@@ -1,7 +1,7 @@
 import yaml 
 from sqlalchemy import create_engine
 
-class DataExtractor: 
+class DatabaseConnector: 
 
     def read_db_creds(self):
         try:
@@ -24,5 +24,5 @@ class DataExtractor:
             raise Exception
 
 if __name__ == "__main__":
-    new_database = DataExtractor()
+    new_database = DatabaseConnector()
     new_database.read_db_creds()
