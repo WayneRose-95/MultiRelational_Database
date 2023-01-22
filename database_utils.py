@@ -23,6 +23,10 @@ class DatabaseConnector:
             print('There was an error')
             raise Exception
 
+    def upload_to_db(self, dataframe, table_name):
+        pass
+    
+
 if __name__ == "__main__":
     new_database = DatabaseConnector()
     new_database.read_db_creds()
