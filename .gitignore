@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 
 db_creds.yaml 
+
+# .ipynb files 
+*.ipynb
