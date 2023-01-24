@@ -41,9 +41,9 @@ class DatabaseExtractor:
                        'display.max_columns', None,
                        'display.precision', 3,
                        ):
-            print(dataframe)
+            
 
-        return dataframe 
+            return dataframe 
        
         
     
