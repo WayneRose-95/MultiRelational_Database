@@ -1,6 +1,6 @@
 from database_utils import DatabaseConnector 
 from sqlalchemy import inspect
-
+import pandas as pd 
 
 class DatabaseExtractor:
 
@@ -28,16 +28,28 @@ class DatabaseExtractor:
 
 
 
-    def read_rds_table(self):
-        pass
+    def read_rds_table(self, table_name):
+        database_connection = DatabaseConnector()
 
-    def clean_user_data(self):
-        pass
+        # Initialise the connection 
+        engine = database_connection.initialise_database_connection()
 
+        table_query = engine.execute(f"""SELECT * FROM {table_name}""").fetchall()
+        dataframe = pd.DataFrame(table_query)
+
+        with pd.option_context('display.max_rows', None,
+                       'display.max_columns', None,
+                       'display.precision', 3,
+                       ):
+            print(dataframe)
+
+        return dataframe 
+       
+        
     
 if __name__ == "__main__":
     extract = DatabaseExtractor() 
-    extract.list_db_tables()
+    extract.read_rds_table('legacy_users')
 
             
 
