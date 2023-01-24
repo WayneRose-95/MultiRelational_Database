@@ -53,7 +53,9 @@ class DatabaseConnector:
         except:
             print("There was an error")
             raise Exception
-
+    
+        return database_engine
+         
     def upload_to_db(self, dataframe, table_name):
         pass
 
