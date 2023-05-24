@@ -1,6 +1,6 @@
 import yaml
 from sqlalchemy import create_engine
-
+import pandas as pd 
 
 class DatabaseConnector:
     def read_database_credentials(self):
@@ -56,7 +56,12 @@ class DatabaseConnector:
     
         return database_engine
          
-    def upload_to_db(self, dataframe, table_name):
+    def upload_to_db(self, dataframe : pd.DataFrame , connection,  table_name : str): 
+        try:
+            dataframe.to_sql(table_name, con=connection, if_exists='replace')
+        except:
+            print("There was an error")
+            raise Exception 
         pass
 
 
