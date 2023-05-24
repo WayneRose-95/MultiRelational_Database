@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy import Table
 from sqlalchemy import MetaData
 import pandas as pd 
+import tabula 
 
 class DatabaseExtractor:
 
@@ -62,12 +63,24 @@ class DatabaseExtractor:
         # Return the dataframe_table as an output of the method
         return dataframe_table
             
-       
+    def retrieve_pdf_data(self, link_to_pdf : str):
+        # Read in the pdf_table using tabula-py ensuring all pages are captured 
+        pdf_table = tabula.read_pdf(link_to_pdf, multiple_tables=True, pages='all', lattice=True)
+        
+        # Combine the list of tables using pd.concat 
+        combined_table = pd.concat(pdf_table)
+
+        # Reset the index upon combining the tables 
+        combined_table.reset_index(drop=True, inplace=True)
+
+        return combined_table 
+           
         
     
 if __name__ == "__main__":
     extract = DatabaseExtractor() 
-    extract.read_rds_table('legacy_users')
+    #extract.read_rds_table('legacy_users')
+    extract.retrieve_pdf_data("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf")
 
             
 
