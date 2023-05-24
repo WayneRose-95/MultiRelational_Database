@@ -56,7 +56,7 @@ class DatabaseConnector:
     
         return database_engine
          
-    def upload_to_db(self, dataframe : pd.DataFrame , connection,  table_name : str):
+    def upload_to_db(self, dataframe : pd.DataFrame , connection,  table_name : str): 
         try:
             dataframe.to_sql(table_name, con=connection, if_exists='replace')
         except:

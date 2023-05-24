@@ -1,5 +1,8 @@
 from database_utils import DatabaseConnector 
 from sqlalchemy import inspect
+from sqlalchemy import select
+from sqlalchemy import Table
+from sqlalchemy import MetaData
 import pandas as pd 
 
 class DatabaseExtractor:
@@ -28,22 +31,37 @@ class DatabaseExtractor:
 
 
 
-    def read_rds_table(self, table_name):
-        database_connection = DatabaseConnector()
+    def read_rds_table(self, table_name :str):
+        # Instantiate an instance of the DatabaseConnector class 
+        database_connector = DatabaseConnector()
 
         # Initialise the connection 
-        engine = database_connection.initialise_database_connection()
+        connection = database_connector.initialise_database_connection()
 
-        table_query = engine.execute(f"""SELECT * FROM {table_name}""").fetchall()
-        dataframe = pd.DataFrame(table_query)
+        # Connect to the database 
+        connection = connection.connect() 
 
-        with pd.option_context('display.max_rows', None,
-                       'display.max_columns', None,
-                       'display.precision', 3,
-                       ):
+        # Initialise a MetaData object 
+        metadata = MetaData() 
+
+        # Set a user table object 
+        user_table = Table(table_name, metadata, autoload_with=connection)
+
+        # Show the table
+        print(metadata.tables.keys())
+
+        # Do a select statement to select all rows of the table 
+        print(select(user_table))
+
+        # Declare a select statement on the table to select all rows of the table
+        select_statement = str(select(user_table))
+
+        # Pass this select statement into a pandas function, which reads the sql query 
+        dataframe_table = pd.read_sql(select_statement, con=connection)
+
+        # Return the dataframe_table as an output of the method
+        return dataframe_table
             
-
-            return dataframe 
        
         
     

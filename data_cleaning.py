@@ -1,10 +1,30 @@
 from data_extraction import DatabaseExtractor
+from database_utils import DatabaseConnector
+from sqlalchemy import create_engine
 import pandas as pd 
+import yaml
 
 class DataCleaning: 
 
     def __init__(self):
-        pass
+        with open("sales_data_creds.yaml") as file:
+            creds = yaml.safe_load(file)
+            DATABASE_TYPE = creds['DATABASE_TYPE']
+            DBAPI = creds['DBAPI']
+            RDS_USER = creds['RDS_USER']
+            RDS_PASSWORD = creds['RDS_PASSWORD']
+            RDS_HOST = creds['RDS_HOST']
+            RDS_PORT = creds['RDS_PORT']
+            DATABASE = creds['DATABASE']
+
+        try:    
+            self.engine = create_engine(
+                 f"{DATABASE_TYPE}+{DBAPI}://{RDS_USER}:{RDS_PASSWORD}@{RDS_HOST}:{RDS_PORT}/{DATABASE}"
+            )
+            print("connection successful")
+        except:
+            print("There was an error")
+            raise Exception    
 
     def clean_user_data(self):
         '''
@@ -58,10 +78,17 @@ class DataCleaning:
         # Reset the index if desired
         legacy_users_dataframe = legacy_users_dataframe.reset_index(drop=True)
         legacy_users_dataframe['user_key'] = legacy_users_dataframe.index 
-
+        upload = DatabaseConnector() 
+        try:
+            upload.upload_to_db(legacy_users_dataframe,self.engine, 'dim_users')
+            print(f"Table uploaded")
+        except: 
+            print("there was an error")
+            raise Exception 
         return legacy_users_dataframe
     
 
 if __name__=="__main__":
     cleaner = DataCleaning()
-    cleaner.clean_user_data() 
+    cleaner.clean_user_data()
+ 
