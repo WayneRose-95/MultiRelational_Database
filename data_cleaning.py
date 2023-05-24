@@ -2,6 +2,7 @@ from data_extraction import DatabaseExtractor
 from database_utils import DatabaseConnector
 from sqlalchemy import create_engine
 import pandas as pd 
+import tabula
 import yaml
 
 class DataCleaning: 
@@ -146,6 +147,7 @@ class DataCleaning:
         # Lastly, drop the store_number column
         legacy_store_dataframe = legacy_store_dataframe.drop("store_number", axis=1)
 
+        #TODO: Fix the bug where the replace function is not replacing the correct region
         legacy_store_dataframe.replace('eeEurope', 'Europe')
         legacy_store_dataframe.replace('eeAmerica', 'America')
 
@@ -158,9 +160,39 @@ class DataCleaning:
             raise Exception 
         return legacy_store_dataframe
         
+    def clean_card_details(self, link_to_pdf : str):
 
+        extractor = DatabaseExtractor()
+
+        card_details_table = extractor.retrieve_pdf_data(link_to_pdf)
+        card_details_table["date_payment_confirmed"] = pd.to_datetime(card_details_table['date_payment_confirmed'], errors='coerce').dt.strftime('%d/%m/%Y')
+        card_details_table = card_details_table.dropna(subset=['date_payment_confirmed'])
+        card_details_table['card_key'] = (range(len(card_details_table)))
+
+        column_order = [
+            'card_key',
+            'card_number',
+            'expiry_date',
+            'card_provider',
+            'date_payment_confirmed'
+        ]
+
+        card_details_table = card_details_table[column_order]
+
+        upload = DatabaseConnector() 
+        try:
+            upload.upload_to_db(card_details_table, self.engine, 'dim_card_details')
+            print(f"Table uploaded")
+        except: 
+            print("there was an error")
+            raise Exception 
+
+        pass
 if __name__=="__main__":
     cleaner = DataCleaning()
     # cleaner.clean_user_data()
-    cleaner.clean_store_data() 
+    # cleaner.clean_store_data()
+    cleaner.clean_card_details(
+        "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
+    ) 
  
