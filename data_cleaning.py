@@ -161,14 +161,22 @@ class DataCleaning:
         return legacy_store_dataframe
         
     def clean_card_details(self, link_to_pdf : str):
-
+        # Instantiating an instance of the Database Extractor class
         extractor = DatabaseExtractor()
 
+        # Read in the pdf data for the card details 
         card_details_table = extractor.retrieve_pdf_data(link_to_pdf)
+
+        # Convert the date_payment_confirmed column into a datetime 
         card_details_table["date_payment_confirmed"] = pd.to_datetime(card_details_table['date_payment_confirmed'], errors='coerce').dt.strftime('%d/%m/%Y')
+
+        # For any null values, drop them. 
         card_details_table = card_details_table.dropna(subset=['date_payment_confirmed'])
+
+        # Add a new column called card_key, which is the length of the card_details table 
         card_details_table['card_key'] = (range(len(card_details_table)))
 
+        # Rearrange the order of the columns 
         column_order = [
             'card_key',
             'card_number',
@@ -177,8 +185,10 @@ class DataCleaning:
             'date_payment_confirmed'
         ]
 
+        # Set the order of the columns in the table 
         card_details_table = card_details_table[column_order]
 
+        # Lastly, try to upload the table to the database. 
         upload = DatabaseConnector() 
         try:
             upload.upload_to_db(card_details_table, self.engine, 'dim_card_details')
@@ -188,11 +198,79 @@ class DataCleaning:
             raise Exception 
 
         pass
+
+    def clean_orders_table(self):
+        # Instantiating an instance of the Database Extractor class
+        extractor = DatabaseExtractor()
+
+        # Read in the table from the RDS database 
+        orders_dataframe = extractor.read_rds_table("orders_table")
+
+        # State the names of the columns 
+        orders_dataframe.columns = [
+            'order_key',
+            'null_key',
+            'date_uuid',
+            'first_name',
+            'last_name',
+            'user_uuid',
+            'card_number',
+            'store_code',
+            'product_code',
+            'null_column',
+            'product_quantity'
+            
+        ]
+
+        # Drop the following columns within the dataframe if they exist 
+        orders_dataframe.drop(["null_key", "first_name", "last_name", "null_column"], axis=1, inplace=True)
+
+        # Lastly, try to upload the cleaned table to the database 
+        upload = DatabaseConnector() 
+        try:
+            upload.upload_to_db(orders_dataframe, self.engine, 'orders_table')
+            print(f"Table uploaded")
+        except: 
+            print("there was an error")
+            raise Exception 
+
+    def clean_time_event_table(self):
+        # Instantiate an instance of the DatabaseExtractor() class 
+        extractor = DatabaseExtractor()
+
+        # Read in the json data from the s3 bucket 
+        time_df = extractor.read_json_from_s3("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json")
+
+        # Filter out non-numeric values and convert the column to numeric using boolean mask 
+        numeric_mask = time_df['month'].apply(pd.to_numeric, errors='coerce').notna()
+        # copy the dataframe then convert the month column to a numeric datatype 
+        time_df = time_df[numeric_mask].copy()
+        time_df['month'] = pd.to_numeric(time_df['month'])
+        # Afterwards, drop any values which are not null or not numeric 
+        time_df = time_df.dropna(subset=['month'])
+
+        #TODO: Write a piece of code which verifies that the number of rows in the orders_table 
+        # is equal to the number of rows in the dim_date_times table 
+        # Currently, the operation drops 38 rows 
+        # 120161 - 120123 = 38 
+        # Correct number because the orders table has 120123 rows, so we have a time event per order.
+
+        upload = DatabaseConnector() 
+        try:
+            upload.upload_to_db(time_df, self.engine, 'dim_date_times')
+            print(f"Table uploaded")
+        except: 
+            print("there was an error")
+            raise Exception 
+
+        
 if __name__=="__main__":
     cleaner = DataCleaning()
     # cleaner.clean_user_data()
     # cleaner.clean_store_data()
-    cleaner.clean_card_details(
-        "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
-    ) 
+    # cleaner.clean_card_details(
+    #     "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
+    # ) 
+    # cleaner.clean_orders_table() 
+    cleaner.clean_time_event_table() 
  
