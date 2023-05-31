@@ -7,6 +7,7 @@ from io import StringIO
 import pandas as pd 
 import boto3
 import tabula 
+import re 
 
 class DatabaseExtractor:
 
@@ -118,7 +119,37 @@ class DatabaseExtractor:
         print(key)
         
         return bucket_name, key
-   
+    
+    def read_json_from_s3(self, bucket_url):
+        s3_client = boto3.client('s3')
+        bucket_name, key = self.parse_s3_url_json(bucket_url)
+
+        try:
+            response = s3_client.get_object(Bucket=bucket_name, Key=key)
+            json_data = response['Body'].read().decode('utf-8')
+            df = pd.read_json(json_data)
+            return df
+        except Exception as e:
+            print(f"Error reading JSON from S3: {e}")
+            return None
+
+    @staticmethod
+    def parse_s3_url_json(url):
+        # Extract the bucket name and key using a regex pattern 
+        match = re.match(r'^https?://([^.]+)\..+/(.*)$', url)
+        # if it matches the regex pattern, 
+        # group the first and second matches and set it to the bucket_name and key variables respectively
+        if match:
+            bucket_name = match.group(1)
+            key = match.group(2)
+        # Else set the bucket_name and key to None 
+        else:
+            bucket_name = None
+            key = None
+
+        return bucket_name,key
+
+  
     
 if __name__ == "__main__":
     extract = DatabaseExtractor() 
