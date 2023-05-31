@@ -3,7 +3,9 @@ from sqlalchemy import inspect
 from sqlalchemy import select
 from sqlalchemy import Table
 from sqlalchemy import MetaData
+from io import StringIO
 import pandas as pd 
+import boto3
 import tabula 
 
 class DatabaseExtractor:
@@ -75,13 +77,55 @@ class DatabaseExtractor:
 
         return combined_table 
            
+
+    def read_s3_bucket_to_dataframe(self, s3_url):
+        # Make an instance of the boto3 object to use s3
+        s3_client = boto3.client('s3')
+
+        # Assign the bucket_name and the key to a tuple which is the output of the previous function. 
+        bucket_name, key = self._parse_s3_url(s3_url)
+
+        # Use the get_object method to collect items in the bucket. Index it on the key. 
+        response = s3_client.get_object(Bucket=bucket_name, Key=key)
+
+        # Extract the data getting the values assigned to each key, then decode it using utf-8 encoding 
+        data = response['Body'].read().decode('utf-8')
+
+        # Lastly, read the csv into pandas as a dataframe, then return the dataframe as an output. 
+        dataframe = pd.read_csv(StringIO(data), delimiter=',')  
         
+        return dataframe
+    
+    def _parse_s3_url(self, s3_url):
+        # Example s3_url: s3://my-bucket-name/my-data.csv
+        # Extracting bucket name and key from the URL
+        # Done by replacing the first part of the s3_url with an empty string, then splitting it by the '/' character
+        s3_url_splitted = s3_url.replace('s3://', '').split('/')
+
+        # Print the s3_url_splitted variable for debugging purposes 
+        print(s3_url_splitted)
+
+        # Set the bucket_name variable to the first index of the list of strings
+        bucket_name = s3_url_splitted[0]
+
+        # Print the bucket name for debugging purposes 
+        print(bucket_name)
+
+        # Set the key variable to second index of the splitted string onwards, and join it to the '/' character. 
+        key = '/'.join(s3_url_splitted[1:])
+
+        # Print the key variable for debugging purposes 
+        print(key)
+        
+        return bucket_name, key
+   
     
 if __name__ == "__main__":
     extract = DatabaseExtractor() 
     #extract.read_rds_table('legacy_users')
-    extract.retrieve_pdf_data("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf")
-
+    # extract.retrieve_pdf_data("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf")
+    # extract._parse_s3_url("s3://data-handling-public/products.csv")
+    extract.read_s3_bucket_to_dataframe("s3://data-handling-public/products.csv")
             
 
      
