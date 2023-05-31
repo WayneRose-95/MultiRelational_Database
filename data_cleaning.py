@@ -188,11 +188,46 @@ class DataCleaning:
             raise Exception 
 
         pass
+
+    def clean_orders_table(self):
+        extractor = DatabaseExtractor()
+        orders_dataframe = extractor.read_rds_table("orders_table")
+
+        orders_dataframe.columns = [
+            'order_key',
+            'null_key',
+            'date_uuid',
+            'first_name',
+            'last_name',
+            'user_uuid',
+            'card_number',
+            'store_code',
+            'product_code',
+            'null_column',
+            'product_quantity'
+            
+        ]
+
+
+        orders_dataframe.drop(["null_key", "first_name", "last_name", "null_column"], axis=1, inplace=True)
+
+        upload = DatabaseConnector() 
+        try:
+            upload.upload_to_db(orders_dataframe, self.engine, 'orders_table')
+            print(f"Table uploaded")
+        except: 
+            print("there was an error")
+            raise Exception 
+
+
+
+        
 if __name__=="__main__":
     cleaner = DataCleaning()
     # cleaner.clean_user_data()
     # cleaner.clean_store_data()
-    cleaner.clean_card_details(
-        "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
-    ) 
+    # cleaner.clean_card_details(
+    #     "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
+    # ) 
+    cleaner.clean_orders_table() 
  
