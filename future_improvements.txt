@@ -25,3 +25,9 @@ and improving the robustness of the data model to handle either:
 
 - More data sources 
 - Updates to current data within the warehouse. 
+
+3. The Cloud engineering / DevOps Side 
+
+- Setting up the database on a cloud provider 
+- Running the python scripts in an automated fashion 
+- Running the project within a Docker Container? 
