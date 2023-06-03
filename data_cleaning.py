@@ -102,7 +102,7 @@ class DataCleaning:
             'null_column', 
             'city', 
             'store_code', 
-            'store_number', 
+            'number_of_staff', 
             'opening_date', 
             'store_type', 
             'latitude',
@@ -122,7 +122,7 @@ class DataCleaning:
             'latitude',
             'city',
             'store_code',
-            'store_number',
+            'number_of_staff',
             'opening_date',
             'store_type',
             'country_code',
@@ -144,12 +144,10 @@ class DataCleaning:
         # Set the store_key column as the index column to reallign it with the index column 
         legacy_store_dataframe['store_key'] = legacy_store_dataframe.index 
 
-        # Lastly, drop the store_number column
-        legacy_store_dataframe = legacy_store_dataframe.drop("store_number", axis=1)
 
         #TODO: Fix the bug where the replace function is not replacing the correct region
-        legacy_store_dataframe.replace('eeEurope', 'Europe')
-        legacy_store_dataframe.replace('eeAmerica', 'America')
+        legacy_store_dataframe = legacy_store_dataframe.replace('eeEurope', 'Europe')
+        legacy_store_dataframe = legacy_store_dataframe.replace('eeAmerica', 'America')
 
         upload = DatabaseConnector() 
         try:
@@ -333,11 +331,11 @@ class DataCleaning:
 if __name__=="__main__":
     cleaner = DataCleaning()
     # cleaner.clean_user_data()
-    # cleaner.clean_store_data()
+    cleaner.clean_store_data()
     # cleaner.clean_card_details(
     #     "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
     # ) 
     # cleaner.clean_orders_table() 
     # cleaner.clean_time_event_table()
-    cleaner.clean_product_table() 
+    # cleaner.clean_product_table() 
  
