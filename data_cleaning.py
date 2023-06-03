@@ -90,7 +90,7 @@ class DataCleaning:
     
     def clean_store_data(self):
         #TODO: clean the number_of_staff and longitude columns 
-        
+
         # Instantiating an instance of the Database Extractor class 
         extractor = DatabaseExtractor()
         # Reading in the table from the AWS database 
@@ -333,11 +333,11 @@ class DataCleaning:
 if __name__=="__main__":
     cleaner = DataCleaning()
     # cleaner.clean_user_data()
-    cleaner.clean_store_data()
+    # cleaner.clean_store_data()
     # cleaner.clean_card_details(
     #     "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
     # ) 
     # cleaner.clean_orders_table() 
     # cleaner.clean_time_event_table()
-    # cleaner.clean_product_table() 
+    cleaner.clean_product_table() 
  
