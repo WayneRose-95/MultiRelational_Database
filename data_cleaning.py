@@ -263,6 +263,72 @@ class DataCleaning:
             print("there was an error")
             raise Exception 
 
+    def clean_product_table(self):
+        extraction = DatabaseExtractor() 
+        products_table = extraction.read_s3_bucket_to_dataframe("s3://data-handling-public/products.csv")
+        values = list(products_table["removed"].unique())
+        print(values)
+        products_table = products_table[~products_table['removed'].isin(values[-3:])]
+        products_table["date_added"] = pd.to_datetime(products_table['date_added'], errors='coerce')
+        products_table['product_price'] = products_table['product_price'].str.replace('£', '')
+        products_table['weight'] = products_table['weight'].apply(self.convert_to_kg)
+        products_table = products_table.dropna(subset=["weight"])
+        products_table["product_key"] = range(len(products_table))
+        products_table = products_table.drop("Unnamed: 0", axis=1)
+
+        column_order = [
+    
+            "product_key",
+            "EAN",
+            "product_name", 
+            "product_price",
+            "weight",
+            "category",
+            "date_added",
+            "uuid",
+            "removed",
+            "product_code"
+            
+        ]
+
+        products_table = products_table[column_order]
+
+        upload = DatabaseConnector() 
+        try:
+            upload.upload_to_db(products_table, self.engine, 'dim_product_details')
+            print(f"Table uploaded")
+        except: 
+            print("there was an error")
+            raise Exception 
+
+    
+    def convert_to_kg(self, weight):
+        if isinstance(weight, float):
+            return weight  # Return the original float value if weight is already a float
+        
+        clean_weight = str(weight)
+        # Removes punctuation from string
+    
+        
+        if 'kg' in weight:
+            return float(clean_weight.strip('kg'))
+        elif ' x ' in weight:
+            value, unit = clean_weight.split(' x ')
+            combined_value = float(value) * float(unit[:-1])
+            return combined_value
+        elif 'g' in clean_weight or 'ml' in clean_weight:
+            try:
+                clean_weight = clean_weight.replace('.', " ")
+                clean_weight = clean_weight.strip('g').strip('ml')
+                return float(clean_weight) / 1000
+            except:
+                modified_weight = clean_weight.strip('.').replace(" ", "").strip('g').strip('ml')
+                return float(modified_weight) / 1000
+        elif 'oz' in clean_weight:
+            clean_weight = clean_weight.strip('oz')
+            return round(float(clean_weight) * 0.028349523, 2)
+        else:
+            return None
         
 if __name__=="__main__":
     cleaner = DataCleaning()
@@ -272,5 +338,6 @@ if __name__=="__main__":
     #     "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
     # ) 
     # cleaner.clean_orders_table() 
-    cleaner.clean_time_event_table() 
+    # cleaner.clean_time_event_table()
+    cleaner.clean_product_table() 
  
