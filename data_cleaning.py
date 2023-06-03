@@ -89,6 +89,8 @@ class DataCleaning:
         return legacy_users_dataframe
     
     def clean_store_data(self):
+        #TODO: clean the number_of_staff and longitude columns 
+        
         # Instantiating an instance of the Database Extractor class 
         extractor = DatabaseExtractor()
         # Reading in the table from the AWS database 
