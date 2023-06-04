@@ -1,0 +1,36 @@
+04.06.2023 
+
+1. In the dim_store_details table, clean the longitude and number_of_staff columns. 
+   Reupload the table, and add in the necessary schema changes and constraints. (DONE)
+
+2. Create sql scripts for the creation of the orders_table and the dim_store_details table (DONE)
+
+3. Verify that the STAR schema model works by performing some joins to the table. 
+   Currently, the foreign keys seem as if they are all nulls.
+
+Solution to 3
+
+UPDATE orders_table
+SET card_key = dim_card_details.card_key
+FROM dim_card_details
+WHERE orders_table.card_number::varchar = dim_card_details.card_number;    
+
+The following SQL Script allows this to happen, BUT 
+The dim_card_details table is missing some keys. 
+Will have to do some further investigation on this later; especially with the other tables. 
+
+4. Foreign keys are not updating inside the orders_table 
+   Fix the scripts so that the keys are updated inside the orders_table (DONE) 
+
+5. Query the data warehouse: answering the following questions: 
+
+How many stores does the business have an in which countries? 
+Which locations currently have the most stores? 
+Which months produce the average highest cost of sales typically? 
+What percentage of sales come through each type of store? 
+Which month in in each produced the highest cost of sales? 
+What is our staff headcount? 
+Which German store type is selling the most? 
+How quickly is the company making sales? 
+
+How many sales are coming from online? (Unsure because there's no online column)

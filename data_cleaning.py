@@ -57,8 +57,8 @@ class DataCleaning:
                 'join_date', 
                 'unique_id'
             ] 
-        legacy_users_dataframe["join_date"] = pd.to_datetime(legacy_users_dataframe['join_date'], errors='coerce').dt.strftime('%d/%m/%Y')
-        legacy_users_dataframe["birth_date"] = pd.to_datetime(legacy_users_dataframe['birth_date'], errors='coerce').dt.strftime('%d/%m/%Y')
+        legacy_users_dataframe["join_date"] = pd.to_datetime(legacy_users_dataframe['join_date'], errors='coerce')
+        legacy_users_dataframe["birth_date"] = pd.to_datetime(legacy_users_dataframe['birth_date'], errors='coerce')
         
         # Renaming the columns as appropriate data types 
         legacy_users_dataframe = legacy_users_dataframe.astype(
@@ -135,7 +135,7 @@ class DataCleaning:
         legacy_store_dataframe = legacy_store_dataframe[column_order]
 
         # Change the date format of the opening_date column to dd/mm/yyyy 
-        legacy_store_dataframe["opening_date"] = pd.to_datetime(legacy_store_dataframe['opening_date'], errors='coerce').dt.strftime('%d/%m/%Y')
+        legacy_store_dataframe["opening_date"] = pd.to_datetime(legacy_store_dataframe['opening_date'], errors='coerce')
 
         # Drop dates in the opening_date which are null 
         legacy_store_dataframe = legacy_store_dataframe.dropna(subset=['opening_date'])
@@ -147,10 +147,15 @@ class DataCleaning:
         legacy_store_dataframe['store_key'] = legacy_store_dataframe.index 
 
 
-        #TODO: Fix the bug where the replace function is not replacing the correct region
+        # Replace the Region with the correct spelling 
         legacy_store_dataframe = legacy_store_dataframe.replace('eeEurope', 'Europe')
         legacy_store_dataframe = legacy_store_dataframe.replace('eeAmerica', 'America')
 
+        # Clean the longitude column by converting it to a numeric value 
+        legacy_store_dataframe["longitude"] = pd.to_numeric(legacy_store_dataframe["longitude"], errors='coerce')
+
+        legacy_store_dataframe["number_of_staff"] = legacy_store_dataframe["number_of_staff"].replace({'3n9': '39', 'A97': '97', '80R': '80', 'J78': '78', '30e': '30'})
+       
         upload = DatabaseConnector() 
         try:
             upload.upload_to_db(legacy_store_dataframe, self.engine, 'dim_store_details')
@@ -168,7 +173,7 @@ class DataCleaning:
         card_details_table = extractor.retrieve_pdf_data(link_to_pdf)
 
         # Convert the date_payment_confirmed column into a datetime 
-        card_details_table["date_payment_confirmed"] = pd.to_datetime(card_details_table['date_payment_confirmed'], errors='coerce').dt.strftime('%d/%m/%Y')
+        card_details_table["date_payment_confirmed"] = pd.to_datetime(card_details_table['date_payment_confirmed'], errors='coerce')
 
         # For any null values, drop them. 
         card_details_table = card_details_table.dropna(subset=['date_payment_confirmed'])
@@ -187,6 +192,9 @@ class DataCleaning:
 
         # Set the order of the columns in the table 
         card_details_table = card_details_table[column_order]
+
+        # Reset the index of the table to match the indexes to the card_keys 
+        card_details_table = card_details_table.reset_index(drop=True)
 
         # Lastly, try to upload the table to the database. 
         upload = DatabaseConnector() 
@@ -254,7 +262,25 @@ class DataCleaning:
         # Currently, the operation drops 38 rows 
         # 120161 - 120123 = 38 
         # Correct number because the orders table has 120123 rows, so we have a time event per order.
+        
+        time_df["time_key"] = range(len(time_df))
+        # Reset the index 
+        time_df = time_df.reset_index(drop=True)
 
+        # Lastly, change the column order
+        column_order = [
+            'time_key',
+            'timestamp',
+            'day',
+            'month',
+            'year',
+            'time_period',
+            'date_uuid'
+        ]
+
+        time_df = time_df[column_order]
+
+        # Try to upload the table to the database
         upload = DatabaseConnector() 
         try:
             upload.upload_to_db(time_df, self.engine, 'dim_date_times')
@@ -377,12 +403,12 @@ class DataCleaning:
         
 if __name__=="__main__":
     cleaner = DataCleaning()
-    # cleaner.clean_user_data()
-    # cleaner.clean_store_data()
-    # cleaner.clean_card_details(
-    #     "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
-    # ) 
-    # cleaner.clean_orders_table() 
-    # cleaner.clean_time_event_table()
+    cleaner.clean_user_data()
+    cleaner.clean_store_data()
+    cleaner.clean_card_details(
+         "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
+     ) 
+    cleaner.clean_orders_table() 
+    cleaner.clean_time_event_table()
     cleaner.clean_product_table() 
  
