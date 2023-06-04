@@ -57,8 +57,8 @@ class DataCleaning:
                 'join_date', 
                 'unique_id'
             ] 
-        legacy_users_dataframe["join_date"] = pd.to_datetime(legacy_users_dataframe['join_date'], errors='coerce').dt.strftime('%d/%m/%Y')
-        legacy_users_dataframe["birth_date"] = pd.to_datetime(legacy_users_dataframe['birth_date'], errors='coerce').dt.strftime('%d/%m/%Y')
+        legacy_users_dataframe["join_date"] = pd.to_datetime(legacy_users_dataframe['join_date'], errors='coerce')
+        legacy_users_dataframe["birth_date"] = pd.to_datetime(legacy_users_dataframe['birth_date'], errors='coerce')
         
         # Renaming the columns as appropriate data types 
         legacy_users_dataframe = legacy_users_dataframe.astype(
@@ -262,7 +262,25 @@ class DataCleaning:
         # Currently, the operation drops 38 rows 
         # 120161 - 120123 = 38 
         # Correct number because the orders table has 120123 rows, so we have a time event per order.
+        
+        time_df["time_key"] = range(len(time_df))
+        # Reset the index 
+        time_df = time_df.reset_index(drop=True)
 
+        # Lastly, change the column order
+        column_order = [
+            'time_key',
+            'timestamp',
+            'day',
+            'month',
+            'year',
+            'time_period',
+            'date_uuid'
+        ]
+
+        time_df = time_df[column_order]
+
+        # Try to upload the table to the database
         upload = DatabaseConnector() 
         try:
             upload.upload_to_db(time_df, self.engine, 'dim_date_times')
