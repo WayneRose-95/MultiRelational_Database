@@ -2,6 +2,12 @@
 2. Create .sql scripts representing the tables. Store these in version control. 
 3. Create Views for successful complicated queries 
 4. Add tables / functionality to deal with different currencies
+5. The .sql scripts such as changing schema, placing primary and foreign keys and updating the orders_table are done after the ETL process. 
+   Is there a way to automate all of this? 
+6. Addition of logging to document progress of ETL pipeline. 
+7. Various code improvements (Will have to document after a code review)
+8. Addition of unittests and validation tests for the ETL process 
+9. Implementation of GitHub Actions (Will research)
 
 Other Questions: 
 
