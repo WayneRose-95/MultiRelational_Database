@@ -1,0 +1,21 @@
+04.06.2023 
+
+1. In the dim_store_details table, clean the longitude and number_of_staff columns. 
+   Reupload the table, and add in the necessary schema changes and constraints. 
+
+2. Create sql scripts for the creation of the orders_table and the dim_store_details table 
+
+3. Verify that the STAR schema model works by performing some joins to the table. 
+   Currently, the foreign keys seem as if they are all nulls.
+
+Solution to 3
+
+UPDATE orders_table
+SET card_key = dim_card_details.card_key
+FROM dim_card_details
+WHERE orders_table.card_number::varchar = dim_card_details.card_number;    
+
+The following SQL Script allows this to happen, BUT 
+The dim_card_details table is missing some keys. 
+Will have to do some further investigation on this later; especially with the other tables. 
+

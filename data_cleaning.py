@@ -147,13 +147,18 @@ class DataCleaning:
         legacy_store_dataframe['store_key'] = legacy_store_dataframe.index 
 
 
-        #TODO: Fix the bug where the replace function is not replacing the correct region
+        # Replace the Region with the correct spelling 
         legacy_store_dataframe = legacy_store_dataframe.replace('eeEurope', 'Europe')
         legacy_store_dataframe = legacy_store_dataframe.replace('eeAmerica', 'America')
 
+        # Clean the longitude column by converting it to a numeric value 
+        legacy_store_dataframe["longitude"] = pd.to_numeric(legacy_store_dataframe["longitude"], errors='coerce')
+
+        legacy_store_dataframe["number_of_staff"] = legacy_store_dataframe["number_of_staff"].replace({'3n9': '39', 'A97': '97', '80R': '80', 'J78': '78', '30e': '30'})
+       
         upload = DatabaseConnector() 
         try:
-            upload.upload_to_db(legacy_store_dataframe, self.engine, 'dim_store_details')
+            upload.upload_to_db(legacy_store_dataframe, self.engine, 'dim_store_details_test')
             print(f"Table uploaded")
         except: 
             print("there was an error")
@@ -378,11 +383,11 @@ class DataCleaning:
 if __name__=="__main__":
     cleaner = DataCleaning()
     # cleaner.clean_user_data()
-    # cleaner.clean_store_data()
+    cleaner.clean_store_data()
     # cleaner.clean_card_details(
     #     "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
     # ) 
     # cleaner.clean_orders_table() 
     # cleaner.clean_time_event_table()
-    cleaner.clean_product_table() 
+    # cleaner.clean_product_table() 
  
