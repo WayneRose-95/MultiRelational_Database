@@ -135,7 +135,7 @@ class DataCleaning:
         legacy_store_dataframe = legacy_store_dataframe[column_order]
 
         # Change the date format of the opening_date column to dd/mm/yyyy 
-        legacy_store_dataframe["opening_date"] = pd.to_datetime(legacy_store_dataframe['opening_date'], errors='coerce').dt.strftime('%d/%m/%Y')
+        legacy_store_dataframe["opening_date"] = pd.to_datetime(legacy_store_dataframe['opening_date'], errors='coerce')
 
         # Drop dates in the opening_date which are null 
         legacy_store_dataframe = legacy_store_dataframe.dropna(subset=['opening_date'])
