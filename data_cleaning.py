@@ -158,7 +158,7 @@ class DataCleaning:
        
         upload = DatabaseConnector() 
         try:
-            upload.upload_to_db(legacy_store_dataframe, self.engine, 'dim_store_details_test')
+            upload.upload_to_db(legacy_store_dataframe, self.engine, 'dim_store_details')
             print(f"Table uploaded")
         except: 
             print("there was an error")
@@ -173,7 +173,7 @@ class DataCleaning:
         card_details_table = extractor.retrieve_pdf_data(link_to_pdf)
 
         # Convert the date_payment_confirmed column into a datetime 
-        card_details_table["date_payment_confirmed"] = pd.to_datetime(card_details_table['date_payment_confirmed'], errors='coerce').dt.strftime('%d/%m/%Y')
+        card_details_table["date_payment_confirmed"] = pd.to_datetime(card_details_table['date_payment_confirmed'], errors='coerce')
 
         # For any null values, drop them. 
         card_details_table = card_details_table.dropna(subset=['date_payment_confirmed'])
@@ -192,6 +192,9 @@ class DataCleaning:
 
         # Set the order of the columns in the table 
         card_details_table = card_details_table[column_order]
+
+        # Reset the index of the table to match the indexes to the card_keys 
+        card_details_table = card_details_table.reset_index(drop=True)
 
         # Lastly, try to upload the table to the database. 
         upload = DatabaseConnector() 
@@ -382,12 +385,12 @@ class DataCleaning:
         
 if __name__=="__main__":
     cleaner = DataCleaning()
-    # cleaner.clean_user_data()
+    cleaner.clean_user_data()
     cleaner.clean_store_data()
-    # cleaner.clean_card_details(
-    #     "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
-    # ) 
-    # cleaner.clean_orders_table() 
-    # cleaner.clean_time_event_table()
-    # cleaner.clean_product_table() 
+    cleaner.clean_card_details(
+         "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
+     ) 
+    cleaner.clean_orders_table() 
+    cleaner.clean_time_event_table()
+    cleaner.clean_product_table() 
  
