@@ -7,8 +7,8 @@ import yaml
 
 class DataCleaning: 
 
-    def __init__(self):
-        with open("sales_data_creds.yaml") as file:
+    def __init__(self, config_file_name):
+        with open(config_file_name) as file:
             creds = yaml.safe_load(file)
             DATABASE_TYPE = creds['DATABASE_TYPE']
             DBAPI = creds['DBAPI']
