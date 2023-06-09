@@ -153,8 +153,8 @@ class DatabaseExtractor:
     
 if __name__ == "__main__":
     extract = DatabaseExtractor() 
-    # extract.list_db_tables('db_creds.yaml')
-    extract.read_rds_table('legacy_users', 'db_creds.yaml')
+    extract.list_db_tables('db_creds.yaml')
+    # extract.read_rds_table('legacy_users', 'db_creds.yaml')
     # extract.retrieve_pdf_data("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf")
     # extract._parse_s3_url("s3://data-handling-public/products.csv")
     # extract.read_s3_bucket_to_dataframe("s3://data-handling-public/products.csv")
