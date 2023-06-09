@@ -14,12 +14,12 @@ class DatabaseExtractor:
     def __init__(self):
         pass
 
-    def list_db_tables(self):
+    def list_db_tables(self, config_file_name):
         # Create an instance of the DatabaseConnector Class 
         database_connection = DatabaseConnector()
 
         # Initialise the connection 
-        engine = database_connection.initialise_database_connection()
+        engine = database_connection.initialise_database_connection(config_file_name)
 
         # Use the inspect method of sqlalchemy to get an inspector element 
         inspector = inspect(engine)
@@ -35,12 +35,12 @@ class DatabaseExtractor:
 
 
 
-    def read_rds_table(self, table_name :str):
+    def read_rds_table(self, table_name :str, config_file_name):
         # Instantiate an instance of the DatabaseConnector class 
         database_connector = DatabaseConnector()
 
         # Initialise the connection 
-        connection = database_connector.initialise_database_connection()
+        connection = database_connector.initialise_database_connection(config_file_name)
 
         # Connect to the database 
         connection = connection.connect() 
@@ -153,10 +153,11 @@ class DatabaseExtractor:
     
 if __name__ == "__main__":
     extract = DatabaseExtractor() 
-    #extract.read_rds_table('legacy_users')
+    # extract.list_db_tables('db_creds.yaml')
+    extract.read_rds_table('legacy_users', 'db_creds.yaml')
     # extract.retrieve_pdf_data("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf")
     # extract._parse_s3_url("s3://data-handling-public/products.csv")
-    extract.read_s3_bucket_to_dataframe("s3://data-handling-public/products.csv")
+    # extract.read_s3_bucket_to_dataframe("s3://data-handling-public/products.csv")
             
 
      
