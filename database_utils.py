@@ -1,16 +1,25 @@
 import yaml
 from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError 
 import pandas as pd 
 
 class DatabaseConnector:
-    def read_database_credentials(self):
+    def read_database_credentials(self, config_file):
         # Read the yaml file
-        with open("db_creds.yaml") as file:
-            database_credentials = yaml.safe_load(file)
-            # print(database_credentials)
-
-        # Return the yaml file as a dictionary
-        return dict(database_credentials)
+        try:
+            with open(config_file) as file:
+                database_credentials = yaml.safe_load(file)
+                # print(database_credentials)
+                
+             # Return the yaml file as a dictionary    
+            return database_credentials
+        # If the file is not found, raise an exception 
+        except FileNotFoundError:
+            raise Exception("Config file not found")
+        # If the config file is not in a YAML format, raise an exception
+        except yaml.YAMLError:
+            raise Exception("Invalid YAML format.")
+        
 
     def initialise_database_connection(self):
 
@@ -67,4 +76,5 @@ class DatabaseConnector:
 
 if __name__ == "__main__":
     new_database = DatabaseConnector()
-    new_database.initialise_database_connection()
+    new_database.read_database_credentials('db_creds.yaml') 
+    #new_database.initialise_database_connection()
