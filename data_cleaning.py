@@ -430,7 +430,7 @@ class DataCleaning:
         clean_weight: float 
         The weight of the object in kg. 
 
-        None if the value is not a weight 
+        None if the value is not a weight. 
 
         '''
         # Check if the weight is a float
