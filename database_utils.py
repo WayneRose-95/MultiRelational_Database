@@ -5,6 +5,18 @@ import pandas as pd
 
 class DatabaseConnector:
     def read_database_credentials(self, config_file):
+        '''
+        Method to read database_credentials from a yaml file 
+
+        Parameters: 
+        config_file  
+        The file pathway to the yaml file 
+
+        Returns: 
+        database_credentials : dict 
+        A dictionary of the database credentials from yaml file 
+
+        '''
         # Read the yaml file
         try:
             with open(config_file) as file:
@@ -22,7 +34,18 @@ class DatabaseConnector:
         
 
     def initialise_database_connection(self, config_file_name):
+        '''
+        Method to establish a connection to the database 
 
+        Parameters: 
+        config_file_name: str 
+        The file pathway to the yaml file
+
+        Returns: 
+        database_engine: engine 
+        A database engine object 
+
+        '''
         # Call the database details method to use the dictionary as an output
         database_credentials = self.read_database_credentials(config_file_name)
 
@@ -45,13 +68,27 @@ class DatabaseConnector:
             database_engine = create_engine(connection_string)
             database_engine.connect()
             print("connection successful")
+            return database_engine
         except OperationalError:
             print("Error Connecting to the Database")
             raise Exception
     
-        return database_engine
+        
          
     def upload_to_db(self, dataframe : pd.DataFrame , connection,  table_name : str): 
+        '''
+        Method to upload the table to the database 
+
+        Parameters: 
+        dataframe : pd.DataFrame
+        A pandas dataframe 
+
+        connection 
+        The engine to connect to the database 
+
+        table_name : str 
+        The name of the table to be uploaded to the database 
+        '''
         try:
             dataframe.to_sql(table_name, con=connection, if_exists='replace')
         except:
