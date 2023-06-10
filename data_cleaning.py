@@ -255,12 +255,10 @@ class DataCleaning:
             raise Exception 
 
 
-    def clean_orders_table(self):
-        # Instantiating an instance of the Database Extractor class
-        extractor = DatabaseExtractor()
-
+    def clean_orders_table(self, source_table_name : str, source_database_config_file_name : str, datastore_table_name : str):
+        
         # Read in the table from the RDS database 
-        orders_dataframe = extractor.read_rds_table("orders_table")
+        orders_dataframe = self.extractor.read_rds_table(source_table_name, source_database_config_file_name)
 
         # State the names of the columns 
         orders_dataframe.columns = [
@@ -282,12 +280,12 @@ class DataCleaning:
         orders_dataframe.drop(["null_key", "first_name", "last_name", "null_column"], axis=1, inplace=True)
 
         # Lastly, try to upload the cleaned table to the database 
-        upload = DatabaseConnector() 
         try:
-            upload.upload_to_db(orders_dataframe, self.engine, 'orders_table')
-            print(f"Table uploaded")
+            self.uploader.upload_to_db(orders_dataframe, self.engine, datastore_table_name)
+            print("Table uploaded")
+            return orders_dataframe 
         except: 
-            print("there was an error")
+            print("Error uploading table to the database")
             raise Exception 
 
     def clean_time_event_table(self):
@@ -453,11 +451,11 @@ if __name__=="__main__":
     cleaner = DataCleaning('sales_data_creds_dev.yaml')
     # cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users",)
     # cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
-    cleaner.clean_card_details(
-          "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
-          "dim_card_details"
-      ) 
-    # cleaner.clean_orders_table() 
+    # cleaner.clean_card_details(
+    #       "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
+    #       "dim_card_details"
+    #   ) 
+    cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
     # cleaner.clean_time_event_table()
     # cleaner.clean_product_table() 
  
