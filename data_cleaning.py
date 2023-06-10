@@ -288,12 +288,20 @@ class DataCleaning:
             print("Error uploading table to the database")
             raise Exception 
 
-    def clean_time_event_table(self):
-        # Instantiate an instance of the DatabaseExtractor() class 
-        extractor = DatabaseExtractor()
+    def clean_time_event_table(self, s3_bucket_url, datastore_table_name):
+        '''
+        Method to read in a time_dimension table from an AWS S3 Bucket, 
+        clean it, and upload it to the datastore.
 
+        Parameters: 
+        bucket_url : str 
+        A link to the s3 bucket hosted on AWS 
+
+        datastore_table_name : str 
+        The name of the table to be uploaded to the datastore 
+        '''
         # Read in the json data from the s3 bucket 
-        time_df = extractor.read_json_from_s3("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json")
+        time_df = self.extractor.read_json_from_s3(s3_bucket_url)
 
         # Filter out non-numeric values and convert the column to numeric using boolean mask 
         numeric_mask = time_df['month'].apply(pd.to_numeric, errors='coerce').notna()
@@ -329,10 +337,11 @@ class DataCleaning:
         # Try to upload the table to the database
         upload = DatabaseConnector() 
         try:
-            upload.upload_to_db(time_df, self.engine, 'dim_date_times')
-            print(f"Table uploaded")
+            upload.upload_to_db(time_df, self.engine, datastore_table_name)
+            print("Table uploaded")
+            return time_df 
         except: 
-            print("there was an error")
+            print("Error uploading table to the database")
             raise Exception 
 
     def clean_product_table(self):
@@ -455,7 +464,10 @@ if __name__=="__main__":
     #       "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
     #       "dim_card_details"
     #   ) 
-    cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
-    # cleaner.clean_time_event_table()
+    # cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
+    cleaner.clean_time_event_table(
+        "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
+        "dim_date_times"
+    )
     # cleaner.clean_product_table() 
  
