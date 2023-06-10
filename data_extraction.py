@@ -176,20 +176,53 @@ class DatabaseExtractor:
         return bucket_name, key
     
     def read_json_from_s3(self, bucket_url : str):
+        '''
+        Method to read in a .json file from an s3_bucket on AWS 
+
+        Parameters: 
+        bucket_url : str 
+        The link to the bucket 
+
+        Returns 
+        df: DataFrame 
+
+        A pandas dataframe of the .json file 
+
+        None if reading the .json from s3 throws an exception. 
+
+        '''
+        # Create an instance of the boto3 client for s3 
         s3_client = boto3.client('s3')
+
+        # Set the bucket_name and key of the bucket to the output of the method
         bucket_name, key = self.parse_s3_url_json(bucket_url)
 
+        # Try to get the object from the s3_bucket
         try:
             response = s3_client.get_object(Bucket=bucket_name, Key=key)
+            # Get the body of the .json file and decode it with utf-8 encoding 
             json_data = response['Body'].read().decode('utf-8')
+            # Lastly, read the json_data into a pandas dataframe and return it 
             df = pd.read_json(json_data)
             return df
+        # If the code runs into an exception, raise the exception. 
         except Exception as e:
             print(f"Error reading JSON from S3: {e}")
             return None
 
     @staticmethod
     def parse_s3_url_json(url : str):
+        '''
+        Method to interpret an s3_url for a .json file 
+
+        Parameters: 
+        url : str 
+        The url of the s3 bucket 
+
+        Returns: 
+        bucket,key : Tuple 
+        A tuple containing the bucket name and the key of the s3_bucket. 
+        '''
         # Extract the bucket name and key using a regex pattern 
         match = re.match(r'^https?://([^.]+)\..+/(.*)$', url)
         # if it matches the regex pattern, 
