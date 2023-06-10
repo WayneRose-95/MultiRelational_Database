@@ -288,7 +288,7 @@ class DataCleaning:
             print("Error uploading table to the database")
             raise Exception 
 
-    def clean_time_event_table(self, s3_bucket_url, datastore_table_name):
+    def clean_time_event_table(self, s3_bucket_url : str , datastore_table_name : str):
         '''
         Method to read in a time_dimension table from an AWS S3 Bucket, 
         clean it, and upload it to the datastore.
@@ -344,12 +344,26 @@ class DataCleaning:
             print("Error uploading table to the database")
             raise Exception 
 
-    def clean_product_table(self):
-        # Create an instance of the DatabaseExtractor() class
-        extraction = DatabaseExtractor() 
+    def clean_product_table(self, s3_bucket_url : str, datastore_table_name : str):
+        '''
+        Method to read in a .csv file from an S3 Bucket on AWS, 
+        CLean the data, and then upload it to the datastore 
 
+        Parameters: 
+
+        s3_bucket_url : str 
+        The link to the s3_bucket 
+
+        datastore_table_name : str
+        The name of the table uploaded to the datastore
+
+        Returns 
+        products_table: 
+        A dataframe containing the cleaned products_table 
+
+        '''
         # Set the dataframe to the output of the method 
-        products_table = extraction.read_s3_bucket_to_dataframe("s3://data-handling-public/products.csv")
+        products_table = self.extractor.read_s3_bucket_to_dataframe(s3_bucket_url)
         # Create a list of unique values within the 'removed' column  and print them out for debugging purposes 
         values = list(products_table["removed"].unique())
         print(values)
@@ -395,12 +409,12 @@ class DataCleaning:
         products_table = products_table[column_order]
 
         # Try to upload the table to the database. 
-        upload = DatabaseConnector() 
         try:
-            upload.upload_to_db(products_table, self.engine, 'dim_product_details')
-            print(f"Table uploaded")
+            self.uploader.upload_to_db(products_table, self.engine, datastore_table_name)
+            print("Table uploaded")
+            return products_table 
         except: 
-            print("there was an error")
+            print("Error uploading table to database")
             raise Exception 
 
     
@@ -465,9 +479,12 @@ if __name__=="__main__":
     #       "dim_card_details"
     #   ) 
     # cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
-    cleaner.clean_time_event_table(
-        "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
-        "dim_date_times"
-    )
-    # cleaner.clean_product_table() 
+    # cleaner.clean_time_event_table(
+    #     "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
+    #     "dim_date_times"
+    # )
+    cleaner.clean_product_table(
+        "s3://data-handling-public/products.csv",
+        "dim_product_details"
+    ) 
  
