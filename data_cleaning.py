@@ -419,6 +419,20 @@ class DataCleaning:
 
     
     def convert_to_kg(self, weight):
+        '''
+        Utilty method to standardise weights into kg
+
+        Parameters: 
+        weight 
+        The numerical weight of the object. 
+
+        Returns: 
+        clean_weight: float 
+        The weight of the object in kg. 
+
+        None if the value is not a weight 
+
+        '''
         # Check if the weight is a float
         if isinstance(weight, float):
             # Return the original float value if weight is already a float
@@ -472,17 +486,17 @@ class DataCleaning:
         
 if __name__=="__main__":
     cleaner = DataCleaning('sales_data_creds_dev.yaml')
-    # cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users",)
-    # cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
-    # cleaner.clean_card_details(
-    #       "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
-    #       "dim_card_details"
-    #   ) 
-    # cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
-    # cleaner.clean_time_event_table(
-    #     "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
-    #     "dim_date_times"
-    # )
+    cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users",)
+    cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
+    cleaner.clean_card_details(
+          "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
+          "dim_card_details"
+      ) 
+    cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
+    cleaner.clean_time_event_table(
+        "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
+        "dim_date_times"
+    )
     cleaner.clean_product_table(
         "s3://data-handling-public/products.csv",
         "dim_product_details"
