@@ -389,6 +389,20 @@ class DataCleaning:
         # Drop the "Unamed:  0" column within the dataframe 
         products_table = products_table.drop("Unnamed: 0", axis=1)
 
+        # stating the names of the columns
+        products_table.columns = [
+
+            "product_name", 
+            "product_price",
+            "weight",
+            "category",
+            "EAN",
+            "date_added",
+            "uuid",
+            "availability",
+            "product_code",
+            "product_key"
+        ]
         # Rearrange the order of the columns 
         column_order = [
     
@@ -400,7 +414,7 @@ class DataCleaning:
             "category",
             "date_added",
             "uuid",
-            "removed",
+            "availability",
             "product_code"
             
         ]
