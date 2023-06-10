@@ -33,19 +33,19 @@ class DataCleaning:
             print("Error connecting to database")
             raise Exception    
 
-    def clean_user_data(self, source_table : str, table_name : str, source_database_config_file_name : str):
+    def clean_user_data(self, source_table_name : str, source_database_config_file_name : str, datastore_table_name : str):
         '''
         Method to clean the user data table 
 
-        Parameters:
-        source_table : str 
-        The name of the source table which is being read from the source database
-
-        table_name : str 
-        The name of the table, which you wish to upload to the datastore
+        Parameters: 
+        source_table_name : str 
+        The table name in the source database 
 
         source_database_config_file_name : str 
-        The name of the config file for the source database which you are extracting from.
+        The name of the config file used to connect to the source database 
+
+        datastore_table_name : str 
+        The name of the table which will be uploaded to the datastore
 
         Returns: 
         legacy_users_dataframe: Dataframe 
@@ -54,7 +54,7 @@ class DataCleaning:
         '''
 
         # Reading in the table from the AWS database 
-        legacy_users_dataframe = self.extractor.read_rds_table(source_table, source_database_config_file_name)
+        legacy_users_dataframe = self.extractor.read_rds_table(source_table_name, source_database_config_file_name)
         # Naming the columns in the dataframe 
         legacy_users_dataframe.columns = [
                 'user_key', 
@@ -95,7 +95,7 @@ class DataCleaning:
 
         # Upload the dataframe to the datastore  
         try:
-            self.uploader.upload_to_db(legacy_users_dataframe, self.engine, table_name)
+            self.uploader.upload_to_db(legacy_users_dataframe, self.engine, datastore_table_name)
             print(f"Table uploaded")
             return legacy_users_dataframe
         except: 
@@ -103,13 +103,32 @@ class DataCleaning:
             raise Exception 
         
     
-    def clean_store_data(self):
-        #TODO: clean the number_of_staff and longitude columns 
+    def clean_store_data(self, source_table_name : str , source_database_config_file_name : str, datastore_table_name : str):
+        '''
+        Method to reads in store_data from an RDS, 
+        cleans it then uploads it to the datastore
+
+        Parameters: 
+        source_table_name : str 
+        The table name in the source database 
+
+        source_database_config_file_name : str 
+        The name of the config file used to connect to the source database 
+
+        datastore_table_name : str 
+        The name of the table which will be uploaded to the datastore
+
+        Returns: 
+
+        legacy_store_dataframe : DataFrame 
+        A cleaned version of the source data as a Pandas DataFrame 
+
+        '''
 
         # Instantiating an instance of the Database Extractor class 
         extractor = DatabaseExtractor()
         # Reading in the table from the AWS database 
-        legacy_store_dataframe = extractor.read_rds_table("legacy_store_details")
+        legacy_store_dataframe = extractor.read_rds_table(source_table_name, source_database_config_file_name)
         
         # State the column names for the table 
         legacy_store_dataframe.columns = [
@@ -173,19 +192,35 @@ class DataCleaning:
        
         upload = DatabaseConnector() 
         try:
-            upload.upload_to_db(legacy_store_dataframe, self.engine, 'dim_store_details')
+            upload.upload_to_db(legacy_store_dataframe, self.engine, datastore_table_name)
             print(f"Table uploaded")
+            return legacy_store_dataframe
         except: 
-            print("there was an error")
+            print("Error uploading table to database")
             raise Exception 
-        return legacy_store_dataframe
         
-    def clean_card_details(self, link_to_pdf : str):
-        # Instantiating an instance of the Database Extractor class
-        extractor = DatabaseExtractor()
+        
+    def clean_card_details(self, link_to_pdf : str, datastore_table_name : str):
+        '''
+        Method to clean a pdf file with card details and upload it to a datastore 
+
+        Parameters: 
+
+        link_to_pdf : str 
+        The link to the pdf file 
+
+        datastore_table_name : str 
+        The name of the table to be uploaded to the datastore 
+
+        Returns 
+
+        card_details_table 
+        A dataframe consisting of card_details read from the pdf 
+
+        '''
 
         # Read in the pdf data for the card details 
-        card_details_table = extractor.retrieve_pdf_data(link_to_pdf)
+        card_details_table = self.extractor.retrieve_pdf_data(link_to_pdf)
 
         # Convert the date_payment_confirmed column into a datetime 
         card_details_table["date_payment_confirmed"] = pd.to_datetime(card_details_table['date_payment_confirmed'], errors='coerce')
@@ -212,15 +247,13 @@ class DataCleaning:
         card_details_table = card_details_table.reset_index(drop=True)
 
         # Lastly, try to upload the table to the database. 
-        upload = DatabaseConnector() 
         try:
-            upload.upload_to_db(card_details_table, self.engine, 'dim_card_details')
-            print(f"Table uploaded")
+            self.uploader.upload_to_db(card_details_table, self.engine, datastore_table_name)
+            print("Table uploaded")
         except: 
-            print("there was an error")
+            print("Error uploading table to the database")
             raise Exception 
 
-        pass
 
     def clean_orders_table(self):
         # Instantiating an instance of the Database Extractor class
@@ -418,11 +451,12 @@ class DataCleaning:
         
 if __name__=="__main__":
     cleaner = DataCleaning('sales_data_creds_dev.yaml')
-    cleaner.clean_user_data("legacy_users", "dim_users", 'db_creds.yaml')
-    # cleaner.clean_store_data()
-    # cleaner.clean_card_details(
-    #      "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
-    #  ) 
+    # cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users",)
+    # cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
+    cleaner.clean_card_details(
+          "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
+          "dim_card_details"
+      ) 
     # cleaner.clean_orders_table() 
     # cleaner.clean_time_event_table()
     # cleaner.clean_product_table() 
