@@ -1,14 +1,20 @@
 from data_extraction import DatabaseExtractor
 from database_utils import DatabaseConnector
 from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError
 import pandas as pd 
 import tabula
 import yaml
 
 class DataCleaning: 
 
-    def __init__(self):
-        with open("sales_data_creds.yaml") as file:
+    def __init__(self, datastore_config_file_name):
+        # Instantitating an instance of the DatabaseExtractor Class
+        self.extractor = DatabaseExtractor()
+        # Instantitating an instance of the DatabaseConnector Class
+        self.uploader = DatabaseConnector()
+
+        with open(datastore_config_file_name) as file:
             creds = yaml.safe_load(file)
             DATABASE_TYPE = creds['DATABASE_TYPE']
             DBAPI = creds['DBAPI']
@@ -16,32 +22,39 @@ class DataCleaning:
             RDS_PASSWORD = creds['RDS_PASSWORD']
             RDS_HOST = creds['RDS_HOST']
             RDS_PORT = creds['RDS_PORT']
-            DATABASE = creds['DATABASE']
+            DATABASE = creds['RDS_DATABASE']
 
         try:    
             self.engine = create_engine(
                  f"{DATABASE_TYPE}+{DBAPI}://{RDS_USER}:{RDS_PASSWORD}@{RDS_HOST}:{RDS_PORT}/{DATABASE}"
             )
             print("connection successful")
-        except:
-            print("There was an error")
+        except OperationalError:
+            print("Error connecting to database")
             raise Exception    
 
-    def clean_user_data(self):
+    def clean_user_data(self, source_table_name : str, source_database_config_file_name : str, datastore_table_name : str):
         '''
         Method to clean the user data table 
 
-        Parameters:
-        None 
+        Parameters: 
+        source_table_name : str 
+        The table name in the source database 
+
+        source_database_config_file_name : str 
+        The name of the config file used to connect to the source database 
+
+        datastore_table_name : str 
+        The name of the table which will be uploaded to the datastore
 
         Returns: 
         legacy_users_dataframe: Dataframe 
         Pandas dataframe used to upload to the database. 
+
         '''
-        # Instantiating an instance of the Database Extractor class 
-        extractor = DatabaseExtractor()
+
         # Reading in the table from the AWS database 
-        legacy_users_dataframe = extractor.read_rds_table("legacy_users")
+        legacy_users_dataframe = self.extractor.read_rds_table(source_table_name, source_database_config_file_name)
         # Naming the columns in the dataframe 
         legacy_users_dataframe.columns = [
                 'user_key', 
@@ -79,22 +92,43 @@ class DataCleaning:
         # Reset the index if desired
         legacy_users_dataframe = legacy_users_dataframe.reset_index(drop=True)
         legacy_users_dataframe['user_key'] = legacy_users_dataframe.index 
-        upload = DatabaseConnector() 
+
+        # Upload the dataframe to the datastore  
         try:
-            upload.upload_to_db(legacy_users_dataframe, self.engine, 'dim_users')
+            self.uploader.upload_to_db(legacy_users_dataframe, self.engine, datastore_table_name)
             print(f"Table uploaded")
+            return legacy_users_dataframe
         except: 
-            print("there was an error")
+            print("Error uploading table to database")
             raise Exception 
-        return legacy_users_dataframe
+        
     
-    def clean_store_data(self):
-        #TODO: clean the number_of_staff and longitude columns 
+    def clean_store_data(self, source_table_name : str , source_database_config_file_name : str, datastore_table_name : str):
+        '''
+        Method to reads in store_data from an RDS, 
+        cleans it then uploads it to the datastore
+
+        Parameters: 
+        source_table_name : str 
+        The table name in the source database 
+
+        source_database_config_file_name : str 
+        The name of the config file used to connect to the source database 
+
+        datastore_table_name : str 
+        The name of the table which will be uploaded to the datastore
+
+        Returns: 
+
+        legacy_store_dataframe : DataFrame 
+        A cleaned version of the source data as a Pandas DataFrame 
+
+        '''
 
         # Instantiating an instance of the Database Extractor class 
         extractor = DatabaseExtractor()
         # Reading in the table from the AWS database 
-        legacy_store_dataframe = extractor.read_rds_table("legacy_store_details")
+        legacy_store_dataframe = extractor.read_rds_table(source_table_name, source_database_config_file_name)
         
         # State the column names for the table 
         legacy_store_dataframe.columns = [
@@ -158,19 +192,35 @@ class DataCleaning:
        
         upload = DatabaseConnector() 
         try:
-            upload.upload_to_db(legacy_store_dataframe, self.engine, 'dim_store_details')
+            upload.upload_to_db(legacy_store_dataframe, self.engine, datastore_table_name)
             print(f"Table uploaded")
+            return legacy_store_dataframe
         except: 
-            print("there was an error")
+            print("Error uploading table to database")
             raise Exception 
-        return legacy_store_dataframe
         
-    def clean_card_details(self, link_to_pdf : str):
-        # Instantiating an instance of the Database Extractor class
-        extractor = DatabaseExtractor()
+        
+    def clean_card_details(self, link_to_pdf : str, datastore_table_name : str):
+        '''
+        Method to clean a pdf file with card details and upload it to a datastore 
+
+        Parameters: 
+
+        link_to_pdf : str 
+        The link to the pdf file 
+
+        datastore_table_name : str 
+        The name of the table to be uploaded to the datastore 
+
+        Returns 
+
+        card_details_table 
+        A dataframe consisting of card_details read from the pdf 
+
+        '''
 
         # Read in the pdf data for the card details 
-        card_details_table = extractor.retrieve_pdf_data(link_to_pdf)
+        card_details_table = self.extractor.retrieve_pdf_data(link_to_pdf)
 
         # Convert the date_payment_confirmed column into a datetime 
         card_details_table["date_payment_confirmed"] = pd.to_datetime(card_details_table['date_payment_confirmed'], errors='coerce')
@@ -197,22 +247,18 @@ class DataCleaning:
         card_details_table = card_details_table.reset_index(drop=True)
 
         # Lastly, try to upload the table to the database. 
-        upload = DatabaseConnector() 
         try:
-            upload.upload_to_db(card_details_table, self.engine, 'dim_card_details')
-            print(f"Table uploaded")
+            self.uploader.upload_to_db(card_details_table, self.engine, datastore_table_name)
+            print("Table uploaded")
         except: 
-            print("there was an error")
+            print("Error uploading table to the database")
             raise Exception 
 
-        pass
 
-    def clean_orders_table(self):
-        # Instantiating an instance of the Database Extractor class
-        extractor = DatabaseExtractor()
-
+    def clean_orders_table(self, source_table_name : str, source_database_config_file_name : str, datastore_table_name : str):
+        
         # Read in the table from the RDS database 
-        orders_dataframe = extractor.read_rds_table("orders_table")
+        orders_dataframe = self.extractor.read_rds_table(source_table_name, source_database_config_file_name)
 
         # State the names of the columns 
         orders_dataframe.columns = [
@@ -234,20 +280,28 @@ class DataCleaning:
         orders_dataframe.drop(["null_key", "first_name", "last_name", "null_column"], axis=1, inplace=True)
 
         # Lastly, try to upload the cleaned table to the database 
-        upload = DatabaseConnector() 
         try:
-            upload.upload_to_db(orders_dataframe, self.engine, 'orders_table')
-            print(f"Table uploaded")
+            self.uploader.upload_to_db(orders_dataframe, self.engine, datastore_table_name)
+            print("Table uploaded")
+            return orders_dataframe 
         except: 
-            print("there was an error")
+            print("Error uploading table to the database")
             raise Exception 
 
-    def clean_time_event_table(self):
-        # Instantiate an instance of the DatabaseExtractor() class 
-        extractor = DatabaseExtractor()
+    def clean_time_event_table(self, s3_bucket_url : str , datastore_table_name : str):
+        '''
+        Method to read in a time_dimension table from an AWS S3 Bucket, 
+        clean it, and upload it to the datastore.
 
+        Parameters: 
+        bucket_url : str 
+        A link to the s3 bucket hosted on AWS 
+
+        datastore_table_name : str 
+        The name of the table to be uploaded to the datastore 
+        '''
         # Read in the json data from the s3 bucket 
-        time_df = extractor.read_json_from_s3("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json")
+        time_df = self.extractor.read_json_from_s3(s3_bucket_url)
 
         # Filter out non-numeric values and convert the column to numeric using boolean mask 
         numeric_mask = time_df['month'].apply(pd.to_numeric, errors='coerce').notna()
@@ -283,18 +337,33 @@ class DataCleaning:
         # Try to upload the table to the database
         upload = DatabaseConnector() 
         try:
-            upload.upload_to_db(time_df, self.engine, 'dim_date_times')
-            print(f"Table uploaded")
+            upload.upload_to_db(time_df, self.engine, datastore_table_name)
+            print("Table uploaded")
+            return time_df 
         except: 
-            print("there was an error")
+            print("Error uploading table to the database")
             raise Exception 
 
-    def clean_product_table(self):
-        # Create an instance of the DatabaseExtractor() class
-        extraction = DatabaseExtractor() 
+    def clean_product_table(self, s3_bucket_url : str, datastore_table_name : str):
+        '''
+        Method to read in a .csv file from an S3 Bucket on AWS, 
+        CLean the data, and then upload it to the datastore 
 
+        Parameters: 
+
+        s3_bucket_url : str 
+        The link to the s3_bucket 
+
+        datastore_table_name : str
+        The name of the table uploaded to the datastore
+
+        Returns 
+        products_table: 
+        A dataframe containing the cleaned products_table 
+
+        '''
         # Set the dataframe to the output of the method 
-        products_table = extraction.read_s3_bucket_to_dataframe("s3://data-handling-public/products.csv")
+        products_table = self.extractor.read_s3_bucket_to_dataframe(s3_bucket_url)
         # Create a list of unique values within the 'removed' column  and print them out for debugging purposes 
         values = list(products_table["removed"].unique())
         print(values)
@@ -320,6 +389,20 @@ class DataCleaning:
         # Drop the "Unamed:  0" column within the dataframe 
         products_table = products_table.drop("Unnamed: 0", axis=1)
 
+        # stating the names of the columns
+        products_table.columns = [
+
+            "product_name", 
+            "product_price",
+            "weight",
+            "category",
+            "EAN",
+            "date_added",
+            "uuid",
+            "availability",
+            "product_code",
+            "product_key"
+        ]
         # Rearrange the order of the columns 
         column_order = [
     
@@ -331,7 +414,7 @@ class DataCleaning:
             "category",
             "date_added",
             "uuid",
-            "removed",
+            "availability",
             "product_code"
             
         ]
@@ -340,16 +423,30 @@ class DataCleaning:
         products_table = products_table[column_order]
 
         # Try to upload the table to the database. 
-        upload = DatabaseConnector() 
         try:
-            upload.upload_to_db(products_table, self.engine, 'dim_product_details')
-            print(f"Table uploaded")
+            self.uploader.upload_to_db(products_table, self.engine, datastore_table_name)
+            print("Table uploaded")
+            return products_table 
         except: 
-            print("there was an error")
+            print("Error uploading table to database")
             raise Exception 
 
     
     def convert_to_kg(self, weight):
+        '''
+        Utilty method to standardise weights into kg
+
+        Parameters: 
+        weight 
+        The numerical weight of the object. 
+
+        Returns: 
+        clean_weight: float 
+        The weight of the object in kg. 
+
+        None if the value is not a weight. 
+
+        '''
         # Check if the weight is a float
         if isinstance(weight, float):
             # Return the original float value if weight is already a float
@@ -402,13 +499,20 @@ class DataCleaning:
             return None
         
 if __name__=="__main__":
-    cleaner = DataCleaning()
-    cleaner.clean_user_data()
-    cleaner.clean_store_data()
+    cleaner = DataCleaning('sales_data_creds_dev.yaml')
+    cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users",)
+    cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
     cleaner.clean_card_details(
-         "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
-     ) 
-    cleaner.clean_orders_table() 
-    cleaner.clean_time_event_table()
-    cleaner.clean_product_table() 
+          "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
+          "dim_card_details"
+      ) 
+    cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
+    cleaner.clean_time_event_table(
+        "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
+        "dim_date_times"
+    )
+    cleaner.clean_product_table(
+        "s3://data-handling-public/products.csv",
+        "dim_product_details"
+    ) 
  

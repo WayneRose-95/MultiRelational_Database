@@ -22,7 +22,7 @@ Will have to do some further investigation on this later; especially with the ot
 4. Foreign keys are not updating inside the orders_table 
    Fix the scripts so that the keys are updated inside the orders_table (DONE) 
 
-5. Query the data warehouse: answering the following questions: 
+5. Query the data warehouse: answering the following questions: (DONE)
 
 How many stores does the business have an in which countries? 
 Which locations currently have the most stores? 
@@ -34,3 +34,11 @@ Which German store type is selling the most?
 How quickly is the company making sales? 
 
 How many sales are coming from online? (Unsure because there's no online column)
+
+6. Update code with parameters and docstring the methods. 
+
+7. Investigate the automation of the SQL scripts to set up relationships in the database. 
+
+8. Add rows in dimension table for Unknown and Empty records 
+
+9. Back up and Restore the Database 
