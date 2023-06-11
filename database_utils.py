@@ -92,7 +92,7 @@ class DatabaseConnector:
         try:
             dataframe.to_sql(table_name, con=connection, if_exists='replace')
         except:
-            print("There was an error")
+            print("Error uploading table to the database")
             raise Exception 
         pass
 
