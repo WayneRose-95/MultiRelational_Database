@@ -1,7 +1,6 @@
--- Script to add a new column: weight_class based on the weight of the item 
+-- 11.06.2023 WR Removed column addition to move into column_additions SQL Script
 
-ALTER TABLE dim_product_details 
-ADD COLUMN weight_class VARCHAR(255);
+-- Script to add a new column: weight_class based on the weight of the item 
 
 UPDATE dim_product_details
 SET weight_class = 
