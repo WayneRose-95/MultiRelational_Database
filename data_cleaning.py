@@ -91,7 +91,26 @@ class DataCleaning:
 
         # Reset the index if desired
         legacy_users_dataframe = legacy_users_dataframe.reset_index(drop=True)
+
+        legacy_users_dataframe.index = legacy_users_dataframe.index + 1
+
         legacy_users_dataframe['user_key'] = legacy_users_dataframe.index 
+
+        new_rows_addition = self.add_new_rows(
+            [
+                {
+                    "user_key": -1,
+                    "first_name": "Not Applicable",
+                    "last_name": "Not Applicable"
+                },
+                {
+                    "user_key": 0, 
+                    "first_name": "Unknown",
+                    "last_name": "Unknown"
+                }
+            ]
+        )
+        legacy_users_dataframe = pd.concat([new_rows_addition, legacy_users_dataframe]).reset_index(drop=True)
 
         # Upload the dataframe to the datastore  
         try:
@@ -178,7 +197,11 @@ class DataCleaning:
         legacy_store_dataframe = legacy_store_dataframe.reset_index(drop=True)
         
         # Set the store_key column as the index column to reallign it with the index column 
-        legacy_store_dataframe['store_key'] = legacy_store_dataframe.index 
+        # legacy_store_dataframe['store_key'] = legacy_store_dataframe.index 
+        # Set the index to start from 1 instead of 0 
+        legacy_store_dataframe.index = legacy_store_dataframe.index + 1
+
+        legacy_store_dataframe['store_key'] = legacy_store_dataframe.index
 
 
         # Replace the Region with the correct spelling 
@@ -189,7 +212,21 @@ class DataCleaning:
         legacy_store_dataframe["longitude"] = pd.to_numeric(legacy_store_dataframe["longitude"], errors='coerce')
 
         legacy_store_dataframe["number_of_staff"] = legacy_store_dataframe["number_of_staff"].replace({'3n9': '39', 'A97': '97', '80R': '80', 'J78': '78', '30e': '30'})
-       
+        
+        new_rows_addition = self.add_new_rows([
+            {
+            "store_key": -1,
+            "store_address": "Not Applicable"
+            }, 
+            {
+            "store_key": 0,
+            "store_address": "Unknown"
+            }
+
+        ])
+
+        legacy_store_dataframe = pd.concat([new_rows_addition, legacy_store_dataframe]).reset_index(drop=True)
+
         upload = DatabaseConnector() 
         try:
             upload.upload_to_db(legacy_store_dataframe, self.engine, datastore_table_name)
@@ -431,6 +468,11 @@ class DataCleaning:
             print("Error uploading table to database")
             raise Exception 
 
+    @staticmethod 
+    def add_new_rows(rows_to_add : list):
+        new_rows = rows_to_add 
+        new_rows_df = pd.DataFrame(new_rows)
+        return new_rows_df 
     
     def convert_to_kg(self, weight):
         '''
@@ -501,18 +543,18 @@ class DataCleaning:
 if __name__=="__main__":
     cleaner = DataCleaning('sales_data_creds_dev.yaml')
     cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users",)
-    cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
-    cleaner.clean_card_details(
-          "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
-          "dim_card_details"
-      ) 
-    cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
-    cleaner.clean_time_event_table(
-        "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
-        "dim_date_times"
-    )
-    cleaner.clean_product_table(
-        "s3://data-handling-public/products.csv",
-        "dim_product_details"
-    ) 
+    # cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
+    # cleaner.clean_card_details(
+    #       "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
+    #       "dim_card_details"
+    #   ) 
+    # cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
+    # cleaner.clean_time_event_table(
+    #     "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
+    #     "dim_date_times"
+    # )
+    # cleaner.clean_product_table(
+    #     "s3://data-handling-public/products.csv",
+    #     "dim_product_details"
+    # ) 
  
