@@ -35,10 +35,10 @@ How quickly is the company making sales?
 
 How many sales are coming from online? (Unsure because there's no online column)
 
-6. Update code with parameters and docstring the methods. 
+6. Update code with parameters and docstring the methods. (DONE)
 
-7. Investigate the automation of the SQL scripts to set up relationships in the database. 
+7. Investigate the automation of the SQL scripts to set up relationships in the database (DONE)
 
-8. Add rows in dimension table for Unknown and Empty records 
+8. Add rows in dimension tables for Unknown and Empty records (TODO)
 
-9. Back up and Restore the Database 
+9. Back up and Restore the Database (DONE)

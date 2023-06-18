@@ -91,7 +91,26 @@ class DataCleaning:
 
         # Reset the index if desired
         legacy_users_dataframe = legacy_users_dataframe.reset_index(drop=True)
+
+        legacy_users_dataframe.index = legacy_users_dataframe.index + 1
+
         legacy_users_dataframe['user_key'] = legacy_users_dataframe.index 
+
+        new_rows_addition = self.add_new_rows(
+            [
+                {
+                    "user_key": -1,
+                    "first_name": "Not Applicable",
+                    "last_name": "Not Applicable"
+                },
+                {
+                    "user_key": 0, 
+                    "first_name": "Unknown",
+                    "last_name": "Unknown"
+                }
+            ]
+        )
+        legacy_users_dataframe = pd.concat([new_rows_addition, legacy_users_dataframe]).reset_index(drop=True)
 
         # Upload the dataframe to the datastore  
         try:
@@ -178,7 +197,11 @@ class DataCleaning:
         legacy_store_dataframe = legacy_store_dataframe.reset_index(drop=True)
         
         # Set the store_key column as the index column to reallign it with the index column 
-        legacy_store_dataframe['store_key'] = legacy_store_dataframe.index 
+        # legacy_store_dataframe['store_key'] = legacy_store_dataframe.index 
+        # Set the index to start from 1 instead of 0 
+        legacy_store_dataframe.index = legacy_store_dataframe.index + 1
+
+        legacy_store_dataframe['store_key'] = legacy_store_dataframe.index
 
 
         # Replace the Region with the correct spelling 
@@ -189,7 +212,21 @@ class DataCleaning:
         legacy_store_dataframe["longitude"] = pd.to_numeric(legacy_store_dataframe["longitude"], errors='coerce')
 
         legacy_store_dataframe["number_of_staff"] = legacy_store_dataframe["number_of_staff"].replace({'3n9': '39', 'A97': '97', '80R': '80', 'J78': '78', '30e': '30'})
-       
+        
+        new_rows_addition = self.add_new_rows([
+            {
+            "store_key": -1,
+            "store_address": "Not Applicable"
+            }, 
+            {
+            "store_key": 0,
+            "store_address": "Unknown"
+            }
+
+        ])
+
+        legacy_store_dataframe = pd.concat([new_rows_addition, legacy_store_dataframe]).reset_index(drop=True)
+
         upload = DatabaseConnector() 
         try:
             upload.upload_to_db(legacy_store_dataframe, self.engine, datastore_table_name)
@@ -228,8 +265,10 @@ class DataCleaning:
         # For any null values, drop them. 
         card_details_table = card_details_table.dropna(subset=['date_payment_confirmed'])
 
-        # Add a new column called card_key, which is the length of the card_details table 
-        card_details_table['card_key'] = (range(len(card_details_table)))
+        # combined_table.index = combined_table.index + 1 
+        card_details_table.index = card_details_table.index + 1
+        # Add a new column called card_key, which is the length of the index column of the card_details table
+        card_details_table['card_key'] = card_details_table.index
 
         # Rearrange the order of the columns 
         column_order = [
@@ -245,6 +284,22 @@ class DataCleaning:
 
         # Reset the index of the table to match the indexes to the card_keys 
         card_details_table = card_details_table.reset_index(drop=True)
+
+        # Add new rows to the table 
+        new_rows_additions = self.add_new_rows(
+            [
+                {
+                    "card_key": -1,
+                    "card_number": "Not Applicable"
+                },
+                {
+                    "card_key": 0,
+                    "card_number": "Unknown"
+                }
+            ]
+        )
+        # Concatentate the two dataframes together
+        card_details_table = pd.concat([new_rows_additions, card_details_table]).reset_index(drop=True)
 
         # Lastly, try to upload the table to the database. 
         try:
@@ -316,8 +371,9 @@ class DataCleaning:
         # Currently, the operation drops 38 rows 
         # 120161 - 120123 = 38 
         # Correct number because the orders table has 120123 rows, so we have a time event per order.
-        
-        time_df["time_key"] = range(len(time_df))
+        time_df.index = time_df.index + 1 
+
+        time_df["time_key"] = time_df.index
         # Reset the index 
         time_df = time_df.reset_index(drop=True)
 
@@ -333,6 +389,21 @@ class DataCleaning:
         ]
 
         time_df = time_df[column_order]
+
+        new_rows_addition = self.add_new_rows(
+            [
+                {
+                    "time_key": -1,
+                    "timestamp": "Not Applicable"
+                }, 
+                {
+                    "time_key": 0,
+                    "timestamp": "Unknown"
+                }
+            ]
+        )
+
+        time_df = pd.concat([new_rows_addition, time_df]).reset_index(drop=True)
 
         # Try to upload the table to the database
         upload = DatabaseConnector() 
@@ -383,8 +454,11 @@ class DataCleaning:
         # Drop any weights which are NaNs
         products_table = products_table.dropna(subset=["weight"])
 
+        # Set the index column to start from 1 
+        products_table.index = products_table.index + 1
         # Add a new column product_key, which is a list of numbers ranging for the length of the dataframe 
-        products_table["product_key"] = range(len(products_table))
+        products_table["product_key"] = products_table.index
+
 
         # Drop the "Unamed:  0" column within the dataframe 
         products_table = products_table.drop("Unnamed: 0", axis=1)
@@ -422,6 +496,21 @@ class DataCleaning:
         # Set the new products_table to the name of the column order 
         products_table = products_table[column_order]
 
+        new_rows_addition = self.add_new_rows(
+            [
+                {
+                    "product_key": -1,
+                    "EAN": "Not Applicable"
+                }, 
+                {
+                    "product_key": 0,
+                    "EAN": "Unknown"
+                }
+            ]
+        )
+        products_table = pd.concat([new_rows_addition, products_table]).reset_index(drop=True)
+
+
         # Try to upload the table to the database. 
         try:
             self.uploader.upload_to_db(products_table, self.engine, datastore_table_name)
@@ -431,6 +520,11 @@ class DataCleaning:
             print("Error uploading table to database")
             raise Exception 
 
+    @staticmethod 
+    def add_new_rows(rows_to_add : list):
+        new_rows = rows_to_add 
+        new_rows_df = pd.DataFrame(new_rows)
+        return new_rows_df 
     
     def convert_to_kg(self, weight):
         '''
