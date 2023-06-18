@@ -594,17 +594,17 @@ class DataCleaning:
         
 if __name__=="__main__":
     cleaner = DataCleaning('sales_data_creds_dev.yaml')
-    #cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users",)
-    #cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
-    # cleaner.clean_card_details(
-    #       "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
-    #       "dim_card_details"
-    #   ) 
-    # cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
-    # cleaner.clean_time_event_table(
-    #     "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
-    #     "dim_date_times"
-    # )
+    cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users",)
+    cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
+    cleaner.clean_card_details(
+          "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
+          "dim_card_details"
+      ) 
+    cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
+    cleaner.clean_time_event_table(
+        "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
+        "dim_date_times"
+    )
     cleaner.clean_product_table(
         "s3://data-handling-public/products.csv",
         "dim_product_details"

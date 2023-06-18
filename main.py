@@ -38,3 +38,5 @@ sql_statements.alter_and_update(r'sales_data\DDL\add_primary_keys.sql')
 sql_statements.alter_and_update(r'sales_data\DDL\orders_table_FK_constraints.sql')
 # Lastly map the dimension keys in the dim tables to the foreign keys in the orders_table 
 sql_statements.alter_and_update(r'sales_data\DML\update_orders_table_foreign_keys.sql')
+
+sql_statements.alter_and_update(r'sales_data\DML\fill_null_keys_in_orders_table.sql')
