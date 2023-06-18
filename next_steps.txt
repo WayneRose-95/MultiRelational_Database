@@ -39,6 +39,10 @@ How many sales are coming from online? (Unsure because there's no online column)
 
 7. Investigate the automation of the SQL scripts to set up relationships in the database (DONE)
 
-8. Add rows in dimension tables for Unknown and Empty records (TODO)
+8. Add rows in dimension tables for Unknown and Empty records (DONE)
 
 9. Back up and Restore the Database (DONE)
+
+10. Investigate the missing rows for users, store and card details tables (TODO)
+
+11. Write up some Unittests for the modules (TODO)
