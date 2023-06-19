@@ -192,8 +192,8 @@ class DataCleaning:
         # remake the dataframe with the column order in place 
         legacy_store_dataframe = legacy_store_dataframe[column_order]
 
-        # Change the date format of the opening_date column to dd/mm/yyyy 
-        legacy_store_dataframe["opening_date"] = pd.to_datetime(legacy_store_dataframe['opening_date'], errors='coerce')
+        # Change the opening_date column to a datetime 
+        legacy_store_dataframe["opening_date"] = legacy_store_dataframe['opening_date'].apply(self.clean_dates)
 
         # Drop dates in the opening_date which are null 
         legacy_store_dataframe = legacy_store_dataframe.dropna(subset=['opening_date'])
@@ -264,11 +264,16 @@ class DataCleaning:
         # Read in the pdf data for the card details 
         card_details_table = self.extractor.retrieve_pdf_data(link_to_pdf)
 
-        # Convert the date_payment_confirmed column into a datetime 
-        card_details_table["date_payment_confirmed"] = pd.to_datetime(card_details_table['date_payment_confirmed'], errors='coerce')
+        values = list(card_details_table["card_provider"].unique())
+        print(values)
 
-        # For any null values, drop them. 
-        card_details_table = card_details_table.dropna(subset=['date_payment_confirmed'])
+        card_details_table = card_details_table[~card_details_table['card_provider'].isin(values[-14:])]
+
+        # Convert the date_payment_confirmed column into a datetime 
+        # card_details_table["date_payment_confirmed"] = pd.to_datetime(card_details_table['date_payment_confirmed'], errors='coerce')
+
+        # # For any null values, drop them. 
+        # card_details_table = card_details_table.dropna(subset=['date_payment_confirmed'])
 
         # combined_table.index = combined_table.index + 1 
         card_details_table.index = card_details_table.index + 1
@@ -617,18 +622,18 @@ class DataCleaning:
 if __name__=="__main__":
     cleaner = DataCleaning('sales_data_creds_test.yaml')
     cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users")
-    # cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
-    # cleaner.clean_card_details(
-    #       "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
-    #       "dim_card_details"
-    #   ) 
-    # cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
-    # cleaner.clean_time_event_table(
-    #     "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
-    #     "dim_date_times"
-    # )
-    # cleaner.clean_product_table(
-    #     "s3://data-handling-public/products.csv",
-    #     "dim_product_details"
-    # ) 
+    cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
+    cleaner.clean_card_details(
+          "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
+          "dim_card_details"
+      ) 
+    cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
+    cleaner.clean_time_event_table(
+        "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
+        "dim_date_times"
+    )
+    cleaner.clean_product_table(
+        "s3://data-handling-public/products.csv",
+        "dim_product_details"
+    ) 
  
