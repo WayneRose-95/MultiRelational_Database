@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 import pandas as pd 
 import tabula
+import re 
 import yaml
 
 class DataCleaning: 
@@ -68,10 +69,14 @@ class DataCleaning:
                 'country_index',
                 'phone_number', 
                 'join_date', 
-                'unique_id'
-            ] 
-        legacy_users_dataframe["join_date"] = pd.to_datetime(legacy_users_dataframe['join_date'], errors='coerce')
-        legacy_users_dataframe["birth_date"] = pd.to_datetime(legacy_users_dataframe['birth_date'], errors='coerce')
+                'user_uuid'
+            ]
+        # Apply the clean_dates function to the dataframe  
+        legacy_users_dataframe["join_date"] = legacy_users_dataframe["join_date"].apply(self.clean_dates)
+        legacy_users_dataframe["birth_date"] = legacy_users_dataframe["birth_date"].apply(self.clean_dates)
+        
+        # legacy_users_dataframe["join_date"] = pd.to_datetime(legacy_users_dataframe['join_date'], errors='coerce')
+        # legacy_users_dataframe["birth_date"] = pd.to_datetime(legacy_users_dataframe['birth_date'], errors='coerce')
         
         # Renaming the columns as appropriate data types 
         legacy_users_dataframe = legacy_users_dataframe.astype(
@@ -592,21 +597,38 @@ class DataCleaning:
         else:
             return None
         
+    def clean_dates(self, date):
+            if date == 'NULL':
+                # Convert 'NULL' to NaT (Not a Time) for missing values
+                return pd.NaT  
+            elif re.match(r'\d{4}-\d{2}-\d{2}', date):
+                # Already in the correct format, convert to datetime
+                return pd.to_datetime(date)  
+            elif re.match(r'\d{4}/\d{1,2}/\d{1,2}', date):
+                # Convert from 'YYYY/MM/DD' format to datetime
+                return pd.to_datetime(date, format='%Y/%m/%d')  
+            elif re.match(r'\d{4} [a-zA-Z]{3,} \d{2}', date):
+                # Convert from 'YYYY Month DD' format to datetime
+                return pd.to_datetime(date, format='%Y %B %d')  
+            else:
+                # Try to convert with generic parsing, ignoring errors
+                return pd.to_datetime(date, errors='coerce')  
+        
 if __name__=="__main__":
-    cleaner = DataCleaning('sales_data_creds_dev.yaml')
-    cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users",)
-    cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
-    cleaner.clean_card_details(
-          "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
-          "dim_card_details"
-      ) 
-    cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
-    cleaner.clean_time_event_table(
-        "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
-        "dim_date_times"
-    )
-    cleaner.clean_product_table(
-        "s3://data-handling-public/products.csv",
-        "dim_product_details"
-    ) 
+    cleaner = DataCleaning('sales_data_creds_test.yaml')
+    cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users")
+    # cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
+    # cleaner.clean_card_details(
+    #       "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
+    #       "dim_card_details"
+    #   ) 
+    # cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
+    # cleaner.clean_time_event_table(
+    #     "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
+    #     "dim_date_times"
+    # )
+    # cleaner.clean_product_table(
+    #     "s3://data-handling-public/products.csv",
+    #     "dim_product_details"
+    # ) 
  

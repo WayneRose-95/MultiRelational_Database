@@ -131,6 +131,7 @@ dmypy.json
 db_creds.yaml
 sales_data_creds.yaml 
 sales_data_creds_dev.yaml
+sales_data_creds_test.yaml
 
 # .ipynb files 
 *.ipynb
