@@ -267,7 +267,7 @@ class DataCleaning:
         values = list(card_details_table["card_provider"].unique())
         print(values)
 
-        card_details_table = card_details_table[~card_details_table['card_provider'].isin(values[-14:])]
+        card_details_table = card_details_table[~card_details_table['card_provider'].isin(values[-15:])]
 
         # Convert the date_payment_confirmed column into a datetime 
         # card_details_table["date_payment_confirmed"] = pd.to_datetime(card_details_table['date_payment_confirmed'], errors='coerce')

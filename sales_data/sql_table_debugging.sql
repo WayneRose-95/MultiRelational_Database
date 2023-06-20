@@ -6,11 +6,11 @@ WHERE date_key = 0
 SELECT COUNT(product_key) FROM orders_table
 WHERE product_key = 0
 
--- Count of missing values = 2528 
+-- Count of missing values = 2528 (now 0)
 SELECT COUNT(store_key) FROM orders_table 
 WHERE store_key = 0 
 
--- Count of missing values 387 
+-- Count of missing values 387 (now 0)
 SELECT COUNT(user_key) FROM orders_table
 WHERE user_key = 0
 

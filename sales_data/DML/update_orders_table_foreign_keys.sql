@@ -29,4 +29,4 @@ WHERE orders_table.store_code::varchar = dim_store_details.store_code;
 UPDATE orders_table 
 SET user_key = dim_users.user_key 
 FROM dim_users 
-WHERE orders_table.user_uuid::uuid = dim_users.unique_id; 
+WHERE orders_table.user_uuid::uuid = dim_users.user_uuid; 
