@@ -43,6 +43,10 @@ How many sales are coming from online? (Unsure because there's no online column)
 
 9. Back up and Restore the Database (DONE)
 
-10. Investigate the missing rows for users, store and card details tables (TODO)
+10. Investigate the missing rows for users, store and card details tables (DONE)
 
 11. Write up some Unittests for the modules (TODO)
+
+12. Create a UML Class Diagram for the code (TODO)
+
+13. Implementation of Logging for each class module (TODO)
