@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 import pandas as pd 
 import tabula
+import re 
 import yaml
 
 class DataCleaning: 
@@ -68,10 +69,14 @@ class DataCleaning:
                 'country_index',
                 'phone_number', 
                 'join_date', 
-                'unique_id'
-            ] 
-        legacy_users_dataframe["join_date"] = pd.to_datetime(legacy_users_dataframe['join_date'], errors='coerce')
-        legacy_users_dataframe["birth_date"] = pd.to_datetime(legacy_users_dataframe['birth_date'], errors='coerce')
+                'user_uuid'
+            ]
+        # Apply the clean_dates function to the dataframe  
+        legacy_users_dataframe["join_date"] = legacy_users_dataframe["join_date"].apply(self.clean_dates)
+        legacy_users_dataframe["birth_date"] = legacy_users_dataframe["birth_date"].apply(self.clean_dates)
+        
+        # legacy_users_dataframe["join_date"] = pd.to_datetime(legacy_users_dataframe['join_date'], errors='coerce')
+        # legacy_users_dataframe["birth_date"] = pd.to_datetime(legacy_users_dataframe['birth_date'], errors='coerce')
         
         # Renaming the columns as appropriate data types 
         legacy_users_dataframe = legacy_users_dataframe.astype(
@@ -91,7 +96,26 @@ class DataCleaning:
 
         # Reset the index if desired
         legacy_users_dataframe = legacy_users_dataframe.reset_index(drop=True)
+
+        legacy_users_dataframe.index = legacy_users_dataframe.index + 1
+
         legacy_users_dataframe['user_key'] = legacy_users_dataframe.index 
+
+        new_rows_addition = self.add_new_rows(
+            [
+                {
+                    "user_key": -1,
+                    "first_name": "Not Applicable",
+                    "last_name": "Not Applicable"
+                },
+                {
+                    "user_key": 0, 
+                    "first_name": "Unknown",
+                    "last_name": "Unknown"
+                }
+            ]
+        )
+        legacy_users_dataframe = pd.concat([new_rows_addition, legacy_users_dataframe]).reset_index(drop=True)
 
         # Upload the dataframe to the datastore  
         try:
@@ -168,8 +192,8 @@ class DataCleaning:
         # remake the dataframe with the column order in place 
         legacy_store_dataframe = legacy_store_dataframe[column_order]
 
-        # Change the date format of the opening_date column to dd/mm/yyyy 
-        legacy_store_dataframe["opening_date"] = pd.to_datetime(legacy_store_dataframe['opening_date'], errors='coerce')
+        # Change the opening_date column to a datetime 
+        legacy_store_dataframe["opening_date"] = legacy_store_dataframe['opening_date'].apply(self.clean_dates)
 
         # Drop dates in the opening_date which are null 
         legacy_store_dataframe = legacy_store_dataframe.dropna(subset=['opening_date'])
@@ -178,7 +202,11 @@ class DataCleaning:
         legacy_store_dataframe = legacy_store_dataframe.reset_index(drop=True)
         
         # Set the store_key column as the index column to reallign it with the index column 
-        legacy_store_dataframe['store_key'] = legacy_store_dataframe.index 
+        # legacy_store_dataframe['store_key'] = legacy_store_dataframe.index 
+        # Set the index to start from 1 instead of 0 
+        legacy_store_dataframe.index = legacy_store_dataframe.index + 1
+
+        legacy_store_dataframe['store_key'] = legacy_store_dataframe.index
 
 
         # Replace the Region with the correct spelling 
@@ -189,7 +217,21 @@ class DataCleaning:
         legacy_store_dataframe["longitude"] = pd.to_numeric(legacy_store_dataframe["longitude"], errors='coerce')
 
         legacy_store_dataframe["number_of_staff"] = legacy_store_dataframe["number_of_staff"].replace({'3n9': '39', 'A97': '97', '80R': '80', 'J78': '78', '30e': '30'})
-       
+        
+        new_rows_addition = self.add_new_rows([
+            {
+            "store_key": -1,
+            "store_address": "Not Applicable"
+            }, 
+            {
+            "store_key": 0,
+            "store_address": "Unknown"
+            }
+
+        ])
+
+        legacy_store_dataframe = pd.concat([new_rows_addition, legacy_store_dataframe]).reset_index(drop=True)
+
         upload = DatabaseConnector() 
         try:
             upload.upload_to_db(legacy_store_dataframe, self.engine, datastore_table_name)
@@ -222,14 +264,31 @@ class DataCleaning:
         # Read in the pdf data for the card details 
         card_details_table = self.extractor.retrieve_pdf_data(link_to_pdf)
 
+        # removing non-numeric characters from the card_number column 
+        card_details_table['card_number'] = card_details_table['card_number'].apply(lambda x: re.sub(r'\D', '', str(x)))
+
+        # Define the items to remove
+        items_to_remove = [
+                        'NULL', 'NB71VBAHJE', 'WJVMUO4QX6', 'JRPRLPIBZ2', 'TS8A81WFXV',
+                        'JCQMU8FN85', '5CJH7ABGDR', 'DE488ORDXY', 'OGJTXI6X1H',
+                        '1M38DYQTZV', 'DLWF2HANZF', 'XGZBYBYGUW', 'UA07L7EILH',
+                        'BU9U947ZGV', '5MFWFBZRM9'
+                        ]
+        
+        # Filter out the last 15 entries from the card provider column 
+        card_details_table = card_details_table[~card_details_table['card_provider'].isin(items_to_remove)]
+        
+        # Apply the clean_dates method to the dataframe to clean the date values
+        card_details_table["date_payment_confirmed"] = card_details_table['date_payment_confirmed'].apply(self.clean_dates)
         # Convert the date_payment_confirmed column into a datetime 
         card_details_table["date_payment_confirmed"] = pd.to_datetime(card_details_table['date_payment_confirmed'], errors='coerce')
-
         # For any null values, drop them. 
         card_details_table = card_details_table.dropna(subset=['date_payment_confirmed'])
 
-        # Add a new column called card_key, which is the length of the card_details table 
-        card_details_table['card_key'] = (range(len(card_details_table)))
+        # Set the index of the dataframe to start at 1 instead of 0 
+        card_details_table.index = card_details_table.index + 1
+        # Add a new column called card_key, which is the length of the index column of the card_details table
+        card_details_table['card_key'] = card_details_table.index
 
         # Rearrange the order of the columns 
         column_order = [
@@ -245,6 +304,22 @@ class DataCleaning:
 
         # Reset the index of the table to match the indexes to the card_keys 
         card_details_table = card_details_table.reset_index(drop=True)
+
+        # Add new rows to the table 
+        new_rows_additions = self.add_new_rows(
+            [
+                {
+                    "card_key": -1,
+                    "card_number": "Not Applicable"
+                },
+                {
+                    "card_key": 0,
+                    "card_number": "Unknown"
+                }
+            ]
+        )
+        # Concatentate the two dataframes together
+        card_details_table = pd.concat([new_rows_additions, card_details_table]).reset_index(drop=True)
 
         # Lastly, try to upload the table to the database. 
         try:
@@ -316,8 +391,9 @@ class DataCleaning:
         # Currently, the operation drops 38 rows 
         # 120161 - 120123 = 38 
         # Correct number because the orders table has 120123 rows, so we have a time event per order.
-        
-        time_df["time_key"] = range(len(time_df))
+        time_df.index = time_df.index + 1 
+
+        time_df["time_key"] = time_df.index
         # Reset the index 
         time_df = time_df.reset_index(drop=True)
 
@@ -333,6 +409,21 @@ class DataCleaning:
         ]
 
         time_df = time_df[column_order]
+
+        new_rows_addition = self.add_new_rows(
+            [
+                {
+                    "time_key": -1,
+                    "timestamp": "Not Applicable"
+                }, 
+                {
+                    "time_key": 0,
+                    "timestamp": "Unknown"
+                }
+            ]
+        )
+
+        time_df = pd.concat([new_rows_addition, time_df]).reset_index(drop=True)
 
         # Try to upload the table to the database
         upload = DatabaseConnector() 
@@ -383,8 +474,11 @@ class DataCleaning:
         # Drop any weights which are NaNs
         products_table = products_table.dropna(subset=["weight"])
 
+        # Set the index column to start from 1 
+        products_table.index = products_table.index + 1
         # Add a new column product_key, which is a list of numbers ranging for the length of the dataframe 
-        products_table["product_key"] = range(len(products_table))
+        products_table["product_key"] = products_table.index
+
 
         # Drop the "Unamed:  0" column within the dataframe 
         products_table = products_table.drop("Unnamed: 0", axis=1)
@@ -422,6 +516,21 @@ class DataCleaning:
         # Set the new products_table to the name of the column order 
         products_table = products_table[column_order]
 
+        new_rows_addition = self.add_new_rows(
+            [
+                {
+                    "product_key": -1,
+                    "EAN": "Not Applicable"
+                }, 
+                {
+                    "product_key": 0,
+                    "EAN": "Unknown"
+                }
+            ]
+        )
+        products_table = pd.concat([new_rows_addition, products_table]).reset_index(drop=True)
+
+
         # Try to upload the table to the database. 
         try:
             self.uploader.upload_to_db(products_table, self.engine, datastore_table_name)
@@ -431,6 +540,11 @@ class DataCleaning:
             print("Error uploading table to database")
             raise Exception 
 
+    @staticmethod 
+    def add_new_rows(rows_to_add : list):
+        new_rows = rows_to_add 
+        new_rows_df = pd.DataFrame(new_rows)
+        return new_rows_df 
     
     def convert_to_kg(self, weight):
         '''
@@ -498,9 +612,37 @@ class DataCleaning:
         else:
             return None
         
+    def clean_dates(self, date):
+            '''
+            Utility method to clean dates extracted from the data sources 
+
+            Parameters: 
+            date : a date object 
+
+            Returns: 
+            pd.NaT : Not a datetime if the value is null 
+            
+            pd.to-dateime(date) : The date object in a datetime format. 
+            '''
+            if date == 'NULL':
+                # Convert 'NULL' to NaT (Not a Time) for missing values
+                return pd.NaT  
+            elif re.match(r'\d{4}-\d{2}-\d{2}', date):
+                # Already in the correct format, convert to datetime
+                return pd.to_datetime(date)  
+            elif re.match(r'\d{4}/\d{1,2}/\d{1,2}', date):
+                # Convert from 'YYYY/MM/DD' format to datetime
+                return pd.to_datetime(date, format='%Y/%m/%d')  
+            elif re.match(r'\d{4} [a-zA-Z]{3,} \d{2}', date):
+                # Convert from 'YYYY Month DD' format to datetime
+                return pd.to_datetime(date, format='%Y %B %d')  
+            else:
+                # Try to convert with generic parsing, ignoring errors
+                return pd.to_datetime(date, errors='coerce')  
+        
 if __name__=="__main__":
-    cleaner = DataCleaning('sales_data_creds_dev.yaml')
-    cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users",)
+    cleaner = DataCleaning('sales_data_creds_test.yaml')
+    cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users")
     cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
     cleaner.clean_card_details(
           "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
