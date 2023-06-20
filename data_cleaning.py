@@ -264,12 +264,19 @@ class DataCleaning:
         # Read in the pdf data for the card details 
         card_details_table = self.extractor.retrieve_pdf_data(link_to_pdf)
 
-        # Create a list of values from the card_provider column and print them 
-        values = list(card_details_table["card_provider"].unique())
-        print(values)
+        # removing non-numeric characters from the card_number column 
+        card_details_table['card_number'] = card_details_table['card_number'].apply(lambda x: re.sub(r'\D', '', str(x)))
+
+        # Define the items to remove
+        items_to_remove = [
+                        'NULL', 'NB71VBAHJE', 'WJVMUO4QX6', 'JRPRLPIBZ2', 'TS8A81WFXV',
+                        'JCQMU8FN85', '5CJH7ABGDR', 'DE488ORDXY', 'OGJTXI6X1H',
+                        '1M38DYQTZV', 'DLWF2HANZF', 'XGZBYBYGUW', 'UA07L7EILH',
+                        'BU9U947ZGV', '5MFWFBZRM9'
+                        ]
         
         # Filter out the last 15 entries from the card provider column 
-        card_details_table = card_details_table[~card_details_table['card_provider'].isin(values[-15:])]
+        card_details_table = card_details_table[~card_details_table['card_provider'].isin(items_to_remove)]
         
         # Apply the clean_dates method to the dataframe to clean the date values
         card_details_table["date_payment_confirmed"] = card_details_table['date_payment_confirmed'].apply(self.clean_dates)

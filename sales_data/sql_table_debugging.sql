@@ -14,6 +14,6 @@ WHERE store_key = 0
 SELECT COUNT(user_key) FROM orders_table
 WHERE user_key = 0
 
--- Count of missing values 261 
+-- Count of missing values 261 (now 0)
 SELECT COUNT(card_key) FROM orders_table
 WHERE card_key = 0
