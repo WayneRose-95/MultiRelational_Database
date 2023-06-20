@@ -613,6 +613,17 @@ class DataCleaning:
             return None
         
     def clean_dates(self, date):
+            '''
+            Utility method to clean dates extracted from the data sources 
+
+            Parameters: 
+            date : a date object 
+
+            Returns: 
+            pd.NaT : Not a datetime if the value is null 
+            
+            pd.to-dateime(date) : The date object in a datetime format. 
+            '''
             if date == 'NULL':
                 # Convert 'NULL' to NaT (Not a Time) for missing values
                 return pd.NaT  
