@@ -3,7 +3,7 @@ from data_cleaning import DataCleaning
 
 # Script to Clean the data and upload it to the database using the specified config file 
 
-cleaner = DataCleaning('sales_data_creds_dev.yaml')
+cleaner = DataCleaning('sales_data_creds.yaml')
 cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users",)
 cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
 cleaner.clean_card_details(
@@ -22,7 +22,7 @@ cleaner.clean_product_table(
 
 # Scripts to transform and update the tables schema, add columns to tables, add primary keys to tables, and map foreign key constraints to orders_table 
 
-sql_statements = SQLAlterations('sales_data_creds_dev.yaml')
+sql_statements = SQLAlterations('sales_data_creds.yaml')
 sql_statements.connect_to_database()
 # Alter the table_schema of every table except dim_product_details 
 sql_statements.alter_and_update(r'sales_data\DDL\alter_table_schema.sql') 

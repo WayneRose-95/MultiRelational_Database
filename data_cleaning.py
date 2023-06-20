@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 import pandas as pd 
 import tabula
+import re 
 import yaml
 
 class DataCleaning: 
@@ -68,10 +69,14 @@ class DataCleaning:
                 'country_index',
                 'phone_number', 
                 'join_date', 
-                'unique_id'
-            ] 
-        legacy_users_dataframe["join_date"] = pd.to_datetime(legacy_users_dataframe['join_date'], errors='coerce')
-        legacy_users_dataframe["birth_date"] = pd.to_datetime(legacy_users_dataframe['birth_date'], errors='coerce')
+                'user_uuid'
+            ]
+        # Apply the clean_dates function to the dataframe  
+        legacy_users_dataframe["join_date"] = legacy_users_dataframe["join_date"].apply(self.clean_dates)
+        legacy_users_dataframe["birth_date"] = legacy_users_dataframe["birth_date"].apply(self.clean_dates)
+        
+        # legacy_users_dataframe["join_date"] = pd.to_datetime(legacy_users_dataframe['join_date'], errors='coerce')
+        # legacy_users_dataframe["birth_date"] = pd.to_datetime(legacy_users_dataframe['birth_date'], errors='coerce')
         
         # Renaming the columns as appropriate data types 
         legacy_users_dataframe = legacy_users_dataframe.astype(
@@ -187,8 +192,8 @@ class DataCleaning:
         # remake the dataframe with the column order in place 
         legacy_store_dataframe = legacy_store_dataframe[column_order]
 
-        # Change the date format of the opening_date column to dd/mm/yyyy 
-        legacy_store_dataframe["opening_date"] = pd.to_datetime(legacy_store_dataframe['opening_date'], errors='coerce')
+        # Change the opening_date column to a datetime 
+        legacy_store_dataframe["opening_date"] = legacy_store_dataframe['opening_date'].apply(self.clean_dates)
 
         # Drop dates in the opening_date which are null 
         legacy_store_dataframe = legacy_store_dataframe.dropna(subset=['opening_date'])
@@ -259,13 +264,28 @@ class DataCleaning:
         # Read in the pdf data for the card details 
         card_details_table = self.extractor.retrieve_pdf_data(link_to_pdf)
 
+        # removing non-numeric characters from the card_number column 
+        card_details_table['card_number'] = card_details_table['card_number'].apply(lambda x: re.sub(r'\D', '', str(x)))
+
+        # Define the items to remove
+        items_to_remove = [
+                        'NULL', 'NB71VBAHJE', 'WJVMUO4QX6', 'JRPRLPIBZ2', 'TS8A81WFXV',
+                        'JCQMU8FN85', '5CJH7ABGDR', 'DE488ORDXY', 'OGJTXI6X1H',
+                        '1M38DYQTZV', 'DLWF2HANZF', 'XGZBYBYGUW', 'UA07L7EILH',
+                        'BU9U947ZGV', '5MFWFBZRM9'
+                        ]
+        
+        # Filter out the last 15 entries from the card provider column 
+        card_details_table = card_details_table[~card_details_table['card_provider'].isin(items_to_remove)]
+        
+        # Apply the clean_dates method to the dataframe to clean the date values
+        card_details_table["date_payment_confirmed"] = card_details_table['date_payment_confirmed'].apply(self.clean_dates)
         # Convert the date_payment_confirmed column into a datetime 
         card_details_table["date_payment_confirmed"] = pd.to_datetime(card_details_table['date_payment_confirmed'], errors='coerce')
-
         # For any null values, drop them. 
         card_details_table = card_details_table.dropna(subset=['date_payment_confirmed'])
 
-        # combined_table.index = combined_table.index + 1 
+        # Set the index of the dataframe to start at 1 instead of 0 
         card_details_table.index = card_details_table.index + 1
         # Add a new column called card_key, which is the length of the index column of the card_details table
         card_details_table['card_key'] = card_details_table.index
@@ -592,9 +612,37 @@ class DataCleaning:
         else:
             return None
         
+    def clean_dates(self, date):
+            '''
+            Utility method to clean dates extracted from the data sources 
+
+            Parameters: 
+            date : a date object 
+
+            Returns: 
+            pd.NaT : Not a datetime if the value is null 
+            
+            pd.to-dateime(date) : The date object in a datetime format. 
+            '''
+            if date == 'NULL':
+                # Convert 'NULL' to NaT (Not a Time) for missing values
+                return pd.NaT  
+            elif re.match(r'\d{4}-\d{2}-\d{2}', date):
+                # Already in the correct format, convert to datetime
+                return pd.to_datetime(date)  
+            elif re.match(r'\d{4}/\d{1,2}/\d{1,2}', date):
+                # Convert from 'YYYY/MM/DD' format to datetime
+                return pd.to_datetime(date, format='%Y/%m/%d')  
+            elif re.match(r'\d{4} [a-zA-Z]{3,} \d{2}', date):
+                # Convert from 'YYYY Month DD' format to datetime
+                return pd.to_datetime(date, format='%Y %B %d')  
+            else:
+                # Try to convert with generic parsing, ignoring errors
+                return pd.to_datetime(date, errors='coerce')  
+        
 if __name__=="__main__":
-    cleaner = DataCleaning('sales_data_creds_dev.yaml')
-    cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users",)
+    cleaner = DataCleaning('sales_data_creds_test.yaml')
+    cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users")
     cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
     cleaner.clean_card_details(
           "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",

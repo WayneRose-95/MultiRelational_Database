@@ -34,7 +34,7 @@ ALTER COLUMN first_name TYPE VARCHAR(255),
 ALTER COLUMN last_name TYPE VARCHAR(255),
 ALTER COLUMN birth_date TYPE DATE USING birth_date::date,
 ALTER COLUMN country_index TYPE VARCHAR(10),
-ALTER COLUMN unique_id TYPE UUID USING unique_id::uuid,
+ALTER COLUMN user_uuid TYPE UUID USING user_uuid::uuid,
 ALTER COLUMN join_date TYPE DATE USING join_date::date;
 
 -- Altering schema for Orders_Table 
