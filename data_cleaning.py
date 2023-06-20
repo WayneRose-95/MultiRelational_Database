@@ -264,18 +264,21 @@ class DataCleaning:
         # Read in the pdf data for the card details 
         card_details_table = self.extractor.retrieve_pdf_data(link_to_pdf)
 
+        # Create a list of values from the card_provider column and print them 
         values = list(card_details_table["card_provider"].unique())
         print(values)
-
+        
+        # Filter out the last 15 entries from the card provider column 
         card_details_table = card_details_table[~card_details_table['card_provider'].isin(values[-15:])]
-
+        
+        # Apply the clean_dates method to the dataframe to clean the date values
+        card_details_table["date_payment_confirmed"] = card_details_table['date_payment_confirmed'].apply(self.clean_dates)
         # Convert the date_payment_confirmed column into a datetime 
-        # card_details_table["date_payment_confirmed"] = pd.to_datetime(card_details_table['date_payment_confirmed'], errors='coerce')
+        card_details_table["date_payment_confirmed"] = pd.to_datetime(card_details_table['date_payment_confirmed'], errors='coerce')
+        # For any null values, drop them. 
+        card_details_table = card_details_table.dropna(subset=['date_payment_confirmed'])
 
-        # # For any null values, drop them. 
-        # card_details_table = card_details_table.dropna(subset=['date_payment_confirmed'])
-
-        # combined_table.index = combined_table.index + 1 
+        # Set the index of the dataframe to start at 1 instead of 0 
         card_details_table.index = card_details_table.index + 1
         # Add a new column called card_key, which is the length of the index column of the card_details table
         card_details_table['card_key'] = card_details_table.index
