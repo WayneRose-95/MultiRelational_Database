@@ -56,12 +56,7 @@ class DatabaseConnector:
         
 
         connection_string = f"postgresql+psycopg2://{database_credentials['RDS_USER']}:{database_credentials['RDS_PASSWORD']}@{database_credentials['RDS_HOST']}:{database_credentials['RDS_PORT']}/{database_credentials['RDS_DATABASE']}"
-
-        # Expected output
-
-        # postgresql+psycopg2://aicore_admin:AiCore2022@data-handling-project-readonly.cq2e8zno855e.eu-west-1.rds.amazonaws.com:5432/postgres
-
-        print(connection_string)
+        
 
         # Lastly try to connect to the database using your connection string variable
         try:
