@@ -351,11 +351,12 @@ class DataCleaning:
         orders_dataframe.drop(["null_key", "first_name", "last_name", "null_column"], axis=1, inplace=True)
 
         # Lastly, try to upload the cleaned table to the database 
-        self._upload_to_database(
-            orders_dataframe,
-            self.engine,
-            datastore_table_name
-        )
+        orders_datatable = self._upload_to_database(
+                                    orders_dataframe,
+                                    self.engine,
+                                    datastore_table_name
+                                )
+        return orders_datatable 
 
     def clean_time_event_table(self, s3_bucket_url : str , datastore_table_name : str):
         '''
@@ -420,11 +421,12 @@ class DataCleaning:
         time_df = pd.concat([new_rows_addition, time_df]).reset_index(drop=True)
 
         # Try to upload the table to the database
-        self._upload_to_database(
-            time_df,
-            self.engine,
-            datastore_table_name
-        )
+        time_datastore_table = self._upload_to_database(
+                                    time_df,
+                                    self.engine,
+                                    datastore_table_name
+                                )
+        return time_datastore_table
 
     def clean_product_table(self, s3_bucket_url : str, datastore_table_name : str):
         '''
@@ -523,11 +525,12 @@ class DataCleaning:
 
 
         # Try to upload the table to the database. 
-        self._upload_to_database(
-            products_table,
-            self.engine,
-            datastore_table_name
-        )
+        products_datastore_table = self._upload_to_database(
+                                            products_table,
+                                            self.engine,
+                                            datastore_table_name
+                                        )
+        return products_datastore_table
 
     def _upload_to_database(self, dataframe : pd.DataFrame, database_engine, datastore_table_name : str):
         '''

@@ -8,7 +8,7 @@ from data_extraction import DatabaseExtractor
 from database_utils import DatabaseConnector
 import tabula 
 
-class DatabaseExtractionTest(unittest.TestCase):
+class TestDatabaseExtraction(unittest.TestCase):
 
     @classmethod 
     def setUpClass(cls):

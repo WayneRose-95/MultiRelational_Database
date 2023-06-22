@@ -8,7 +8,7 @@ import yaml
 
  
 
-class DatabaseConnectionTest(unittest.TestCase):
+class TestDatabaseConnector(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Mocking the create_engine function
