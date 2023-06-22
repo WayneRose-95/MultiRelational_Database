@@ -118,13 +118,12 @@ class DataCleaning:
         legacy_users_dataframe = pd.concat([new_rows_addition, legacy_users_dataframe]).reset_index(drop=True)
 
         # Upload the dataframe to the datastore  
-        try:
-            self.uploader.upload_to_db(legacy_users_dataframe, self.engine, datastore_table_name)
-            print(f"Table uploaded")
-            return legacy_users_dataframe
-        except: 
-            print("Error uploading table to database")
-            raise Exception 
+        legacy_users_database_table = self._upload_to_database(
+                                    legacy_users_dataframe, 
+                                    self.engine, 
+                                    datastore_table_name
+                                )
+        return legacy_users_database_table
         
     
     def clean_store_data(self, source_table_name : str , source_database_config_file_name : str, datastore_table_name : str):
@@ -149,10 +148,8 @@ class DataCleaning:
 
         '''
 
-        # Instantiating an instance of the Database Extractor class 
-        extractor = DatabaseExtractor()
         # Reading in the table from the AWS database 
-        legacy_store_dataframe = extractor.read_rds_table(source_table_name, source_database_config_file_name)
+        legacy_store_dataframe = self.extractor.read_rds_table(source_table_name, source_database_config_file_name)
         
         # State the column names for the table 
         legacy_store_dataframe.columns = [
@@ -232,14 +229,13 @@ class DataCleaning:
 
         legacy_store_dataframe = pd.concat([new_rows_addition, legacy_store_dataframe]).reset_index(drop=True)
 
-        upload = DatabaseConnector() 
-        try:
-            upload.upload_to_db(legacy_store_dataframe, self.engine, datastore_table_name)
-            print(f"Table uploaded")
-            return legacy_store_dataframe
-        except: 
-            print("Error uploading table to database")
-            raise Exception 
+        legacy_store_database_table = self._upload_to_database(
+                                            legacy_store_dataframe, 
+                                            self.engine, 
+                                            datastore_table_name
+                                            )
+        return legacy_store_database_table
+    
         
         
     def clean_card_details(self, link_to_pdf : str, datastore_table_name : str):
@@ -322,12 +318,12 @@ class DataCleaning:
         card_details_table = pd.concat([new_rows_additions, card_details_table]).reset_index(drop=True)
 
         # Lastly, try to upload the table to the database. 
-        try:
-            self.uploader.upload_to_db(card_details_table, self.engine, datastore_table_name)
-            print("Table uploaded")
-        except: 
-            print("Error uploading table to the database")
-            raise Exception 
+        card_details_database_table = self._upload_to_database(
+                                            card_details_table,
+                                            self.engine,
+                                            datastore_table_name
+                                        )
+        return card_details_database_table
 
 
     def clean_orders_table(self, source_table_name : str, source_database_config_file_name : str, datastore_table_name : str):
@@ -355,13 +351,12 @@ class DataCleaning:
         orders_dataframe.drop(["null_key", "first_name", "last_name", "null_column"], axis=1, inplace=True)
 
         # Lastly, try to upload the cleaned table to the database 
-        try:
-            self.uploader.upload_to_db(orders_dataframe, self.engine, datastore_table_name)
-            print("Table uploaded")
-            return orders_dataframe 
-        except: 
-            print("Error uploading table to the database")
-            raise Exception 
+        orders_datatable = self._upload_to_database(
+                                    orders_dataframe,
+                                    self.engine,
+                                    datastore_table_name
+                                )
+        return orders_datatable 
 
     def clean_time_event_table(self, s3_bucket_url : str , datastore_table_name : str):
         '''
@@ -426,14 +421,12 @@ class DataCleaning:
         time_df = pd.concat([new_rows_addition, time_df]).reset_index(drop=True)
 
         # Try to upload the table to the database
-        upload = DatabaseConnector() 
-        try:
-            upload.upload_to_db(time_df, self.engine, datastore_table_name)
-            print("Table uploaded")
-            return time_df 
-        except: 
-            print("Error uploading table to the database")
-            raise Exception 
+        time_datastore_table = self._upload_to_database(
+                                    time_df,
+                                    self.engine,
+                                    datastore_table_name
+                                )
+        return time_datastore_table
 
     def clean_product_table(self, s3_bucket_url : str, datastore_table_name : str):
         '''
@@ -532,14 +525,41 @@ class DataCleaning:
 
 
         # Try to upload the table to the database. 
+        products_datastore_table = self._upload_to_database(
+                                            products_table,
+                                            self.engine,
+                                            datastore_table_name
+                                        )
+        return products_datastore_table
+
+    def _upload_to_database(self, dataframe : pd.DataFrame, database_engine, datastore_table_name : str):
+        '''
+        Method to upload the completed dataframe to the datastore 
+        Method uses the upload_to_db method in the DatabaseConnector class to upload the table to the database 
+
+        Parameters: 
+        dataframe : pd.DataFrame 
+        A pandas dataframe 
+
+        database_engine 
+        The database_engine that the user wants to use. Defined inside the __init__ method of the DataCleaning class 
+
+        datastore_table_name : str 
+        The name of the table uploaded to the datastore 
+
+        Returns: 
+        dataframe 
+        A pandas dataframe 
+        '''
         try:
-            self.uploader.upload_to_db(products_table, self.engine, datastore_table_name)
-            print("Table uploaded")
-            return products_table 
+            self.uploader.upload_to_db(dataframe, database_engine, datastore_table_name)
+            print(f"Table uploaded")
+            return dataframe
         except: 
             print("Error uploading table to database")
-            raise Exception 
-
+            raise Exception
+    
+         
     @staticmethod 
     def add_new_rows(rows_to_add : list):
         new_rows = rows_to_add 

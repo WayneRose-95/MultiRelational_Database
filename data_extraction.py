@@ -3,6 +3,8 @@ from sqlalchemy import inspect
 from sqlalchemy import select
 from sqlalchemy import Table
 from sqlalchemy import MetaData
+from sqlalchemy.exc import OperationalError 
+from urllib.parse import urlparse
 from io import StringIO
 import pandas as pd 
 import boto3
@@ -23,23 +25,29 @@ class DatabaseExtractor:
         The file pathway to the config file 
 
         '''
-        # Create an instance of the DatabaseConnector Class 
-        database_connection = DatabaseConnector()
+        try:
+            # Create an instance of the DatabaseConnector Class 
+            database_connection = DatabaseConnector()
 
-        # Initialise the connection 
-        engine = database_connection.initialise_database_connection(config_file_name)
+            # Initialise the connection 
+            engine = database_connection.initialise_database_connection(config_file_name)
 
-        # Use the inspect method of sqlalchemy to get an inspector element 
-        inspector = inspect(engine)
+            # Use the inspect method of sqlalchemy to get an inspector element 
+            inspector = inspect(engine)
 
-        # Get the table names using the get_table_names method 
-        table_names = inspector.get_table_names()
-        
-        # print the table names to the console 
-        print(table_names)
+            # Get the table names using the get_table_names method 
+            table_names = inspector.get_table_names()
+            
+            # print the table names to the console 
+            print(table_names)
 
-        # Output: ['legacy_store_details', 'legacy_users', 'orders_table']
+            # Output: ['legacy_store_details', 'legacy_users', 'orders_table']
 
+            return table_names
+        except Exception as e:
+            print("Error occurred while listing tables: %s", str(e))
+            raise Exception 
+            
 
 
 
@@ -54,35 +62,45 @@ class DatabaseExtractor:
         config_file_name 
         The file pathway for the name of the .yaml file 
         '''
-        # Instantiate an instance of the DatabaseConnector class 
-        database_connector = DatabaseConnector()
+        try:
+            # Instantiate an instance of the DatabaseConnector class 
+            database_connector = DatabaseConnector()
 
-        # Initialise the connection 
-        connection = database_connector.initialise_database_connection(config_file_name)
+            # Initialise the connection 
+            connection = database_connector.initialise_database_connection(config_file_name)
 
-        # Connect to the database 
-        connection = connection.connect() 
+            # Connect to the database 
+            connection = connection.connect() 
 
-        # Initialise a MetaData object 
-        metadata = MetaData() 
+            # Initialise a MetaData object 
+            metadata = MetaData() 
 
-        # Set a user table object 
-        user_table = Table(table_name, metadata, autoload_with=connection)
+            # Set a user table object 
+            user_table = Table(table_name, metadata, autoload_with=connection)
 
-        # Show the table
-        print(metadata.tables.keys())
+            # Show the table
+            print(metadata.tables.keys())
 
-        # Do a select statement to select all rows of the table 
-        print(select(user_table))
+            # Do a select statement to select all rows of the table 
+            print(select(user_table))
 
-        # Declare a select statement on the table to select all rows of the table
-        select_statement = str(select(user_table))
+            # Declare a select statement on the table to select all rows of the table
+            select_statement = str(select(user_table))
 
-        # Pass this select statement into a pandas function, which reads the sql query 
-        dataframe_table = pd.read_sql(select_statement, con=connection)
+            # Pass this select statement into a pandas function, which reads the sql query 
+            dataframe_table = pd.read_sql(select_statement, con=connection)
 
-        # Return the dataframe_table as an output of the method
-        return dataframe_table
+            # Return the dataframe_table as an output of the method
+            return dataframe_table
+        
+        except OperationalError as e:
+            # Handles connection query errors
+            raise ValueError(f"Failed to read table '{table_name}': {e}")
+
+        except Exception as e:
+            # Handles other exceptions 
+            raise ValueError(f"Error occured while reading table '{table_name}' : {e}")
+
             
     def retrieve_pdf_data(self, link_to_pdf : str):
         '''
@@ -96,16 +114,29 @@ class DatabaseExtractor:
         combined_table : DataFrame 
         The combined Pandas DataFrame 
         '''
-        # Read in the pdf_table using tabula-py ensuring all pages are captured 
-        pdf_table = tabula.read_pdf(link_to_pdf, multiple_tables=True, pages='all', lattice=True)
+        # Firstly, validate the url 
+        if not self._is_valid_url(link_to_pdf):
+            raise ValueError("Invalid PDF Link")
         
-        # Combine the list of tables using pd.concat 
-        combined_table = pd.concat(pdf_table)
+        try:
+            # Read in the pdf_table using tabula-py ensuring all pages are captured 
+            pdf_table = tabula.read_pdf(link_to_pdf, multiple_tables=True, pages='all', lattice=True)
+            
+            if pdf_table:
+                # Combine the list of tables using pd.concat 
+                combined_table = pd.concat(pdf_table)
 
-        # Reset the index upon combining the tables 
-        combined_table.reset_index(drop=True, inplace=True)
+                # Reset the index upon combining the tables 
+                combined_table.reset_index(drop=True, inplace=True)
 
-        return combined_table 
+                return combined_table
+            else:
+                print("No tables found in PDF")
+                return pd.DataFrame()
+
+        except Exception as e:
+            print(f"Error occured while retrieving PDF data: {str(e)}")
+            raise Exception 
            
 
     def read_s3_bucket_to_dataframe(self, s3_url : str):
@@ -121,22 +152,43 @@ class DatabaseExtractor:
         A pandas dataframe for the raw data from the S3 bucket 
 
         '''
+        # Validation of the s3_url format 
+        if not self._validate_s3_url(s3_url):
+            raise ValueError("Invalid S3 URL format")
+        
         # Make an instance of the boto3 object to use s3
         s3_client = boto3.client('s3')
+        try:
+            # Assign the bucket_name and the key to a tuple which is the output of the previous function. 
+            bucket_name, key = self._parse_s3_url(s3_url)
 
-        # Assign the bucket_name and the key to a tuple which is the output of the previous function. 
-        bucket_name, key = self._parse_s3_url(s3_url)
+            # Use the get_object method to collect items in the bucket. Index it on the key. 
+            response = s3_client.get_object(Bucket=bucket_name, Key=key)
 
-        # Use the get_object method to collect items in the bucket. Index it on the key. 
-        response = s3_client.get_object(Bucket=bucket_name, Key=key)
+            # Extract the data getting the values assigned to each key, then decode it using utf-8 encoding 
+            data = response['Body'].read().decode('utf-8')
 
-        # Extract the data getting the values assigned to each key, then decode it using utf-8 encoding 
-        data = response['Body'].read().decode('utf-8')
+            # Lastly, read the csv into pandas as a dataframe, then return the dataframe as an output. 
+            dataframe = pd.read_csv(StringIO(data), delimiter=',')  
+            
+            return dataframe
+        except Exception as e:
+            print(f"Error occurred while reading S3 bucket '{bucket_name}/{key}': {e}")
+            raise Exception
+    
+    def _validate_s3_url(self, s3_url: str) -> bool:
+        '''
+        Validate the format of the S3 URL
 
-        # Lastly, read the csv into pandas as a dataframe, then return the dataframe as an output. 
-        dataframe = pd.read_csv(StringIO(data), delimiter=',')  
-        
-        return dataframe
+        Parameters:
+        s3_url
+        The URL to the S3 bucket
+
+        Returns:
+        bool: True if the format is valid, False otherwise
+        '''
+        pattern = r'^s3://[\w\-]+/.+$'
+        return bool(re.match(pattern, s3_url))
     
     def _parse_s3_url(self, s3_url : str):
         '''
@@ -208,7 +260,7 @@ class DatabaseExtractor:
         # If the code runs into an exception, raise the exception. 
         except Exception as e:
             print(f"Error reading JSON from S3: {e}")
-            return None
+            raise Exception
 
     @staticmethod
     def parse_s3_url_json(url : str):
@@ -237,7 +289,11 @@ class DatabaseExtractor:
 
         return bucket_name,key
 
-  
+    def _is_valid_url(self, url):
+        parsed_url = urlparse(url)
+        # Returns True if the schema and netloc outputs are non-empty strings
+        # False if they either string is empty due to an invalid URL. 
+        return parsed_url.scheme and parsed_url.netloc
     
 if __name__ == "__main__":
     extract = DatabaseExtractor() 
