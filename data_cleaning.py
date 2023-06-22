@@ -118,11 +118,12 @@ class DataCleaning:
         legacy_users_dataframe = pd.concat([new_rows_addition, legacy_users_dataframe]).reset_index(drop=True)
 
         # Upload the dataframe to the datastore  
-        self._upload_to_database(
-            legacy_users_dataframe, 
-            self.engine, 
-            datastore_table_name
-        )
+        legacy_users_database_table = self._upload_to_database(
+                                    legacy_users_dataframe, 
+                                    self.engine, 
+                                    datastore_table_name
+                                )
+        return legacy_users_database_table
         
     
     def clean_store_data(self, source_table_name : str , source_database_config_file_name : str, datastore_table_name : str):
