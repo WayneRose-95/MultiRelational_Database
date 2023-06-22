@@ -19,6 +19,7 @@ class DatabaseExtractionTest(unittest.TestCase):
         cls.pdf_link = "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
         cls.s3_json_link = "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json"
         cls.test_url = "s3://data-handling-public/products.csv"
+        cls.test_url_wrong = "s3://data-handling-private/prod.csv"
         cls.test_extractor = DatabaseExtractor() 
         cls.test_connector = DatabaseConnector()
         pass 
@@ -103,8 +104,25 @@ class DatabaseExtractionTest(unittest.TestCase):
                 "This is not a json url"
             )
     
+    def test_read_s3_bucket_to_dataframe(self):
+        test_data = self.test_extractor.read_s3_bucket_to_dataframe(
+            self.test_url
+        )
+        self.assertIsInstance(test_data, pd.DataFrame)
+
+        with self.assertRaises(ValueError):
+            self.test_extractor.read_s3_bucket_to_dataframe(
+                "This is not an S3 bucket"
+            )
+        
+        with self.assertRaises(Exception):
+            self.test_extractor(
+                self.test_url_wrong
+            )
+    
+    @unittest.skip
     @patch('data_extraction.boto3.client')
-    def test_read_s3_bucket_to_dataframe(self, mock_client):
+    def test_mock_read_s3_bucket_to_dataframe(self, mock_client):
         # Mock the response from s3_client.get_object
         mock_body = MagicMock()
         mock_body.read.return_value.decode.return_value = 'col1,col2\nvalue1,value2\n'

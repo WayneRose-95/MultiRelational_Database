@@ -152,22 +152,43 @@ class DatabaseExtractor:
         A pandas dataframe for the raw data from the S3 bucket 
 
         '''
+        # Validation of the s3_url format 
+        if not self._validate_s3_url(s3_url):
+            raise ValueError("Invalid S3 URL format")
+        
         # Make an instance of the boto3 object to use s3
         s3_client = boto3.client('s3')
+        try:
+            # Assign the bucket_name and the key to a tuple which is the output of the previous function. 
+            bucket_name, key = self._parse_s3_url(s3_url)
 
-        # Assign the bucket_name and the key to a tuple which is the output of the previous function. 
-        bucket_name, key = self._parse_s3_url(s3_url)
+            # Use the get_object method to collect items in the bucket. Index it on the key. 
+            response = s3_client.get_object(Bucket=bucket_name, Key=key)
 
-        # Use the get_object method to collect items in the bucket. Index it on the key. 
-        response = s3_client.get_object(Bucket=bucket_name, Key=key)
+            # Extract the data getting the values assigned to each key, then decode it using utf-8 encoding 
+            data = response['Body'].read().decode('utf-8')
 
-        # Extract the data getting the values assigned to each key, then decode it using utf-8 encoding 
-        data = response['Body'].read().decode('utf-8')
+            # Lastly, read the csv into pandas as a dataframe, then return the dataframe as an output. 
+            dataframe = pd.read_csv(StringIO(data), delimiter=',')  
+            
+            return dataframe
+        except Exception as e:
+            print(f"Error occurred while reading S3 bucket '{bucket_name}/{key}': {e}")
+            raise Exception
+    
+    def _validate_s3_url(self, s3_url: str) -> bool:
+        '''
+        Validate the format of the S3 URL
 
-        # Lastly, read the csv into pandas as a dataframe, then return the dataframe as an output. 
-        dataframe = pd.read_csv(StringIO(data), delimiter=',')  
-        
-        return dataframe
+        Parameters:
+        s3_url
+        The URL to the S3 bucket
+
+        Returns:
+        bool: True if the format is valid, False otherwise
+        '''
+        pattern = r'^s3://[\w\-]+/.+$'
+        return bool(re.match(pattern, s3_url))
     
     def _parse_s3_url(self, s3_url : str):
         '''
