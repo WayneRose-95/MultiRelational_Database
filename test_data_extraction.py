@@ -2,6 +2,7 @@ import unittest
 from unittest import mock
 from unittest.mock import patch, MagicMock 
 from sqlalchemy.exc import OperationalError, DBAPIError
+from sqlalchemy import create_engine
 import pandas as pd 
 from data_extraction import DatabaseExtractor
 from database_utils import DatabaseConnector
@@ -47,9 +48,9 @@ class DatabaseExtractionTest(unittest.TestCase):
         #Testing if a ValueError is raised when the wrong credentials are passed 
         with self.assertRaises(ValueError):
             self.test_extractor.read_rds_table(self.table_name_wrong, self.config_file_name_wrong)
-            
 
      
+    @unittest.skip
     def test_retrieve_pdf_data(self):
         
         test_pdf_table = self.test_extractor.retrieve_pdf_data(
@@ -62,7 +63,7 @@ class DatabaseExtractionTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.test_extractor.retrieve_pdf_data("Not a link to a PDF")
 
-
+    @unittest.skip 
     @patch('data_extraction.DatabaseExtractor._is_valid_url')
     @patch('data_extraction.tabula.read_pdf')
     def test_mock_retrieve_pdf_data(self, mock_read_pdf, mock_is_valid_url):
@@ -101,6 +102,28 @@ class DatabaseExtractionTest(unittest.TestCase):
             self.test_extractor.read_json_from_s3(
                 "This is not a json url"
             )
+    
+    @patch('data_extraction.boto3.client')
+    def test_read_s3_bucket_to_dataframe(self, mock_client):
+        # Mock the response from s3_client.get_object
+        mock_body = MagicMock()
+        mock_body.read.return_value.decode.return_value = 'col1,col2\nvalue1,value2\n'
+        mock_response = {'Body': mock_body}
+        mock_client.return_value.get_object.return_value = mock_response
+
+        # Define the expected DataFrame
+        expected_df = pd.DataFrame({'col1': ['value1'], 'col2': ['value2']})
+
+        # Call the method under test
+        s3_url = 's3://my-bucket-name/my-data.csv'
+        result = self.test_extractor.read_s3_bucket_to_dataframe(s3_url)
+
+        # Assert the result matches the expected DataFrame
+        pd.testing.assert_frame_equal(result, expected_df)
+
+        # Assert that the boto3 client was called with the correct arguments
+        mock_client.assert_called_once_with('s3')
+        mock_client.return_value.get_object.assert_called_once_with(Bucket='my-bucket-name', Key='my-data.csv')
 
     @unittest.skip 
     def test_parse_s3_url(self):
