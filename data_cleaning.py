@@ -121,7 +121,7 @@ class DataCleaning:
         self._upload_to_database(
             legacy_users_dataframe, 
             self.engine, 
-            "dim_users"
+            datastore_table_name
         )
         
     
@@ -230,14 +230,10 @@ class DataCleaning:
 
         legacy_store_dataframe = pd.concat([new_rows_addition, legacy_store_dataframe]).reset_index(drop=True)
 
-        upload = DatabaseConnector() 
-        try:
-            upload.upload_to_db(legacy_store_dataframe, self.engine, datastore_table_name)
-            print(f"Table uploaded")
-            return legacy_store_dataframe
-        except: 
-            print("Error uploading table to database")
-            raise Exception 
+        self._upload_to_database(
+            legacy_store_dataframe, 
+            self.engine, 
+            datastore_table_name)
         
         
     def clean_card_details(self, link_to_pdf : str, datastore_table_name : str):
@@ -320,12 +316,11 @@ class DataCleaning:
         card_details_table = pd.concat([new_rows_additions, card_details_table]).reset_index(drop=True)
 
         # Lastly, try to upload the table to the database. 
-        try:
-            self.uploader.upload_to_db(card_details_table, self.engine, datastore_table_name)
-            print("Table uploaded")
-        except: 
-            print("Error uploading table to the database")
-            raise Exception 
+        self._upload_to_database(
+            card_details_table,
+            self.engine,
+            datastore_table_name
+        )
 
 
     def clean_orders_table(self, source_table_name : str, source_database_config_file_name : str, datastore_table_name : str):
@@ -353,13 +348,11 @@ class DataCleaning:
         orders_dataframe.drop(["null_key", "first_name", "last_name", "null_column"], axis=1, inplace=True)
 
         # Lastly, try to upload the cleaned table to the database 
-        try:
-            self.uploader.upload_to_db(orders_dataframe, self.engine, datastore_table_name)
-            print("Table uploaded")
-            return orders_dataframe 
-        except: 
-            print("Error uploading table to the database")
-            raise Exception 
+        self._upload_to_database(
+            orders_dataframe,
+            self.engine,
+            datastore_table_name
+        )
 
     def clean_time_event_table(self, s3_bucket_url : str , datastore_table_name : str):
         '''
@@ -424,14 +417,11 @@ class DataCleaning:
         time_df = pd.concat([new_rows_addition, time_df]).reset_index(drop=True)
 
         # Try to upload the table to the database
-        upload = DatabaseConnector() 
-        try:
-            upload.upload_to_db(time_df, self.engine, datastore_table_name)
-            print("Table uploaded")
-            return time_df 
-        except: 
-            print("Error uploading table to the database")
-            raise Exception 
+        self._upload_to_database(
+            time_df,
+            self.engine,
+            datastore_table_name
+        )
 
     def clean_product_table(self, s3_bucket_url : str, datastore_table_name : str):
         '''
@@ -530,13 +520,11 @@ class DataCleaning:
 
 
         # Try to upload the table to the database. 
-        try:
-            self.uploader.upload_to_db(products_table, self.engine, datastore_table_name)
-            print("Table uploaded")
-            return products_table 
-        except: 
-            print("Error uploading table to database")
-            raise Exception 
+        self._upload_to_database(
+            products_table,
+            self.engine,
+            datastore_table_name
+        )
 
     def _upload_to_database(self, dataframe : pd.DataFrame, database_engine, datastore_table_name : str):
         '''
@@ -669,18 +657,18 @@ class DataCleaning:
 if __name__=="__main__":
     cleaner = DataCleaning('sales_data_creds_test.yaml')
     cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users")
-    # cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
-    # cleaner.clean_card_details(
-    #       "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
-    #       "dim_card_details"
-    #   ) 
-    # cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
-    # cleaner.clean_time_event_table(
-    #     "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
-    #     "dim_date_times"
-    # )
-    # cleaner.clean_product_table(
-    #     "s3://data-handling-public/products.csv",
-    #     "dim_product_details"
-    # ) 
+    cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
+    cleaner.clean_card_details(
+          "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
+          "dim_card_details"
+      ) 
+    cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
+    cleaner.clean_time_event_table(
+        "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
+        "dim_date_times"
+    )
+    cleaner.clean_product_table(
+        "s3://data-handling-public/products.csv",
+        "dim_product_details"
+    ) 
  
