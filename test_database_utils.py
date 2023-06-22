@@ -40,18 +40,20 @@ class DatabaseConnectionTest(unittest.TestCase):
         
     
     def test_create_connection_string(self):
-        
+        # Pass a valid connection_string from the output of the create_connection_string method
         test_connection_string_valid = self.test_connection.create_connection_string("db_creds.yaml")
-        
+        # Assert if the output is a string 
         self.assertIsInstance(test_connection_string_valid, str)
         
 
     @mock.patch('database_utils.create_engine')
     def test_initialise_database_connection(self, mock_create_engine):
+        # Create a mock engine with set return values 
         mock_engine = mock.MagicMock()
         mock_engine.connect.return_value = True
         mock_create_engine.return_value = mock_engine
-
+        
+        # Set the config_file_name 
         config_file_name = 'db_creds.yaml'
         connector = DatabaseConnector()
         connection_string = connector.create_connection_string(config_file_name)
