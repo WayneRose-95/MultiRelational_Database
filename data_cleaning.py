@@ -318,11 +318,12 @@ class DataCleaning:
         card_details_table = pd.concat([new_rows_additions, card_details_table]).reset_index(drop=True)
 
         # Lastly, try to upload the table to the database. 
-        self._upload_to_database(
-            card_details_table,
-            self.engine,
-            datastore_table_name
-        )
+        card_details_database_table = self._upload_to_database(
+                                            card_details_table,
+                                            self.engine,
+                                            datastore_table_name
+                                        )
+        return card_details_database_table
 
 
     def clean_orders_table(self, source_table_name : str, source_database_config_file_name : str, datastore_table_name : str):
