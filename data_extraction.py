@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy import Table
 from sqlalchemy import MetaData
 from sqlalchemy.exc import OperationalError 
+from urllib.parse import urlparse
 from io import StringIO
 import pandas as pd 
 import boto3
@@ -113,16 +114,29 @@ class DatabaseExtractor:
         combined_table : DataFrame 
         The combined Pandas DataFrame 
         '''
-        # Read in the pdf_table using tabula-py ensuring all pages are captured 
-        pdf_table = tabula.read_pdf(link_to_pdf, multiple_tables=True, pages='all', lattice=True)
+        # Firstly, validate the url 
+        if not self._is_valid_url(link_to_pdf):
+            raise ValueError("Invalid PDF Link")
         
-        # Combine the list of tables using pd.concat 
-        combined_table = pd.concat(pdf_table)
+        try:
+            # Read in the pdf_table using tabula-py ensuring all pages are captured 
+            pdf_table = tabula.read_pdf(link_to_pdf, multiple_tables=True, pages='all', lattice=True)
+            
+            if pdf_table:
+                # Combine the list of tables using pd.concat 
+                combined_table = pd.concat(pdf_table)
 
-        # Reset the index upon combining the tables 
-        combined_table.reset_index(drop=True, inplace=True)
+                # Reset the index upon combining the tables 
+                combined_table.reset_index(drop=True, inplace=True)
 
-        return combined_table 
+                return combined_table
+            else:
+                print("No tables found in PDF")
+                return pd.DataFrame()
+
+        except Exception as e:
+            print(f"Error occured while retrieving PDF data: {str(e)}")
+            raise Exception 
            
 
     def read_s3_bucket_to_dataframe(self, s3_url : str):
@@ -254,7 +268,11 @@ class DatabaseExtractor:
 
         return bucket_name,key
 
-  
+    def _is_valid_url(self, url):
+        parsed_url = urlparse(url)
+        # Returns True if the schema and netloc outputs are non-empty strings
+        # False if they either string is empty due to an invalid URL. 
+        return parsed_url.scheme and parsed_url.netloc
     
 if __name__ == "__main__":
     extract = DatabaseExtractor() 

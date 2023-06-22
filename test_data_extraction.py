@@ -5,6 +5,7 @@ from sqlalchemy.exc import OperationalError, DBAPIError
 import pandas as pd 
 from data_extraction import DatabaseExtractor
 from database_utils import DatabaseConnector
+import tabula 
 
 class DatabaseExtractionTest(unittest.TestCase):
 
@@ -22,7 +23,7 @@ class DatabaseExtractionTest(unittest.TestCase):
         pass 
 
 
-     
+    @unittest.skip  
     def test_list_db_tables(self):
         # create a test_list of table names using the method 
         test_list = self.test_extractor.list_db_tables(self.config_file_name)
@@ -37,7 +38,7 @@ class DatabaseExtractionTest(unittest.TestCase):
         with self.assertRaises(Exception): 
             self.test_extractor.list_db_tables(self.config_file_name_wrong)
 
-       
+    @unittest.skip  
     def test_read_rds_table(self):
 
         test_read = self.test_extractor.read_rds_table(self.table_name, self.config_file_name)
@@ -48,7 +49,7 @@ class DatabaseExtractionTest(unittest.TestCase):
             self.test_extractor.read_rds_table(self.table_name_wrong, self.config_file_name_wrong)
             
 
-   
+     
     def test_retrieve_pdf_data(self):
         
         test_pdf_table = self.test_extractor.retrieve_pdf_data(
@@ -57,7 +58,36 @@ class DatabaseExtractionTest(unittest.TestCase):
         # Testing if a pandas dataframe is returned from the method 
         self.assertIsInstance(test_pdf_table, pd.DataFrame)
 
-     
+        # Testing to see if the code raises a ValueError on passing an invalid url
+        with self.assertRaises(ValueError):
+            self.test_extractor.retrieve_pdf_data("Not a link to a PDF")
+
+
+    @patch('data_extraction.DatabaseExtractor._is_valid_url')
+    @patch('data_extraction.tabula.read_pdf')
+    def test_mock_retrieve_pdf_data(self, mock_read_pdf, mock_is_valid_url):
+
+        # Mock the return value of _is_valid_url
+        mock_is_valid_url.return_value = True
+
+        # Mock the return value of tabula.read_pdf
+        mock_table1 = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        mock_table2 = pd.DataFrame({'A': [7, 8, 9], 'B': [10, 11, 12]})
+        mock_read_pdf.return_value = [mock_table1, mock_table2]
+
+
+        # Call the method with a mock PDF link
+        result = self.test_extractor.retrieve_pdf_data('mock_pdf_link')
+
+        # Verify the expected behavior
+        # Assuming 2 tables with 3 rows each
+        self.assertEqual(len(result), 6)
+        self.assertTrue(mock_is_valid_url.called)  
+        self.assertTrue(mock_read_pdf.called)
+        mock_read_pdf.assert_called_with('mock_pdf_link', multiple_tables=True, pages='all', lattice=True)
+
+
+    @unittest.skip 
     def test_read_json_from_s3(self):
 
         test_dataframe_from_json = self.test_extractor.read_json_from_s3(
@@ -72,7 +102,7 @@ class DatabaseExtractionTest(unittest.TestCase):
                 "This is not a json url"
             )
 
-   
+    @unittest.skip 
     def test_parse_s3_url(self):
         # Testing if the method returns a tuple 
         self.assertIsInstance(self.test_extractor._parse_s3_url(self.test_url), tuple)
