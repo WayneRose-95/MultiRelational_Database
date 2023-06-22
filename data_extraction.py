@@ -225,7 +225,7 @@ class DatabaseExtractor:
         # If the code runs into an exception, raise the exception. 
         except Exception as e:
             print(f"Error reading JSON from S3: {e}")
-            return None
+            raise Exception
 
     @staticmethod
     def parse_s3_url_json(url : str):
