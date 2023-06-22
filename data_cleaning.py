@@ -229,10 +229,13 @@ class DataCleaning:
 
         legacy_store_dataframe = pd.concat([new_rows_addition, legacy_store_dataframe]).reset_index(drop=True)
 
-        self._upload_to_database(
-            legacy_store_dataframe, 
-            self.engine, 
-            datastore_table_name)
+        legacy_store_database_table = self._upload_to_database(
+                                            legacy_store_dataframe, 
+                                            self.engine, 
+                                            datastore_table_name
+                                            )
+        return legacy_store_database_table
+    
         
         
     def clean_card_details(self, link_to_pdf : str, datastore_table_name : str):
