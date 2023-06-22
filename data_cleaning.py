@@ -118,13 +118,11 @@ class DataCleaning:
         legacy_users_dataframe = pd.concat([new_rows_addition, legacy_users_dataframe]).reset_index(drop=True)
 
         # Upload the dataframe to the datastore  
-        try:
-            self.uploader.upload_to_db(legacy_users_dataframe, self.engine, datastore_table_name)
-            print(f"Table uploaded")
-            return legacy_users_dataframe
-        except: 
-            print("Error uploading table to database")
-            raise Exception 
+        self._upload_to_database(
+            legacy_users_dataframe, 
+            self.engine, 
+            "dim_users"
+        )
         
     
     def clean_store_data(self, source_table_name : str , source_database_config_file_name : str, datastore_table_name : str):
@@ -540,6 +538,34 @@ class DataCleaning:
             print("Error uploading table to database")
             raise Exception 
 
+    def _upload_to_database(self, dataframe : pd.DataFrame, database_engine, datastore_table_name : str):
+        '''
+        Method to upload the completed dataframe to the datastore 
+        Method uses the upload_to_db method in the DatabaseConnector class to upload the table to the database 
+
+        Parameters: 
+        dataframe : pd.DataFrame 
+        A pandas dataframe 
+
+        database_engine 
+        The database_engine that the user wants to use. Defined inside the __init__ method of the DataCleaning class 
+
+        datastore_table_name : str 
+        The name of the table uploaded to the datastore 
+
+        Returns: 
+        dataframe 
+        A pandas dataframe 
+        '''
+        try:
+            self.uploader.upload_to_db(dataframe, database_engine, datastore_table_name)
+            print(f"Table uploaded")
+            return dataframe
+        except: 
+            print("Error uploading table to database")
+            raise Exception
+    
+         
     @staticmethod 
     def add_new_rows(rows_to_add : list):
         new_rows = rows_to_add 
@@ -643,18 +669,18 @@ class DataCleaning:
 if __name__=="__main__":
     cleaner = DataCleaning('sales_data_creds_test.yaml')
     cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users")
-    cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
-    cleaner.clean_card_details(
-          "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
-          "dim_card_details"
-      ) 
-    cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
-    cleaner.clean_time_event_table(
-        "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
-        "dim_date_times"
-    )
-    cleaner.clean_product_table(
-        "s3://data-handling-public/products.csv",
-        "dim_product_details"
-    ) 
+    # cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
+    # cleaner.clean_card_details(
+    #       "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
+    #       "dim_card_details"
+    #   ) 
+    # cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
+    # cleaner.clean_time_event_table(
+    #     "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
+    #     "dim_date_times"
+    # )
+    # cleaner.clean_product_table(
+    #     "s3://data-handling-public/products.csv",
+    #     "dim_product_details"
+    # ) 
  
