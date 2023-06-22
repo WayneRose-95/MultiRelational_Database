@@ -148,10 +148,8 @@ class DataCleaning:
 
         '''
 
-        # Instantiating an instance of the Database Extractor class 
-        extractor = DatabaseExtractor()
         # Reading in the table from the AWS database 
-        legacy_store_dataframe = extractor.read_rds_table(source_table_name, source_database_config_file_name)
+        legacy_store_dataframe = self.extractor.read_rds_table(source_table_name, source_database_config_file_name)
         
         # State the column names for the table 
         legacy_store_dataframe.columns = [
