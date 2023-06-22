@@ -25,7 +25,7 @@ class DatabaseExtractionTest(unittest.TestCase):
         pass 
 
 
-    @unittest.skip  
+      
     def test_list_db_tables(self):
         # create a test_list of table names using the method 
         test_list = self.test_extractor.list_db_tables(self.config_file_name)
@@ -40,7 +40,7 @@ class DatabaseExtractionTest(unittest.TestCase):
         with self.assertRaises(Exception): 
             self.test_extractor.list_db_tables(self.config_file_name_wrong)
 
-    @unittest.skip  
+      
     def test_read_rds_table(self):
 
         test_read = self.test_extractor.read_rds_table(self.table_name, self.config_file_name)
@@ -51,7 +51,7 @@ class DatabaseExtractionTest(unittest.TestCase):
             self.test_extractor.read_rds_table(self.table_name_wrong, self.config_file_name_wrong)
 
      
-    @unittest.skip
+    
     def test_retrieve_pdf_data(self):
         
         test_pdf_table = self.test_extractor.retrieve_pdf_data(
@@ -64,7 +64,7 @@ class DatabaseExtractionTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.test_extractor.retrieve_pdf_data("Not a link to a PDF")
 
-    @unittest.skip 
+    
     @patch('data_extraction.DatabaseExtractor._is_valid_url')
     @patch('data_extraction.tabula.read_pdf')
     def test_mock_retrieve_pdf_data(self, mock_read_pdf, mock_is_valid_url):
@@ -89,7 +89,7 @@ class DatabaseExtractionTest(unittest.TestCase):
         mock_read_pdf.assert_called_with('mock_pdf_link', multiple_tables=True, pages='all', lattice=True)
 
 
-    @unittest.skip 
+     
     def test_read_json_from_s3(self):
 
         test_dataframe_from_json = self.test_extractor.read_json_from_s3(
@@ -120,7 +120,7 @@ class DatabaseExtractionTest(unittest.TestCase):
                 self.test_url_wrong
             )
     
-    @unittest.skip
+    
     @patch('data_extraction.boto3.client')
     def test_mock_read_s3_bucket_to_dataframe(self, mock_client):
         # Mock the response from s3_client.get_object
@@ -143,7 +143,7 @@ class DatabaseExtractionTest(unittest.TestCase):
         mock_client.assert_called_once_with('s3')
         mock_client.return_value.get_object.assert_called_once_with(Bucket='my-bucket-name', Key='my-data.csv')
 
-    @unittest.skip 
+     
     def test_parse_s3_url(self):
         # Testing if the method returns a tuple 
         self.assertIsInstance(self.test_extractor._parse_s3_url(self.test_url), tuple)
