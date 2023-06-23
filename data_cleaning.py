@@ -511,9 +511,15 @@ class DataCleaning:
         datastore_table_name : str 
         The name of the table to be uploaded to the datastore 
         '''
+        logger.info("Starting job clean_time_event_table")
+        logger.info("Reading file from s3_bucket into dataframe")
         # Read in the json data from the s3 bucket 
         time_df = self.extractor.read_json_from_s3(s3_bucket_url)
 
+        logger.info(f"Successfully read file from {s3_bucket_url}")
+        logger.info(f"Number of rows : {len(time_df)}")
+
+        logger.info("Filtering out non-numeric values from the 'month' column")
         # Filter out non-numeric values and convert the column to numeric using boolean mask 
         numeric_mask = time_df['month'].apply(pd.to_numeric, errors='coerce').notna()
         # copy the dataframe then convert the month column to a numeric datatype 
@@ -522,17 +528,24 @@ class DataCleaning:
         # Afterwards, drop any values which are not null or not numeric 
         time_df = time_df.dropna(subset=['month'])
 
+        logger.info(f"Number of rows : {len(time_df)}")
+
         #TODO: Write a piece of code which verifies that the number of rows in the orders_table 
         # is equal to the number of rows in the dim_date_times table 
         # Currently, the operation drops 38 rows 
         # 120161 - 120123 = 38 
         # Correct number because the orders table has 120123 rows, so we have a time event per order.
+        logger.debug(f"Setting the index to start at 1")
         time_df.index = time_df.index + 1 
 
+        logger.debug(f"Setting the time_key column to start at 1")
         time_df["time_key"] = time_df.index
+
+        logger.info("Resetting the index of the table")
         # Reset the index 
         time_df = time_df.reset_index(drop=True)
 
+        logger.info("Changing the column order of the table")
         # Lastly, change the column order
         column_order = [
             'time_key',
@@ -543,9 +556,14 @@ class DataCleaning:
             'time_period',
             'date_uuid'
         ]
+        logger.info(column_order)
 
         time_df = time_df[column_order]
 
+        logger.info("New column order")
+        logger.info(time_df.columns)
+
+        logger.info("Adding new rows to the table in case of unknowns")
         new_rows_addition = self.add_new_rows(
             [
                 {
@@ -558,15 +576,21 @@ class DataCleaning:
                 }
             ]
         )
+        logger.info("New rows added")
+        logger.info(new_rows_addition)
 
+        logger.info("Concatenating new rows to the start of the dataframe")
         time_df = pd.concat([new_rows_addition, time_df]).reset_index(drop=True)
 
+        logger.info("Attempting to upload the table to the database")
         # Try to upload the table to the database
         time_datastore_table = self._upload_to_database(
                                     time_df,
                                     self.engine,
                                     datastore_table_name
                                 )
+        logger.info("Table uploaded")
+        logger.info("Job clean_time_event_table has completed successfully")
         return time_datastore_table
 
     def clean_product_table(self, s3_bucket_url : str, datastore_table_name : str):
