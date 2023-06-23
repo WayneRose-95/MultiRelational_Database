@@ -2,10 +2,13 @@ from data_extraction import DatabaseExtractor
 from database_utils import DatabaseConnector
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
+from logger import DatabaseLogger
 import pandas as pd 
 import tabula
 import re 
 import yaml
+
+logger = DatabaseLogger("logs/data_cleaning.log")
 
 class DataCleaning: 
 
@@ -14,7 +17,7 @@ class DataCleaning:
         self.extractor = DatabaseExtractor()
         # Instantitating an instance of the DatabaseConnector Class
         self.uploader = DatabaseConnector()
-
+        logger.info(f"Parsing datastore_config_file : {datastore_config_file_name}")
         with open(datastore_config_file_name) as file:
             creds = yaml.safe_load(file)
             DATABASE_TYPE = creds['DATABASE_TYPE']
@@ -25,12 +28,15 @@ class DataCleaning:
             RDS_PORT = creds['RDS_PORT']
             DATABASE = creds['RDS_DATABASE']
 
-        try:    
+        try:
+            logger.info("Attempting to connect to datastore")  
             self.engine = create_engine(
                  f"{DATABASE_TYPE}+{DBAPI}://{RDS_USER}:{RDS_PASSWORD}@{RDS_HOST}:{RDS_PORT}/{DATABASE}"
             )
+            logger.info("Connection successful") 
             print("connection successful")
         except OperationalError:
+            logger.exception("Error connecting to the database")
             print("Error connecting to database")
             raise Exception    
 
@@ -53,9 +59,15 @@ class DataCleaning:
         Pandas dataframe used to upload to the database. 
 
         '''
-
+        logger.info("Starting job")
+        logger.debug(f"Using {self.engine}")
+        logger.info(f"Attempting to clean {source_table_name}")
+        logger.info("Reading in table from source database")
         # Reading in the table from the AWS database 
         legacy_users_dataframe = self.extractor.read_rds_table(source_table_name, source_database_config_file_name)
+        
+        logger.debug(f"Number of rows : {len(legacy_users_dataframe)}")
+
         # Naming the columns in the dataframe 
         legacy_users_dataframe.columns = [
                 'user_key', 
@@ -71,6 +83,10 @@ class DataCleaning:
                 'join_date', 
                 'user_uuid'
             ]
+        logger.info(f"Naming the table columns {legacy_users_dataframe.columns}")
+
+        logger.info("Cleaning date columns : join_date and birth_date")
+        logger.info("Attempting to clean dates into correct format")
         # Apply the clean_dates function to the dataframe  
         legacy_users_dataframe["join_date"] = legacy_users_dataframe["join_date"].apply(self.clean_dates)
         legacy_users_dataframe["birth_date"] = legacy_users_dataframe["birth_date"].apply(self.clean_dates)
@@ -78,6 +94,7 @@ class DataCleaning:
         # legacy_users_dataframe["join_date"] = pd.to_datetime(legacy_users_dataframe['join_date'], errors='coerce')
         # legacy_users_dataframe["birth_date"] = pd.to_datetime(legacy_users_dataframe['birth_date'], errors='coerce')
         
+        logger.info("Setting columns as the appropriate datatypes")
         # Renaming the columns as appropriate data types 
         legacy_users_dataframe = legacy_users_dataframe.astype(
             {
@@ -91,15 +108,36 @@ class DataCleaning:
                 "phone_number": "string"
             }
         )
+        logger.debug("Dictionary of datatypes changed")
+        logger.debug(
+            
+             {
+                "first_name": "string",
+                "last_name": "string",
+                "company": "string",
+                "e-mail_address": "string",
+                "address": "string", 
+                "country": "string",
+                "country_index": "string", 
+                "phone_number": "string"
+            }
+        )
+        logger.info("Dropping rows within birth_date and join_date columns which have nulls")
         # Drop all columns with nulls in their dates from the birth and join date columns 
         legacy_users_dataframe = legacy_users_dataframe.dropna(subset=['birth_date', 'join_date'])
+        logger.debug(f"Number of rows : {len(legacy_users_dataframe)}")
 
+        logger.info("resetting the index of the Dataframe")
         # Reset the index if desired
         legacy_users_dataframe = legacy_users_dataframe.reset_index(drop=True)
 
+        logger.info("Setting the index column of the table to 1")
         legacy_users_dataframe.index = legacy_users_dataframe.index + 1
 
+        logger.info("Setting the value of the user_key to the index column")
         legacy_users_dataframe['user_key'] = legacy_users_dataframe.index 
+
+        logger.info("Creating a new dataframe to handle unknowns")
 
         new_rows_addition = self.add_new_rows(
             [
@@ -115,14 +153,23 @@ class DataCleaning:
                 }
             ]
         )
-        legacy_users_dataframe = pd.concat([new_rows_addition, legacy_users_dataframe]).reset_index(drop=True)
+        logger.debug(new_rows_addition)
 
+        logger.info("Appending the new_rows to the beginning of the dataframe")
+
+        legacy_users_dataframe = pd.concat([new_rows_addition, legacy_users_dataframe]).reset_index(drop=True)
+        logger.info("Appended new rows to the beginning of the dataframe")
+        logger.debug(f"Number of rows : {len(legacy_users_dataframe)}")
+
+        logger.info("Uploading table to the database")
         # Upload the dataframe to the datastore  
         legacy_users_database_table = self._upload_to_database(
                                     legacy_users_dataframe, 
                                     self.engine, 
                                     datastore_table_name
                                 )
+        logger.info("Job clean_user_data completed successfully")
+
         return legacy_users_database_table
         
     
@@ -147,10 +194,15 @@ class DataCleaning:
         A cleaned version of the source data as a Pandas DataFrame 
 
         '''
+        logger.info("Starting Job clean_store_data")
 
+        logger.info("Reading in table from the source database")
         # Reading in the table from the AWS database 
         legacy_store_dataframe = self.extractor.read_rds_table(source_table_name, source_database_config_file_name)
-        
+        logger.info("Database table successfully read.")
+        logger.info(f"Number of rows : {len(legacy_store_dataframe)}")
+
+        logger.info("Stating column names for the table")
         # State the column names for the table 
         legacy_store_dataframe.columns = [
             'store_key',
@@ -168,10 +220,17 @@ class DataCleaning:
         
         ]
         
+        logger.debug("Column names")
+        logger.debug(legacy_store_dataframe.columns)
+
+        logger.info("Dropping null_column within the table")
         # Drop the null_column column within the table 
         legacy_store_dataframe = legacy_store_dataframe.drop('null_column', axis=1)
-
-        # Reorder the column order 
+        logger.info("null_column dropped")
+        logger.info(f"Number of rows : {len(legacy_store_dataframe)}")
+        
+        logger.info("Reordering the columns")
+        # Reorder the columns 
         column_order = [
             'store_key',
             'store_address',
@@ -185,36 +244,54 @@ class DataCleaning:
             'country_code',
             'region'
         ]
-
+        logger.info(column_order)
         # remake the dataframe with the column order in place 
         legacy_store_dataframe = legacy_store_dataframe[column_order]
+        logger.info("Dataframe remade in column order")
+        logger.debug(legacy_store_dataframe.columns)
 
+        logger.info("Applying the clean_date method to the opening_date column")
         # Change the opening_date column to a datetime 
         legacy_store_dataframe["opening_date"] = legacy_store_dataframe['opening_date'].apply(self.clean_dates)
 
+        logger.info("Dropping dates from the opening_date column which are null")
         # Drop dates in the opening_date which are null 
         legacy_store_dataframe = legacy_store_dataframe.dropna(subset=['opening_date'])
+        logger.info("Dropped columns")
+        logger.info(f"Number of rows : {legacy_store_dataframe}")
 
+        logger.info("Resetting the index of the table")
         # Reset the index if desired
         legacy_store_dataframe = legacy_store_dataframe.reset_index(drop=True)
         
+        logger.info("Setting the index column to start from 1")
         # Set the store_key column as the index column to reallign it with the index column 
         # legacy_store_dataframe['store_key'] = legacy_store_dataframe.index 
         # Set the index to start from 1 instead of 0 
         legacy_store_dataframe.index = legacy_store_dataframe.index + 1
 
+        logger.info("Setting the store_key to the same as the index column")
         legacy_store_dataframe['store_key'] = legacy_store_dataframe.index
 
-
+        logger.info("Replacing the incorrectly spelleed regions with the correct spelling")
         # Replace the Region with the correct spelling 
         legacy_store_dataframe = legacy_store_dataframe.replace('eeEurope', 'Europe')
         legacy_store_dataframe = legacy_store_dataframe.replace('eeAmerica', 'America')
 
+        logger.info(legacy_store_dataframe["region"].unique() )
+
+        logger.info("Converting longitude column to a numeric value")
         # Clean the longitude column by converting it to a numeric value 
         legacy_store_dataframe["longitude"] = pd.to_numeric(legacy_store_dataframe["longitude"], errors='coerce')
 
+        logger.info("Replacing values in the longitude column to the correct values")
         legacy_store_dataframe["number_of_staff"] = legacy_store_dataframe["number_of_staff"].replace({'3n9': '39', 'A97': '97', '80R': '80', 'J78': '78', '30e': '30'})
         
+        logger.info("Affected values")
+        logger.info({'3n9': '39', 'A97': '97', '80R': '80', 'J78': '78', '30e': '30'})
+
+        logger.info("Adding new rows to cover for unknown values")
+
         new_rows_addition = self.add_new_rows([
             {
             "store_key": -1,
@@ -226,14 +303,21 @@ class DataCleaning:
             }
 
         ])
+        logger.info("New rows addded")
+        logger.info("Concatenating new rows with store_dataframe")
 
         legacy_store_dataframe = pd.concat([new_rows_addition, legacy_store_dataframe]).reset_index(drop=True)
 
+        logger.debug(f"Number of Rows : {len(legacy_store_dataframe)}")
+
+        logger.info("Uploading table to the datastore")
         legacy_store_database_table = self._upload_to_database(
                                             legacy_store_dataframe, 
                                             self.engine, 
                                             datastore_table_name
                                             )
+        logger.info("Table uploaded to datastore")
+        logger.info("Job clean_store_data has completed succesfully")
         return legacy_store_database_table
     
         
@@ -646,35 +730,39 @@ class DataCleaning:
             '''
             if date == 'NULL':
                 # Convert 'NULL' to NaT (Not a Time) for missing values
+                logger.warning("Date field is NULL. Converting to NaT (Not a Datetime)")
                 return pd.NaT  
             elif re.match(r'\d{4}-\d{2}-\d{2}', date):
                 # Already in the correct format, convert to datetime
                 return pd.to_datetime(date)  
             elif re.match(r'\d{4}/\d{1,2}/\d{1,2}', date):
                 # Convert from 'YYYY/MM/DD' format to datetime
+                logger.info(f"{date} with Date Format YYYY/MM/DD converted to datetime object")
                 return pd.to_datetime(date, format='%Y/%m/%d')  
             elif re.match(r'\d{4} [a-zA-Z]{3,} \d{2}', date):
                 # Convert from 'YYYY Month DD' format to datetime
+                logger.info(f"{date} with Date Format YYYY Month DD converted to datetime object")
                 return pd.to_datetime(date, format='%Y %B %d')  
             else:
                 # Try to convert with generic parsing, ignoring errors
+                logger.warning(f"Date format unknown. Attempting to convert to datetime")
                 return pd.to_datetime(date, errors='coerce')  
         
 if __name__=="__main__":
     cleaner = DataCleaning('sales_data_creds_test.yaml')
     cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users")
-    cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
-    cleaner.clean_card_details(
-          "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
-          "dim_card_details"
-      ) 
-    cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
-    cleaner.clean_time_event_table(
-        "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
-        "dim_date_times"
-    )
-    cleaner.clean_product_table(
-        "s3://data-handling-public/products.csv",
-        "dim_product_details"
-    ) 
+    # cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
+    # cleaner.clean_card_details(
+    #       "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
+    #       "dim_card_details"
+    #   ) 
+    # cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
+    # cleaner.clean_time_event_table(
+    #     "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
+    #     "dim_date_times"
+    # )
+    # cleaner.clean_product_table(
+    #     "s3://data-handling-public/products.csv",
+    #     "dim_product_details"
+    # ) 
  

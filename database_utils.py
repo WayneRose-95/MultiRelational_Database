@@ -127,6 +127,7 @@ class DatabaseConnector:
             logger.info(f"Attempting to upload table {table_name} to the database")
             
             dataframe.to_sql(table_name, con=connection, if_exists='replace')
+            logger.info("Table Uploaded")
         except:
             logger.exception(f"Error uploading table to the database. Connection used : {connection}")
             print("Error uploading table to the database")
