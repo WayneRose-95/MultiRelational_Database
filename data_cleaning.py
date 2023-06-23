@@ -59,8 +59,7 @@ class DataCleaning:
         Pandas dataframe used to upload to the database. 
 
         '''
-        logger.info("Starting job")
-        logger.debug(f"Using {self.engine}")
+        logger.info("Starting job clean_user_data")
         logger.info(f"Attempting to clean {source_table_name}")
         logger.info("Reading in table from source database")
         # Reading in the table from the AWS database 
@@ -161,7 +160,7 @@ class DataCleaning:
         logger.info("Appended new rows to the beginning of the dataframe")
         logger.debug(f"Number of rows : {len(legacy_users_dataframe)}")
 
-        logger.info("Uploading table to the database")
+        
         # Upload the dataframe to the datastore  
         legacy_users_database_table = self._upload_to_database(
                                     legacy_users_dataframe, 
@@ -195,7 +194,6 @@ class DataCleaning:
 
         '''
         logger.info("Starting Job clean_store_data")
-
         logger.info("Reading in table from the source database")
         # Reading in the table from the AWS database 
         legacy_store_dataframe = self.extractor.read_rds_table(source_table_name, source_database_config_file_name)
@@ -437,7 +435,7 @@ class DataCleaning:
         card_details_table = pd.concat([new_rows_additions, card_details_table]).reset_index(drop=True)
         logger.info(f"Number of rows : {len(card_details_table)}")
 
-        logger.info("Attempting to upload the table to the datastore")
+        
         # Lastly, try to upload the table to the database. 
         card_details_database_table = self._upload_to_database(
                                             card_details_table,
@@ -488,7 +486,7 @@ class DataCleaning:
         logger.debug(orders_dataframe.columns)
         logger.info(f"Number of rows : {len(orders_dataframe)}")
 
-        logger.info("Attempting to upload the table to the database")
+       
         # Lastly, try to upload the cleaned table to the database 
         orders_datatable = self._upload_to_database(
                                     orders_dataframe,
@@ -582,7 +580,7 @@ class DataCleaning:
         logger.info("Concatenating new rows to the start of the dataframe")
         time_df = pd.concat([new_rows_addition, time_df]).reset_index(drop=True)
 
-        logger.info("Attempting to upload the table to the database")
+        
         # Try to upload the table to the database
         time_datastore_table = self._upload_to_database(
                                     time_df,
@@ -611,36 +609,56 @@ class DataCleaning:
         A dataframe containing the cleaned products_table 
 
         '''
+        logger.info("Starting job clean_product_table")
+        logger.info(f"Reading data from {s3_bucket_url}")
         # Set the dataframe to the output of the method 
         products_table = self.extractor.read_s3_bucket_to_dataframe(s3_bucket_url)
+
+        logger.info(f"Successfully read data from {s3_bucket_url}")
+        logger.info(f"Number of rows : {len(products_table)}")
+
+        logger.info("Creating a list of unique values from within the removed column")
         # Create a list of unique values within the 'removed' column  and print them out for debugging purposes 
         values = list(products_table["removed"].unique())
         print(values)
 
+        logger.info("Filtering out the last three values inside the list")
         # Filter out the last 3 values of the values inside the list using a boolean mask 
         products_table = products_table[~products_table['removed'].isin(values[-3:])]
+        logger.info(f"Number of rows : {len(products_table)}")
 
+        logger.info("Converting dates in the date_added column to a datetime")
         # Convert the values in the date_added column to a datetime turning any invalid dates to NaNs
         products_table["date_added"] = pd.to_datetime(products_table['date_added'], errors='coerce')
 
+        logger.info("Removing the £ sign in the product_price column")
         # Strip the £ sign from each of the prices within the product_price column 
         products_table['product_price'] = products_table['product_price'].str.replace('£', '')
 
+        logger.info("Applying the convert_to_kg method to the weight column")
         # Apply the convert_to_kg method to the 'weight' column to standardise the weights to kg
         products_table['weight'] = products_table['weight'].apply(self.convert_to_kg)
 
+        logger.info("Dropping any weights which are Nulls")
         # Drop any weights which are NaNs
         products_table = products_table.dropna(subset=["weight"])
+        logger.info("Dropped rows")
+        logger.info(f"Number of rows : len({products_table})")
 
+        logger.debug("Setting the index column to start from 1")
         # Set the index column to start from 1 
         products_table.index = products_table.index + 1
+
+        logger.debug("Adding a new column product_key")
         # Add a new column product_key, which is a list of numbers ranging for the length of the dataframe 
         products_table["product_key"] = products_table.index
-
-
+        
+        logger.info("Dropping Unamaed : 0 column")
         # Drop the "Unamed:  0" column within the dataframe 
         products_table = products_table.drop("Unnamed: 0", axis=1)
+        logger.info(f"Number of columns : {len(products_table)}")
 
+        logger.info("Displaying the names of the columns")
         # stating the names of the columns
         products_table.columns = [
 
@@ -655,6 +673,9 @@ class DataCleaning:
             "product_code",
             "product_key"
         ]
+        logger.info(products_table.columns)
+
+        logger.info("Rearranging the order of the columns")
         # Rearrange the order of the columns 
         column_order = [
     
@@ -673,7 +694,11 @@ class DataCleaning:
 
         # Set the new products_table to the name of the column order 
         products_table = products_table[column_order]
+        logger.info("New column order")
+        logger.info(products_table.columns)
 
+
+        logger.info("Adding new rows to the table in case of unknowns")
         new_rows_addition = self.add_new_rows(
             [
                 {
@@ -686,15 +711,19 @@ class DataCleaning:
                 }
             ]
         )
+
+        logger.info("Concatenating new rows to the start of the dataframe")
         products_table = pd.concat([new_rows_addition, products_table]).reset_index(drop=True)
 
-
+        
         # Try to upload the table to the database. 
         products_datastore_table = self._upload_to_database(
                                             products_table,
                                             self.engine,
                                             datastore_table_name
                                         )
+        logger.info("Table uploaded")
+        logger.info("Job clean_time_event_table has completed successfully")
         return products_datastore_table
 
     def _upload_to_database(self, dataframe : pd.DataFrame, database_engine, datastore_table_name : str):
@@ -756,45 +785,55 @@ class DataCleaning:
         
         # Check if the weight has 'kg' in it. 
         if 'kg' in weight:
+            logger.debug("'kg' in weight stripping the kg suffix")
             # If it does, strip the 'kg' from it, and return the value as a float 
             return float(clean_weight.strip('kg'))
         
         # Else if, the weight value is a multipack e.g. 12 x 100g 
         elif ' x ' in weight:
+            logger.debug("Multipack weight detected.")
             # Split the value and unit of the weight via the use of a tuple 
             value, unit = clean_weight.split(' x ')
 
             # Multiply the first number, and the first number of the unit together 
             combined_value = float(value) * float(unit[:-1])
+            logger.debug("Value converted to kg value")
             return combined_value
         
         # Else if there is a 'g' or an 'ml' in the weight value, treat it like it is kgs. 
         elif 'g' in clean_weight or 'ml' in clean_weight:
             try:
+                logger.debug("'g' or 'ml' in weight value")
                 # Try to replace the . with an empty string
                 clean_weight = clean_weight.replace('.', " ")
 
                 # Next, remove the 'g' and the 'ml' from the string 
                 clean_weight = clean_weight.strip('g').strip('ml')
-
+                
+                logger.debug("Weight cleaned. Dividing result by 1000 for kg value")
                 # Lastly, convert the value to a float and divide it by 1000
                 return float(clean_weight) / 1000
             
             # If the value does not fit the desired format then
             except:
+                logger.warning("Irregular formatting found. Attempting to convert to kg")
                 # strip the '.' , get rid of all empty spaces, then strip the 'g' or 'ml' from the string. 
                 modified_weight = clean_weight.strip('.').replace(" ", "").strip('g').strip('ml')
                 # Lastly divide the weight by 1000 and return it as a float
+                logger.debug("Weight converted to kg value")
                 return float(modified_weight) / 1000
         # Else if the weight is listed as 'oz' 
         elif 'oz' in clean_weight:
+            logger.debug("'oz' detected in weight value")
             # strip the 'oz' from the string, then 
             clean_weight = clean_weight.strip('oz')
             # Divide the weight by the conversion factor of oz to kg.
-            # Round the answer to 2 decimal places. 
+            # Round the answer to 2 decimal places.
+            logger.debug("Weight value converted to kg") 
             return round(float(clean_weight) * 0.028349523, 2)
         # Else if the value does not fit any condition, return None 
         else:
+            logger.warning("Unknown value, returning None")
             return None
         
     def clean_dates(self, date):
@@ -818,11 +857,11 @@ class DataCleaning:
                 return pd.to_datetime(date)  
             elif re.match(r'\d{4}/\d{1,2}/\d{1,2}', date):
                 # Convert from 'YYYY/MM/DD' format to datetime
-                logger.info(f"{date} with Date Format YYYY/MM/DD converted to datetime object")
+                logger.debug(f"{date} with Date Format YYYY/MM/DD converted to datetime object")
                 return pd.to_datetime(date, format='%Y/%m/%d')  
             elif re.match(r'\d{4} [a-zA-Z]{3,} \d{2}', date):
                 # Convert from 'YYYY Month DD' format to datetime
-                logger.info(f"{date} with Date Format YYYY Month DD converted to datetime object")
+                logger.debug(f"{date} with Date Format YYYY Month DD converted to datetime object")
                 return pd.to_datetime(date, format='%Y %B %d')  
             else:
                 # Try to convert with generic parsing, ignoring errors
@@ -831,19 +870,19 @@ class DataCleaning:
         
 if __name__=="__main__":
     cleaner = DataCleaning('sales_data_creds_test.yaml')
-    # cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users")
+    cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users")
     cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
-    # cleaner.clean_card_details(
-    #       "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
-    #       "dim_card_details"
-    #   ) 
-    # cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
-    # cleaner.clean_time_event_table(
-    #     "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
-    #     "dim_date_times"
-    # )
-    # cleaner.clean_product_table(
-    #     "s3://data-handling-public/products.csv",
-    #     "dim_product_details"
-    # ) 
+    cleaner.clean_card_details(
+          "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
+          "dim_card_details"
+      ) 
+    cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
+    cleaner.clean_time_event_table(
+        "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
+        "dim_date_times"
+    )
+    cleaner.clean_product_table(
+        "s3://data-handling-public/products.csv",
+        "dim_product_details"
+    ) 
  
