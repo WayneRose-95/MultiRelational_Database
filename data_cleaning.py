@@ -258,7 +258,7 @@ class DataCleaning:
         # Drop dates in the opening_date which are null 
         legacy_store_dataframe = legacy_store_dataframe.dropna(subset=['opening_date'])
         logger.info("Dropped columns")
-        logger.info(f"Number of rows : {legacy_store_dataframe}")
+        logger.info(f"Number of rows : {len(legacy_store_dataframe)}")
 
         logger.info("Resetting the index of the table")
         # Reset the index if desired
@@ -278,7 +278,7 @@ class DataCleaning:
         legacy_store_dataframe = legacy_store_dataframe.replace('eeEurope', 'Europe')
         legacy_store_dataframe = legacy_store_dataframe.replace('eeAmerica', 'America')
 
-        logger.info(legacy_store_dataframe["region"].unique() )
+        logger.info(legacy_store_dataframe["region"].unique())
 
         logger.info("Converting longitude column to a numeric value")
         # Clean the longitude column by converting it to a numeric value 
@@ -750,8 +750,8 @@ class DataCleaning:
         
 if __name__=="__main__":
     cleaner = DataCleaning('sales_data_creds_test.yaml')
-    cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users")
-    # cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
+    # cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users")
+    cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
     # cleaner.clean_card_details(
     #       "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
     #       "dim_card_details"
