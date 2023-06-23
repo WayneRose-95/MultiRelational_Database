@@ -17,7 +17,7 @@ data_extraction_logger = DatabaseLogger("logs/data_extraction.log")
 class DatabaseExtractor:
 
     def __init__(self):
-        pass
+        self.database_connector = DatabaseConnector()
 
     def list_db_tables(self, config_file_name : str):
         '''
@@ -29,12 +29,10 @@ class DatabaseExtractor:
 
         '''
         try:
-            # Create an instance of the DatabaseConnector Class 
-            database_connection = DatabaseConnector()
-
+            
             data_extraction_logger.info("Initialising database connection")
-            # Initialise the connection 
-            engine = database_connection.initialise_database_connection(config_file_name)
+            # Initialise the connection using an instance of the DatabaseConnector class
+            engine = self.database_connector.initialise_database_connection(config_file_name)
             data_extraction_logger.info(f"Initialising database connection using {config_file_name}")
             data_extraction_logger.debug(f"Using {engine}")
 
@@ -72,11 +70,9 @@ class DatabaseExtractor:
         The file pathway for the name of the .yaml file 
         '''
         try:
-            # Instantiate an instance of the DatabaseConnector class 
-            database_connector = DatabaseConnector()
-
+            
             # Initialise the connection 
-            connection = database_connector.initialise_database_connection(config_file_name)
+            connection = self.database_connector.initialise_database_connection(config_file_name)
             data_extraction_logger.info("Initialising connection to the database")
             data_extraction_logger.info(f"Using {connection}")
 
