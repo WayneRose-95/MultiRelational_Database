@@ -4,7 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import sessionmaker
 from logger import DatabaseLogger
 
-logger = DatabaseLogger("logs/sql_transformations.log")
+sql_transformations_logger = DatabaseLogger("logs/sql_transformations.log")
 class SQLAlterations: 
 
     def __init__(self, datastore_config_file : str):
@@ -14,7 +14,7 @@ class SQLAlterations:
         self.engine = self.connector.initialise_database_connection(datastore_config_file)
 
     def connect_to_database(self):
-        logger.debug(f"Connecting to datastore using {self.engine}")
+        sql_transformations_logger.debug(f"Connecting to datastore using {self.engine}")
         # Connect to the database using the Engine returned from the method 
         self.engine.connect() 
 
@@ -27,21 +27,21 @@ class SQLAlterations:
             with open(sql_file_path, 'r') as file:
                 sql_statement = file.read()
                 print(sql_statement)
-            logger.info(sql_statement)
-            logger.info("Executing and committing sql_statement")
+            sql_transformations_logger.info(sql_statement)
+            sql_transformations_logger.info("Executing and committing sql_statement")
             session.execute(text(sql_statement))
             session.commit()
-            logger.info('SQL statement submitted to database. Please verify.')
+            sql_transformations_logger.info('SQL statement submitted to database. Please verify.')
             print('SQL statement submitted to database. Please verify.')
         except:
-            logger.exception(f'Error when running sql_statement. The sql statement submitted was {sql_statement}')
+            sql_transformations_logger.exception(f'Error when running sql_statement. The sql statement submitted was {sql_statement}')
             print(
                 f'Error when running sql_statement. The sql statement submitted was {sql_statement}'
             )
             raise Exception
 
         finally:
-            logger.info("Closing Session")
+            sql_transformations_logger.info("Closing Session")
             session.close()
 
    
