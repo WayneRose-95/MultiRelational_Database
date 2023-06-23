@@ -131,7 +131,7 @@ class DataCleaning:
         # Reset the index if desired
         legacy_users_dataframe = legacy_users_dataframe.reset_index(drop=True)
 
-        logger.info("Setting the index column of the table to 1")
+        logger.debug("Setting the index column of the table to 1")
         legacy_users_dataframe.index = legacy_users_dataframe.index + 1
 
         logger.info("Setting the value of the user_key to the index column")
@@ -270,14 +270,18 @@ class DataCleaning:
         # Set the index to start from 1 instead of 0 
         legacy_store_dataframe.index = legacy_store_dataframe.index + 1
 
-        logger.info("Setting the store_key to the same as the index column")
+        logger.debug("Setting the store_key to the same as the index column")
         legacy_store_dataframe['store_key'] = legacy_store_dataframe.index
 
         logger.info("Replacing the incorrectly spelleed regions with the correct spelling")
+
+        logger.info("Unique values of column")
+        logger.info(legacy_store_dataframe["region"].unique())
         # Replace the Region with the correct spelling 
         legacy_store_dataframe = legacy_store_dataframe.replace('eeEurope', 'Europe')
         legacy_store_dataframe = legacy_store_dataframe.replace('eeAmerica', 'America')
 
+        logger.info("Unique values of column")
         logger.info(legacy_store_dataframe["region"].unique())
 
         logger.info("Converting longitude column to a numeric value")
@@ -340,13 +344,20 @@ class DataCleaning:
         A dataframe consisting of card_details read from the pdf 
 
         '''
-
+        logger.info("Starting Job clean_card_details")
+        logger.info(f"Attempting to read PDF table from {link_to_pdf}")
         # Read in the pdf data for the card details 
         card_details_table = self.extractor.retrieve_pdf_data(link_to_pdf)
+
+        logger.info(f"Succesfully read table from {link_to_pdf}")
+        logger.info(f"Number of rows : {len(card_details_table)}")
+        logger.info("Removing non-numeric characters from the card_number column")
 
         # removing non-numeric characters from the card_number column 
         card_details_table['card_number'] = card_details_table['card_number'].apply(lambda x: re.sub(r'\D', '', str(x)))
 
+        logger.info("List of unique card_providers")
+        logger.info(card_details_table["card_provider"].unique())
         # Define the items to remove
         items_to_remove = [
                         'NULL', 'NB71VBAHJE', 'WJVMUO4QX6', 'JRPRLPIBZ2', 'TS8A81WFXV',
@@ -354,22 +365,36 @@ class DataCleaning:
                         '1M38DYQTZV', 'DLWF2HANZF', 'XGZBYBYGUW', 'UA07L7EILH',
                         'BU9U947ZGV', '5MFWFBZRM9'
                         ]
-        
+        logger.info("Filtering out the last 15 entries of the card_provider column")
+        logger.info(items_to_remove)
+
         # Filter out the last 15 entries from the card provider column 
         card_details_table = card_details_table[~card_details_table['card_provider'].isin(items_to_remove)]
-        
+        logger.info("Card_details filtered")
+        logger.info(f"Number of rows : {card_details_table}")
+
+        logger.info("Applying the clean_dates method to to the dataframe to clean the date values")
         # Apply the clean_dates method to the dataframe to clean the date values
         card_details_table["date_payment_confirmed"] = card_details_table['date_payment_confirmed'].apply(self.clean_dates)
+
+        logger.info("Converting date_payment_confirmed column to a datetime")
         # Convert the date_payment_confirmed column into a datetime 
         card_details_table["date_payment_confirmed"] = pd.to_datetime(card_details_table['date_payment_confirmed'], errors='coerce')
+
+        logger.info("For any null values, drop them from the table")
         # For any null values, drop them. 
         card_details_table = card_details_table.dropna(subset=['date_payment_confirmed'])
-
+        logger.info("Rows dropped")
+        logger.info(f"Number of rows : {len(card_details_table)}")
+        
+        logger.debug("Setting the dataframe index to start at 1 instead of 0")
         # Set the index of the dataframe to start at 1 instead of 0 
         card_details_table.index = card_details_table.index + 1
         # Add a new column called card_key, which is the length of the index column of the card_details table
+        logger.debug("Setting the card_key to the same as the index column")
         card_details_table['card_key'] = card_details_table.index
 
+        logger.info("Rearranging the order of the columns")
         # Rearrange the order of the columns 
         column_order = [
             'card_key',
@@ -379,12 +404,18 @@ class DataCleaning:
             'date_payment_confirmed'
         ]
 
+        logger.info(column_order)
         # Set the order of the columns in the table 
         card_details_table = card_details_table[column_order]
 
+        logger.info("New column order")
+        logger.info(card_details_table.columns)
+
+        logger.info("Resetting the index of the table")
         # Reset the index of the table to match the indexes to the card_keys 
         card_details_table = card_details_table.reset_index(drop=True)
 
+        logger.info("Adding new rows to the table to cover for unknowns")
         # Add new rows to the table 
         new_rows_additions = self.add_new_rows(
             [
@@ -398,23 +429,37 @@ class DataCleaning:
                 }
             ]
         )
+        logger.info("New rows added")
+        logger.info(new_rows_additions)
+
+        logger.info("Concatentating the two dataframes together to add the new rows to the top")
         # Concatentate the two dataframes together
         card_details_table = pd.concat([new_rows_additions, card_details_table]).reset_index(drop=True)
+        logger.info(f"Number of rows : {len(card_details_table)}")
 
+        logger.info("Attempting to upload the table to the datastore")
         # Lastly, try to upload the table to the database. 
         card_details_database_table = self._upload_to_database(
                                             card_details_table,
                                             self.engine,
                                             datastore_table_name
                                         )
+        logger.info("Table uploaded")
+        logger.info("Job clean_card_details has completed successfully.")
         return card_details_database_table
 
 
     def clean_orders_table(self, source_table_name : str, source_database_config_file_name : str, datastore_table_name : str):
         
+        logger.info("Starting job clean_orders_table")
+        logger.info("Reading in the table from the source database")
+
         # Read in the table from the RDS database 
         orders_dataframe = self.extractor.read_rds_table(source_table_name, source_database_config_file_name)
+        logger.info(f"Successfully read the table {source_table_name} from the source database")
+        logger.info(f"Number of rows : {len(orders_dataframe)}")
 
+        logger.info("Stating the name of the columns")
         # State the names of the columns 
         orders_dataframe.columns = [
             'order_key',
@@ -430,16 +475,28 @@ class DataCleaning:
             'product_quantity'
             
         ]
+        logger.info("Names of columns")
+        logger.info(orders_dataframe.columns)
 
+        logger.info("Dropping columns from the dataframe")
+        logger.debug("Columns to drop")
+        logger.debug(["null_key", "first_name", "last_name", "null_column"])
         # Drop the following columns within the dataframe if they exist 
         orders_dataframe.drop(["null_key", "first_name", "last_name", "null_column"], axis=1, inplace=True)
 
+        logger.debug("Columns dropped")
+        logger.debug(orders_dataframe.columns)
+        logger.info(f"Number of rows : {len(orders_dataframe)}")
+
+        logger.info("Attempting to upload the table to the database")
         # Lastly, try to upload the cleaned table to the database 
         orders_datatable = self._upload_to_database(
                                     orders_dataframe,
                                     self.engine,
                                     datastore_table_name
                                 )
+        logger.info("Table uploaded")
+        logger.info("Job clean_orders_table has completed successfully.")
         return orders_datatable 
 
     def clean_time_event_table(self, s3_bucket_url : str , datastore_table_name : str):
