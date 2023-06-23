@@ -1,52 +1,49 @@
-from sql_transformations import SQLAlterations
-from data_cleaning import DataCleaning
-from logger import DatabaseLogger
+
+from data_cleaning import data_cleaning_logger as data_cleaning_logger
+from data_extraction import data_extraction_logger as data_extraction_logger
+from database_utils import database_utils_logger as database_utils_logger
+from sql_transformations import sql_transformations_logger as sql_transformations_logger
+from data_cleaning import perform_data_cleaning
+from sql_transformations import perform_database_operations
 import time 
+import os 
+import logging
 
-# Script to Clean the data and upload it to the database using the specified config file 
-logger = DatabaseLogger("logs/main.log")
-start_time = time.time()
-cleaner = DataCleaning('sales_data_creds_test.yaml')
-cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users",)
-cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
-cleaner.clean_card_details(
-        "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
-        "dim_card_details"
-    ) 
-cleaner.clean_orders_table("orders_table", "db_creds.yaml", "orders_table") 
-cleaner.clean_time_event_table(
-    "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
-    "dim_date_times"
+log_filename = "logs/main.log"
+if not os.path.exists(log_filename):
+    os.makedirs(os.path.dirname(log_filename), exist_ok=True)
+
+main_logger = logging.getLogger(__name__)
+
+# Set the default level as DEBUG
+main_logger.setLevel(logging.DEBUG)
+
+# Format the logs by time, filename, function_name, level_name and the message
+format = logging.Formatter(
+    "%(asctime)s:%(filename)s:%(funcName)s:%(levelname)s:%(message)s"
 )
-cleaner.clean_product_table(
-    "s3://data-handling-public/products.csv",
-    "dim_product_details"
-) 
+file_handler = logging.FileHandler(log_filename)
 
-# Scripts to transform and update the tables schema, add columns to tables, add primary keys to tables, and map foreign key constraints to orders_table 
+# Set the formatter to the variable format
 
-sql_statements = SQLAlterations('sales_data_creds_test.yaml')
-sql_statements.connect_to_database()
-# Alter the table_schema of every table except dim_product_details 
-sql_statements.alter_and_update(r'sales_data\DDL\alter_table_schema.sql') 
-# Add in the necessary columns 
-sql_statements.alter_and_update(r'sales_data\DDL\column_additions.sql') 
-# SQL script to create the logic for the weight_class column added previously. 
-sql_statements.alter_and_update(r'sales_data\DML\add_weight_class_column_script.sql')
-# Alter the schema of the dim_product_details table 
-sql_statements.alter_and_update(r'sales_data\DDL\alter_dim_product_details_table_schema.sql') 
-# Next, add the primary keys to the tables 
-sql_statements.alter_and_update(r'sales_data\DDL\add_primary_keys.sql')
-# Then add the foreign key constraints to the orders_table 
-sql_statements.alter_and_update(r'sales_data\DDL\orders_table_FK_constraints.sql')
-# Lastly map the dimension keys in the dim tables to the foreign keys in the orders_table 
-sql_statements.alter_and_update(r'sales_data\DML\update_orders_table_foreign_keys.sql')
+file_handler.setFormatter(format)
 
-sql_statements.alter_and_update(r'sales_data\DML\fill_null_keys_in_orders_table.sql')
+main_logger.addHandler(file_handler)
+
+
+main_logger.info("Process started")
+
+start_time = time.time()
+
+data_cleaning_logger.info("Calling data_cleaning_script")
+perform_data_cleaning('sales_data_creds_test.yaml')
+
+sql_transformations_logger.info("Calling SQL transformations script")
+perform_database_operations('sales_data_creds_test.yaml')
 
 end_time = time.time() 
 
 execution_time = end_time - start_time 
 
 print(f"Execution time: {execution_time} seconds")
-logger.info(f"Time elapsed : {execution_time} seconds")
+main_logger.info(f"Time elapsed : {execution_time} seconds")

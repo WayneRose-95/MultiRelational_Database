@@ -2,13 +2,33 @@ from data_extraction import DatabaseExtractor
 from database_utils import DatabaseConnector
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
-from logger import DatabaseLogger
 import pandas as pd 
-import tabula
 import re 
 import yaml
+import os 
+import logging
 
-data_cleaning_logger = DatabaseLogger("logs/data_cleaning.log")
+log_filename = "logs/data_cleaning.log"
+if not os.path.exists(log_filename):
+    os.makedirs(os.path.dirname(log_filename), exist_ok=True)
+
+data_cleaning_logger = logging.getLogger(__name__)
+
+# Set the default level as DEBUG
+data_cleaning_logger.setLevel(logging.DEBUG)
+
+# Format the logs by time, filename, function_name, level_name and the message
+format = logging.Formatter(
+    "%(asctime)s:%(filename)s:%(funcName)s:%(levelname)s:%(message)s"
+)
+file_handler = logging.FileHandler(log_filename)
+
+# Set the formatter to the variable format
+
+file_handler.setFormatter(format)
+
+data_cleaning_logger.addHandler(file_handler)
+
 
 class DataCleaning: 
 
@@ -867,9 +887,9 @@ class DataCleaning:
                 # Try to convert with generic parsing, ignoring errors
                 data_cleaning_logger.warning(f"Date format unknown. Attempting to convert to datetime")
                 return pd.to_datetime(date, errors='coerce')  
-        
-if __name__=="__main__":
-    cleaner = DataCleaning('sales_data_creds_test.yaml')
+
+def perform_data_cleaning(target_datastore_config_file_name):
+    cleaner = DataCleaning(target_datastore_config_file_name)
     cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users")
     cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
     cleaner.clean_card_details(
@@ -885,4 +905,7 @@ if __name__=="__main__":
         "s3://data-handling-public/products.csv",
         "dim_product_details"
     ) 
+
+if __name__=="__main__":
+    perform_data_cleaning()
  

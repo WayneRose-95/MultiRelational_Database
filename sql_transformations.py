@@ -2,9 +2,31 @@ from database_utils import DatabaseConnector
 from sqlalchemy import create_engine
 from sqlalchemy import text 
 from sqlalchemy.orm import sessionmaker
-from logger import DatabaseLogger
+import logging
+import os 
 
-sql_transformations_logger = DatabaseLogger("logs/sql_transformations.log")
+log_filename = "logs/sql_transformations.log"
+if not os.path.exists(log_filename):
+    os.makedirs(os.path.dirname(log_filename), exist_ok=True)
+
+sql_transformations_logger = logging.getLogger(__name__)
+
+# Set the default level as DEBUG
+sql_transformations_logger.setLevel(logging.DEBUG)
+
+# Format the logs by time, filename, function_name, level_name and the message
+format = logging.Formatter(
+    "%(asctime)s:%(filename)s:%(funcName)s:%(levelname)s:%(message)s"
+)
+file_handler = logging.FileHandler(log_filename)
+
+# Set the formatter to the variable format
+
+file_handler.setFormatter(format)
+
+sql_transformations_logger.addHandler(file_handler)
+
+
 class SQLAlterations: 
 
     def __init__(self, datastore_config_file : str):
@@ -44,12 +66,8 @@ class SQLAlterations:
             sql_transformations_logger.info("Closing Session")
             session.close()
 
-   
-
-
-
-if __name__ == "__main__":
-    sql_statements = SQLAlterations('sales_data_creds_dev.yaml')
+def perform_database_operations(target_datastore_config_file_name):
+    sql_statements = SQLAlterations(target_datastore_config_file_name)
     sql_statements.connect_to_database()
     # TEST usage 
     # sql_statements.alter_and_update(r'MultiRelational_Database\sales_data\DDL\alter_dim_card_details_table_schema.sql') 
@@ -67,6 +85,12 @@ if __name__ == "__main__":
     sql_statements.alter_and_update(r'sales_data\DDL\orders_table_FK_constraints.sql')
     # Lastly map the dimension keys in the dim tables to the foreign keys in the orders_table 
     sql_statements.alter_and_update(r'sales_data\DML\update_orders_table_foreign_keys.sql')
+
+
+
+
+if __name__ == "__main__":
+    perform_database_operations('sales_data_creds_test.yaml')
 
 
 

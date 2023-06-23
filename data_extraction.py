@@ -1,5 +1,4 @@
 from database_utils import DatabaseConnector 
-from logger import DatabaseLogger
 from sqlalchemy import inspect
 from sqlalchemy import select
 from sqlalchemy import Table
@@ -10,9 +9,31 @@ from io import StringIO
 import pandas as pd 
 import boto3
 import tabula 
-import re 
+import re
+import os 
+import logging
 
-data_extraction_logger = DatabaseLogger("logs/data_extraction.log")
+log_filename = "logs/data_extraction.log"
+if not os.path.exists(log_filename):
+    os.makedirs(os.path.dirname(log_filename), exist_ok=True)
+
+data_extraction_logger  = logging.getLogger(__name__)
+
+# Set the default level as DEBUG
+data_extraction_logger.setLevel(logging.DEBUG)
+
+# Format the logs by time, filename, function_name, level_name and the message
+format = logging.Formatter(
+    "%(asctime)s:%(filename)s:%(funcName)s:%(levelname)s:%(message)s"
+)
+file_handler = logging.FileHandler(log_filename)
+
+# Set the formatter to the variable format
+
+file_handler.setFormatter(format)
+
+data_extraction_logger .addHandler(file_handler)
+
 
 class DatabaseExtractor:
 

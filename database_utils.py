@@ -1,12 +1,32 @@
 import yaml
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError 
-from logger import DatabaseLogger
 import pandas as pd 
 import os 
+import logging
+
+log_filename = "logs/database_utils.log"
+if not os.path.exists(log_filename):
+    os.makedirs(os.path.dirname(log_filename), exist_ok=True)
+
+database_utils_logger = logging.getLogger(__name__)
+
+# Set the default level as DEBUG
+database_utils_logger.setLevel(logging.DEBUG)
+
+# Format the logs by time, filename, function_name, level_name and the message
+format = logging.Formatter(
+    "%(asctime)s:%(filename)s:%(funcName)s:%(levelname)s:%(message)s"
+)
+file_handler = logging.FileHandler(log_filename)
+
+# Set the formatter to the variable format
+
+file_handler.setFormatter(format)
+
+database_utils_logger.addHandler(file_handler)
 
 
-database_utils_logger = DatabaseLogger("logs/database_utils.log")
 
 class DatabaseConnector:
     def read_database_credentials(self, config_file: yaml):
