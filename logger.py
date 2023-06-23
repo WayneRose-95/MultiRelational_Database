@@ -21,6 +21,9 @@ class DatabaseLogger:
     def exception(self, message):
         self.logger.exception(message)
 
+    def warning(self, message):
+        self.logger.warning(message)
+
     def critical(self, message):
         self.logger.critical(message)
 
