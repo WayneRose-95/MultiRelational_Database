@@ -1,8 +1,11 @@
 from sql_transformations import SQLAlterations
 from data_cleaning import DataCleaning
+from logger import DatabaseLogger
+import time 
 
 # Script to Clean the data and upload it to the database using the specified config file 
-
+logger = DatabaseLogger("logs/main.log")
+start_time = time.time()
 cleaner = DataCleaning('sales_data_creds.yaml')
 cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users",)
 cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
@@ -40,3 +43,10 @@ sql_statements.alter_and_update(r'sales_data\DDL\orders_table_FK_constraints.sql
 sql_statements.alter_and_update(r'sales_data\DML\update_orders_table_foreign_keys.sql')
 
 sql_statements.alter_and_update(r'sales_data\DML\fill_null_keys_in_orders_table.sql')
+
+end_time = time.time() 
+
+execution_time = end_time - start_time 
+
+print(f"Execution time: {execution_time} seconds")
+logger.info(f"Time elapsed : {execution_time} seconds")
