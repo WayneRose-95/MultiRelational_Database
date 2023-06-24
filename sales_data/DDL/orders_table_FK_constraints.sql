@@ -24,7 +24,13 @@ ADD CONSTRAINT fk_dim_store_details
 FOREIGN KEY (store_key)
 REFERENCES dim_store_details (store_key);
 
--- Adding FK constraint to Orders Table on dim_store_details table
+-- Adding FK constraint to Orders Table on dim_currency table
+ALTER TABLE orders_table
+ADD CONSTRAINT fk_dim_currency
+FOREIGN KEY (currency_key)
+REFERENCES dim_currency (currency_key);
+
+-- Adding FK constraint to Orders Table on dim_users table
 ALTER TABLE orders_table
 ADD CONSTRAINT fk_dim_users
 FOREIGN KEY (user_key)

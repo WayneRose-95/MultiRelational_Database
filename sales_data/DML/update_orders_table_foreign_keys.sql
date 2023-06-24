@@ -30,3 +30,19 @@ UPDATE orders_table
 SET user_key = dim_users.user_key 
 FROM dim_users 
 WHERE orders_table.user_uuid::uuid = dim_users.user_uuid; 
+
+-- Update the country_code column in orders_table using a subquery to fetch the corresponding value from dim_store_details
+UPDATE orders_table
+SET country_code = (
+  SELECT d.country_code
+  FROM dim_store_details AS d
+  WHERE d.store_code = orders_table.store_code
+);
+
+-- Update the currency_key column in the orders_table using a subquery to fetch the corresponding value from dim_currency
+UPDATE orders_table
+SET currency_key = (
+  SELECT c.currency_key
+  FROM dim_currency AS c
+  WHERE c.country_code = orders_table.country_code
+);

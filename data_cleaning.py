@@ -982,7 +982,8 @@ def perform_data_cleaning(target_datastore_config_file_name):
     cleaner.clean_product_table(
         "s3://data-handling-public/products.csv",
         "dim_product_details"
-    ) 
+    )
+    cleaner.clean_currency_table("country_data.json", ["US", "GB", "DE"], "dim_currency") 
 
 if __name__=="__main__":
     new_cleaner = DataCleaning("sales_data_creds_dev.yaml")

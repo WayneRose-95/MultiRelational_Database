@@ -12,6 +12,9 @@ ALTER TABLE dim_store_details
 
 ALTER TABLE dim_users
     ADD PRIMARY KEY (user_key);
-	
+
+ALTER TABLE dim_currency
+    ADD PRIMARY KEY (currency_key);
+    
 ALTER TABLE orders_table
     ADD PRIMARY KEY (order_key);
