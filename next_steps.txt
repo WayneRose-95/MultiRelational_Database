@@ -45,8 +45,16 @@ How many sales are coming from online? (Unsure because there's no online column)
 
 10. Investigate the missing rows for users, store and card details tables (DONE)
 
-11. Write up some Unittests for the modules (TODO)
+11. Write up some Unittests for the modules (DONE)
 
-12. Create a UML Class Diagram for the code (TODO)
+12. Implementation of Logging for each class module (DONE)
 
-13. Implementation of Logging for each class module (TODO)
+13. Create a UML Class Diagram for the code (TODO)
+
+14. Create currency table, and conversion currency table (TODO)
+
+15. Implement logic for slowly changing dimensions (scds) (TODO)
+
+16. Create CTRL tables in the database for logging purposes (TODO)
+
+
