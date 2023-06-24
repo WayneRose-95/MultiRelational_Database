@@ -986,7 +986,5 @@ def perform_data_cleaning(target_datastore_config_file_name):
     cleaner.clean_currency_table("country_data.json", ["US", "GB", "DE"], "dim_currency") 
 
 if __name__=="__main__":
-    new_cleaner = DataCleaning("sales_data_creds_dev.yaml")
-    new_cleaner.clean_currency_table("country_data.json", ["US", "GB", "DE"], "dim_currency")
-    # perform_data_cleaning()
+    perform_data_cleaning("sales_data_creds_test.yaml")
  
