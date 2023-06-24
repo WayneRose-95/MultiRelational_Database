@@ -745,6 +745,85 @@ class DataCleaning:
         data_cleaning_logger.info("Table uploaded")
         data_cleaning_logger.info("Job clean_time_event_table has completed successfully")
         return products_datastore_table
+    
+    def clean_currency_table(self, source_file_name : str , country_code_subset : list , datastore_table_name : str):
+        data_cleaning_logger.info("Starting Job clean_currency_table")
+
+        data_cleaning_logger.info(f"Reading in file {source_file_name}")
+        # Reading in the file
+        currency_table = self.extractor.read_json_local(source_file_name) # "codes-all_csv.csv"
+        data_cleaning_logger.info("Successfully read file")
+        data_cleaning_logger.debug(f"Number of rows : {len(currency_table)}")
+        
+        # Reset the index of the dataframe
+        data_cleaning_logger.info("Resetting the index of the dataframe")
+        currency_table.reset_index(inplace=True)
+
+        # Setting the names of the columns 
+        data_cleaning_logger.info("Setting the names of the columns")
+
+        currency_table.columns = [
+            'country_code', 
+            'country_name', 
+            'currency_code', 
+            'currency_symbol'
+            ]
+        data_cleaning_logger.debug(currency_table.columns)
+
+        # Adding a new column currency_key to start from 1 onwards
+        currency_table["currency_key"] = range(1,len(currency_table) + 1)
+
+        # Rearranging the column order
+        data_cleaning_logger.info("Rearranging column order")
+        column_order = [
+            'currency_key', 
+            'currency_code', 
+            'country_code', 
+            'country_name', 
+            'currency_symbol'
+            ]
+        data_cleaning_logger.debug(column_order)
+        currency_table = currency_table[column_order]
+        data_cleaning_logger.info(currency_table.columns)
+
+        # Filtering rows from the table based on the subset given 
+        data_cleaning_logger.info(f"Filtering rows based on country codes : {country_code_subset}")
+        filtered_currency_table = currency_table[currency_table["country_code"].isin(country_code_subset)]
+        data_cleaning_logger.debug(f"Number of rows {len(filtered_currency_table)}")
+
+        filtered_currency_table["currency_key"] = range(1, len(filtered_currency_table) + 1)
+
+
+        filtered_currency_table = filtered_currency_table[column_order]
+        data_cleaning_logger.info("Adding new rows in case of unknowns")
+
+        new_rows_addition = self.add_new_rows(
+             [
+                {
+                    "currency_key": -1,
+                    "country_name": "Not Applicable"
+                }, 
+                {
+                    "currency_key": 0,
+                    "country_name": "Unknown"
+                }
+            ]
+        )
+        data_cleaning_logger.info("New rows added")
+        data_cleaning_logger.info(new_rows_addition)
+
+        data_cleaning_logger.info("Concatenating new rows to the start of the table")
+        filtered_currency_table = pd.concat([new_rows_addition, filtered_currency_table]).reset_index(drop=True)
+        data_cleaning_logger.info(f"Number of rows : {len(filtered_currency_table)}")
+
+
+        currency_datastore_table = self._upload_to_database(
+            filtered_currency_table,
+            self.engine,
+            datastore_table_name
+        )
+        data_cleaning_logger.info("Job clean_currency_table has completed successfully.")
+        return currency_datastore_table
 
     def _upload_to_database(self, dataframe : pd.DataFrame, database_engine, datastore_table_name : str):
         '''
@@ -772,7 +851,6 @@ class DataCleaning:
         except: 
             print("Error uploading table to database")
             raise Exception
-    
          
     @staticmethod 
     def add_new_rows(rows_to_add : list):
@@ -904,8 +982,9 @@ def perform_data_cleaning(target_datastore_config_file_name):
     cleaner.clean_product_table(
         "s3://data-handling-public/products.csv",
         "dim_product_details"
-    ) 
+    )
+    cleaner.clean_currency_table("country_data.json", ["US", "GB", "DE"], "dim_currency") 
 
 if __name__=="__main__":
-    perform_data_cleaning()
+    perform_data_cleaning("sales_data_creds_test.yaml")
  

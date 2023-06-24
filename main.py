@@ -36,10 +36,10 @@ main_logger.info("Process started")
 start_time = time.time()
 
 data_cleaning_logger.info("Calling data_cleaning_script")
-perform_data_cleaning('sales_data_creds_test.yaml')
+perform_data_cleaning('sales_data_creds.yaml')
 
 sql_transformations_logger.info("Calling SQL transformations script")
-perform_database_operations('sales_data_creds_test.yaml')
+perform_database_operations('sales_data_creds.yaml')
 
 end_time = time.time() 
 

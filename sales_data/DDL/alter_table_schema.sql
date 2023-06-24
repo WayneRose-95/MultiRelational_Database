@@ -47,3 +47,9 @@ ALTER COLUMN store_code TYPE VARCHAR(30),
 ALTER COLUMN product_code TYPE VARCHAR(30),
 ALTER COLUMN product_quantity TYPE SMALLINT; 
 
+-- Altering schema for dim_currency table 
+
+ALTER TABLE dim_currency
+ALTER COLUMN country_name TYPE VARCHAR(100),
+ALTER COLUMN currency_code TYPE VARCHAR(10),
+ALTER COLUMN country_code TYPE VARCHAR(5);

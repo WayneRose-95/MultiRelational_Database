@@ -20,6 +20,8 @@ class TestDatabaseExtraction(unittest.TestCase):
         cls.s3_json_link = "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json"
         cls.test_url = "s3://data-handling-public/products.csv"
         cls.test_url_wrong = "s3://data-handling-private/prod.csv"
+        cls.test_json_filepath = "country_data.json"
+        cls.test_json_filepath_wrong = "data.json"
         cls.test_extractor = DatabaseExtractor() 
         cls.test_connector = DatabaseConnector()
         pass 
@@ -151,6 +153,20 @@ class TestDatabaseExtraction(unittest.TestCase):
         # Testing if the expected output matches the output of the method. 
         expected_output = ('data-handling-public', 'products.csv')
         self.assertEqual(self.test_extractor._parse_s3_url(self.test_url), expected_output)
+
+    def test_read_json_local(self):
+        
+        sample_json_dataframe = self.test_extractor.read_json_local(self.test_json_filepath)
+        print(type(sample_json_dataframe))
+        # Testing if the file returned is a pandas dataframe
+        self.assertIsInstance(sample_json_dataframe, pd.DataFrame)
+
+        with self.assertRaises(Exception):
+            # Testing if putting an incorrect file path throws an exception
+            self.test_extractor.read_json_local(self.test_json_filepath_wrong)
+
+
+
 
 if __name__ == '__main__':
     unittest.main(argv=[''], verbosity=2, exit=False)

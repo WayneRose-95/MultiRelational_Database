@@ -291,6 +291,30 @@ class DatabaseExtractor:
         data_extraction_logger.debug(f"bucket_name : {bucket_name} \n key : {key}")
         return bucket_name, key
     
+    def read_json_local(self, file_pathway):
+        '''
+        Method to read in a .json file into a pandas dataframe 
+
+        Parameters:
+        file_pathway: 
+        The path to the .json file 
+
+        returns: 
+        dataframe : pd.DataFrame 
+        A pandas dataframe of the .json file read into the system
+        
+        '''
+        try:
+            data_extraction_logger.info(f"Reading in .json file from {file_pathway}")
+            dataframe = pd.read_json(file_pathway, orient='index')
+            data_extraction_logger.info(f"Successfully read .json file from {file_pathway}")
+            return dataframe
+        
+        except Exception:
+            data_extraction_logger.exception("Failed to read .json file into dataframe. Please check the file pathway")
+            raise Exception
+
+        
     def read_json_from_s3(self, bucket_url : str):
         '''
         Method to read in a .json file from an s3_bucket on AWS 
