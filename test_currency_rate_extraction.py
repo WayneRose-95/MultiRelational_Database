@@ -6,7 +6,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import InvalidSelectorException
 from time import sleep
 import os 
-class TestCurrencyConversion(unittest.TestCase):
+class TestCurrencyRateExtraction(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
