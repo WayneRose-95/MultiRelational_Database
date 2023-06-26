@@ -53,3 +53,12 @@ ALTER TABLE dim_currency
 ALTER COLUMN country_name TYPE VARCHAR(100),
 ALTER COLUMN currency_code TYPE VARCHAR(10),
 ALTER COLUMN country_code TYPE VARCHAR(5);
+
+-- Altering schema for dim_currency_conversion table 
+ALTER TABLE dim_currency_conversion 
+ALTER COLUMN currency_conversion_key TYPE BIGINT,
+ALTER COLUMN currency_name TYPE VARCHAR(50),
+ALTER COLUMN currency_code TYPE VARCHAR(5),
+ALTER COLUMN conversion_rate TYPE DECIMAL(10,6) USING conversion_rate::numeric(10,6),
+ALTER COLUMN conversion_rate_percentage TYPE NUMERIC(10,6) USING conversion_rate_percentage::numeric(10,6),
+ALTER COLUMN last_updated TYPE TIMESTAMP WITH TIME ZONE USING last_updated::timestamp with time zone;

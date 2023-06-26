@@ -1,4 +1,5 @@
 from database_utils import DatabaseConnector 
+from currency_rate_extraction import CurrencyRateExtractor
 from sqlalchemy import inspect
 from sqlalchemy import select
 from sqlalchemy import Table
@@ -314,6 +315,58 @@ class DatabaseExtractor:
             data_extraction_logger.exception("Failed to read .json file into dataframe. Please check the file pathway")
             raise Exception
 
+    def extract_currency_conversion_data(
+            self,
+            page_url : str ,
+            table_body_xpath : str,
+            timestamp_xpath : str,
+            data_headers : list ,
+            file_name : str
+            ):
+        '''
+        Method to extract table data from a website to be saved into a .csv format. 
+        Method calls the scrape_information method from currency_rate_extraction.py script
+
+        Parameters: 
+        page_url : str 
+        The url of the website
+
+        table_body_xpath : str
+        The xpath which represents the body of the table to scrape
+
+        timestamp_xpath : str
+        The xpath which represents the timestamp of the data 
+
+        data_headers : list 
+        The headers of the .csv file 
+
+        file_name : str
+        The name of the file exported 
+
+        Returns:
+
+        raw_data : pd.DataFrame , timestamp : str
+        A tuple contaning the dataframe of the extracted data 
+        A timestamp of when the data was extracted 
+
+        Raises Exception upon error 
+        '''
+
+        try:
+            currency_extractor = CurrencyRateExtractor()
+            raw_data, timestamp = currency_extractor.scrape_information(
+                page_url,
+                table_body_xpath,
+                timestamp_xpath,
+                data_headers,
+                file_name
+            )
+            return raw_data, timestamp
+        
+        except:
+            data_extraction_logger.exception("Unable to extract information.")
+            raise Exception
+
         
     def read_json_from_s3(self, bucket_url : str):
         '''
@@ -403,6 +456,13 @@ class DatabaseExtractor:
 if __name__ == "__main__":
     extract = DatabaseExtractor() 
     extract.list_db_tables('db_creds.yaml')
+    extract.extract_currency_conversion_data(
+        "https://www.x-rates.com/table/?from=GBP&amount=1",
+        '//table[@class="tablesorter ratesTable"]/tbody',
+        '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
+        ["currency_name", "conversion_rate", "conversion_rate_percentage"],
+        "currency_conversions"
+    )
     # extract.read_rds_table('legacy_users', 'db_creds.yaml')
     # extract.retrieve_pdf_data("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf")
     # extract._parse_s3_url("s3://data-handling-public/products.csv")
