@@ -18,3 +18,6 @@ ALTER TABLE dim_currency
     
 ALTER TABLE orders_table
     ADD PRIMARY KEY (order_key);
+
+ALTER TABLE dim_currency_conversion
+    ADD PRIMARY KEY (currency_conversion_key);

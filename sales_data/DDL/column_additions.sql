@@ -10,3 +10,5 @@ ADD COLUMN store_key BIGINT,
 ADD COLUMN user_key BIGINT,
 ADD COLUMN currency_key BIGINT;
 
+ALTER TABLE dim_currency
+ADD COLUMN currency_conversion_key BIGINT;
