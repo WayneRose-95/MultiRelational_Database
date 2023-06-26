@@ -83,8 +83,12 @@ def perform_database_operations(target_datastore_config_file_name):
     sql_statements.alter_and_update(r'sales_data\DDL\add_primary_keys.sql')
     # Then add the foreign key constraints to the orders_table 
     sql_statements.alter_and_update(r'sales_data\DDL\orders_table_FK_constraints.sql')
-    # Lastly map the dimension keys in the dim tables to the foreign keys in the orders_table 
+    # Map the dimension keys in the dim tables to the foreign keys in the orders_table 
     sql_statements.alter_and_update(r'sales_data\DML\update_orders_table_foreign_keys.sql')
+    # Update the foreign key constraints in the dim_currency table with the dim-currency_conversion table
+    sql_statements.alter_and_update(r'sales_data\DDL\dim_currency_FK_constraint.sql')
+    # Update the foreign keys in the dim_currency table with the primary keys from the dim_currency_conversion_table
+    sql_statements.alter_and_update(r'sales_data\DML\update_dim_currency_table_foreign_keys.sql')
 
 
 

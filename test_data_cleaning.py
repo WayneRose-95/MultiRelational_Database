@@ -9,7 +9,7 @@ class TestDataCleaning(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.database_credentials_dev = 'sales_data_creds.yaml'
+        cls.database_credentials_dev = 'sales_data_creds_dev.yaml'
         cls.database_credentials_test = 'sales_data_creds_test.yaml'
         cls.source_database_config_file_name = "db_creds.yaml"
         cls.source_data_table_test = "legacy_users"
@@ -23,6 +23,9 @@ class TestDataCleaning(unittest.TestCase):
         cls.pdf_link = "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
         cls.json_s3_link = "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json"
         cls.csv_s3_link = "s3://data-handling-public/products.csv"
+        cls.json_file_path = "country_data.json" 
+        cls.json_file_path_subset = ["US", "GB", "DE"]
+        cls.json_local_datastore_table_name = 'dim_currency'
         cls.list_of_weights = [    
        '0.08kg', '420g', '1.68kg', '0.718kg', '600ml', '0.504kg', '480g', '8 x 150g', '6oz', 
         ]
@@ -33,7 +36,7 @@ class TestDataCleaning(unittest.TestCase):
         cls.test_data_cleaner_dev = DataCleaning(cls.database_credentials_dev)
         cls.test_data_cleaner_test = DataCleaning(cls.database_credentials_test)
     
-   
+    
     def test_clean_user_data(self):
         # Compare the tables between test database and dev sales_data database 
         test_table_to_upload_to_database = self.test_data_cleaner_test.clean_user_data(
@@ -75,6 +78,7 @@ class TestDataCleaning(unittest.TestCase):
         print(f"The expected list : {expected_columns}")
 
         self.assertEqual(test_table_to_upload_to_database.columns.tolist(), expected_columns)
+
     
     def test_clean_store_data(self):
         # Compare the tables between test database and dev sales_data database 
@@ -118,7 +122,7 @@ class TestDataCleaning(unittest.TestCase):
         # Assert if the two lists of columns are equal 
         self.assertEqual(test_table_to_upload_to_database.columns.tolist(), expected_columns)
 
-   
+    
     def test_clean_card_details(self):
         # Compare the tables between test database and dev sales_data database 
         test_table_to_upload_to_database = self.test_data_cleaner_test.clean_card_details(
@@ -157,6 +161,7 @@ class TestDataCleaning(unittest.TestCase):
 
         # Assert if the two lists of columns are equal 
         self.assertEqual(test_table_to_upload_to_database.columns.tolist(), expected_columns)
+    
     
     def test_clean_orders_table(self):
         # Compare the tables between test database and dev sales_data database 
@@ -238,7 +243,8 @@ class TestDataCleaning(unittest.TestCase):
 
         # Assert if the two lists of columns are equal 
         self.assertEqual(test_table_to_upload_to_database.columns.tolist(), expected_columns)
-   
+    
+    
     def test_clean_product_table(self):
         # Compare the tables between test database and dev sales_data database 
         test_table_to_upload_to_database = self.test_data_cleaner_test.clean_product_table(
@@ -278,6 +284,46 @@ class TestDataCleaning(unittest.TestCase):
 
         # Assert if the two lists of columns are equal 
         self.assertEqual(test_table_to_upload_to_database.columns.tolist(), expected_columns)
+    
+    
+    def test_clean_currency_table(self):
+        # Compare the tables between test database and dev sales_data database 
+        test_table_to_upload_to_database = self.test_data_cleaner_test.clean_currency_table(
+            self.json_file_path, 
+            self.json_file_path_subset, 
+            self.json_local_datastore_table_name 
+        )
+
+        reading_rds_table_dev = self.test_data_extractor_dev.read_rds_table(self.json_local_datastore_table_name, self.database_credentials_dev)
+        # Print the number of rows in each table 
+        print(f"Number of rows in orders_table from Dev Database : {len(reading_rds_table_dev)}")
+        print(f"Number of rows in orders_table from Test Database : {len(test_table_to_upload_to_database)}")
+
+        # Asserting that the number of rows in uploaded table is the same as dev
+        self.assertEqual(len(reading_rds_table_dev), len(test_table_to_upload_to_database))
+
+        print(f" The type of the variable {type(test_table_to_upload_to_database)}")
+        # Next, test if the method returns a dataframe 
+        self.assertIsInstance(test_table_to_upload_to_database, pd.DataFrame)
+
+        # Assert the index of the cleaned_table
+        expected_index = pd.RangeIndex(start=0, stop=len(test_table_to_upload_to_database), step=1)
+
+        # Print the length of the expected_index and the length of the table_index
+        print(f"Length of the expected_index : {len(expected_index)}")
+        print(f"Length of the table_index {len(test_table_to_upload_to_database.index)}")
+
+        self.assertEqual(test_table_to_upload_to_database.index.equals(expected_index), True)
+
+        expected_columns  = [
+            "currency_key", "country_name", "currency_code", "country_code", "currency_symbol"
+        ]
+        # print a comparison between the test_list of columns and the expected list of columns
+        print(f"The test list: {test_table_to_upload_to_database.columns.tolist()}")
+        print(f"The expected list : {expected_columns}")
+
+        # Assert if the two lists of columns are equal 
+        self.assertEqual(test_table_to_upload_to_database.columns.tolist(), expected_columns)
 
     
     def test_convert_to_kg_valid_weights(self):
@@ -306,7 +352,7 @@ class TestDataCleaning(unittest.TestCase):
             invalid_weight = self.test_data_cleaner_test.convert_to_kg(weight)
             self.assertIsNone(invalid_weight)
       
- 
+   
     def test_clean_dates(self):
         
         formatted_date_list = []

@@ -51,10 +51,12 @@ How many sales are coming from online? (Unsure because there's no online column)
 
 13. Create a UML Class Diagram for the code (TODO)
 
-14. Create currency table, and conversion currency table (TODO)
+14. Create currency table (DONE)
 
-15. Implement logic for slowly changing dimensions (scds) (TODO)
+15. Create Conversion currency table (TODO)
 
-16. Create CTRL tables in the database for logging purposes (TODO)
+16. Implement logic for slowly changing dimensions (scds) (TODO)
+
+17. Create CTRL tables in the database for logging purposes (TODO)
 
 

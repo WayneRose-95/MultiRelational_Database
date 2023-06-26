@@ -2,6 +2,7 @@ from data_extraction import DatabaseExtractor
 from database_utils import DatabaseConnector
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
+from datetime import datetime
 import pandas as pd 
 import re 
 import yaml
@@ -745,6 +746,218 @@ class DataCleaning:
         data_cleaning_logger.info("Table uploaded")
         data_cleaning_logger.info("Job clean_time_event_table has completed successfully")
         return products_datastore_table
+    
+    def clean_currency_table(self, source_file_name : str , country_code_subset : list , datastore_table_name : str):
+        data_cleaning_logger.info("Starting Job clean_currency_table")
+
+        data_cleaning_logger.info(f"Reading in file {source_file_name}")
+        # Reading in the file
+        currency_table = self.extractor.read_json_local(source_file_name) # "codes-all_csv.csv"
+        data_cleaning_logger.info("Successfully read file")
+        data_cleaning_logger.debug(f"Number of rows : {len(currency_table)}")
+        
+        # Reset the index of the dataframe
+        data_cleaning_logger.info("Resetting the index of the dataframe")
+        currency_table.reset_index(inplace=True)
+
+        # Setting the names of the columns 
+        data_cleaning_logger.info("Setting the names of the columns")
+
+        currency_table.columns = [
+            'country_code', 
+            'country_name', 
+            'currency_code', 
+            'currency_symbol'
+            ]
+        data_cleaning_logger.debug(currency_table.columns)
+
+        # Adding a new column currency_key to start from 1 onwards
+        currency_table["currency_key"] = range(1,len(currency_table) + 1)
+
+        # Rearranging the column order
+        data_cleaning_logger.info("Rearranging column order")
+        column_order = [
+            'currency_key', 
+            'currency_code', 
+            'country_code', 
+            'country_name', 
+            'currency_symbol'
+            ]
+        data_cleaning_logger.debug(column_order)
+        currency_table = currency_table[column_order]
+        data_cleaning_logger.info(currency_table.columns)
+
+        # Filtering rows from the table based on the subset given 
+        data_cleaning_logger.info(f"Filtering rows based on country codes : {country_code_subset}")
+        filtered_currency_table = currency_table[currency_table["country_code"].isin(country_code_subset)]
+        data_cleaning_logger.debug(f"Number of rows {len(filtered_currency_table)}")
+
+        filtered_currency_table["currency_key"] = range(1, len(filtered_currency_table) + 1)
+
+
+        filtered_currency_table = filtered_currency_table[column_order]
+        data_cleaning_logger.info("Adding new rows in case of unknowns")
+
+        new_rows_addition = self.add_new_rows(
+             [
+                {
+                    "currency_key": -1,
+                    "country_name": "Not Applicable"
+                }, 
+                {
+                    "currency_key": 0,
+                    "country_name": "Unknown"
+                }
+            ]
+        )
+        data_cleaning_logger.info("New rows added")
+        data_cleaning_logger.info(new_rows_addition)
+
+        data_cleaning_logger.info("Concatenating new rows to the start of the table")
+        filtered_currency_table = pd.concat([new_rows_addition, filtered_currency_table]).reset_index(drop=True)
+        data_cleaning_logger.info(f"Number of rows : {len(filtered_currency_table)}")
+
+
+        currency_datastore_table = self._upload_to_database(
+            filtered_currency_table,
+            self.engine,
+            datastore_table_name
+        )
+        data_cleaning_logger.info("Job clean_currency_table has completed successfully.")
+        return currency_datastore_table
+    
+    def clean_currency_exchange_rates(
+            self,
+            page_url : str ,
+            table_body_xpath : str,
+            timestamp_xpath : str,
+            data_headers : list ,
+            source_file_name : str,
+            currency_mapping_document_name : str,
+            currency_code_subset : list,
+            datastore_table_name : str
+            ):
+        
+        data_cleaning_logger.info("Starting job clean_currency_exchange_rates")
+        data_cleaning_logger.info(f"Extracting data from {page_url}")
+        raw_currency_data, timestamp = self.extractor.extract_currency_conversion_data(
+            page_url,
+            table_body_xpath,
+            timestamp_xpath,
+            data_headers,
+            source_file_name
+
+        )
+        data_cleaning_logger.info(f"Successfully read in DataFrame and {timestamp}")
+        data_cleaning_logger.debug(f"Number of rows : {len(raw_currency_data)}")
+
+        # Dropping duplicates 
+        data_cleaning_logger.info("Dropping duplicates from table")
+        no_duplicates_dataframe = raw_currency_data.drop_duplicates()
+
+        data_cleaning_logger.debug(f"Number of rows : {len(no_duplicates_dataframe)}")
+        # Dropping the first row of the dataframe 
+        no_duplicates_dataframe = no_duplicates_dataframe[1:]
+        
+        data_cleaning_logger.info(f"Creating datetime object using {timestamp}")
+        # Creating the datetime object using the timestamp variable 
+        datetime_object = datetime.strptime(timestamp, '%b %d, %Y %H:%M %Z')
+        data_cleaning_logger.debug(datetime_object)
+
+        data_cleaning_logger.info("Creating new column with datetime object")
+        # Create a new column called last_updated using the datetime object, then fill all nulls with the datetime 
+        df_with_datetime = no_duplicates_dataframe.assign(last_updated=pd.Series([datetime_object] * len(no_duplicates_dataframe))).fillna(datetime_object)
+
+        data_cleaning_logger.debug(df_with_datetime.columns)
+        data_cleaning_logger.debug(f"Number of columns : {len(df_with_datetime.columns)}")
+
+        # Applying currency mapping to dataframe 
+        data_cleaning_logger.info("Appying currency codes to table")
+        currency_mapping = self.convert_text_file_to_dict(currency_mapping_document_name)
+        data_cleaning_logger.debug(currency_mapping)
+
+        # Mapping currency code dictionary to the currency names within the dataframe 
+        df_with_datetime["currency_code"] = df_with_datetime["currency_name"].map(currency_mapping)
+        data_cleaning_logger.debug(df_with_datetime.columns)
+        data_cleaning_logger.debug(f"Number of columns : {len(df_with_datetime.columns)}")
+
+        # Adding new row to dataframe 
+        new_row = {
+            "currency_name" : 'British Pound',
+            "conversion_rate": '1.000000',
+            "conversion_rate_percentage" : '1.000000',
+            "last_updated": f'{datetime_object}',
+            "currency_code": 'GBP'
+        }
+
+        data_cleaning_logger.info(f"Adding new row {new_row}")
+
+        
+        uk_row_df = pd.DataFrame.from_dict(new_row, orient='index').T
+
+        data_cleaning_logger.info("New dataframe created")
+
+        data_cleaning_logger.debug(uk_row_df)
+        updated_df = pd.concat([uk_row_df, df_with_datetime]).reset_index(drop=True).fillna(datetime_object)
+
+        # Adding 1 to index column to start from 1 instead of 0 
+        data_cleaning_logger.debug("Adding 1 to the index column to start from 1")
+        updated_df.index = updated_df.index + 1
+        data_cleaning_logger.info("Index updated")
+
+        # Adding currency_conversion_key column to match the new index
+        data_cleaning_logger.info("Adding currency_conversion_key column to match the new index")
+        updated_df["currency_conversion_key"] = updated_df.index 
+
+        column_order = [
+                'currency_conversion_key',
+                'currency_name', 
+                'currency_code',
+                'conversion_rate',	
+                'conversion_rate_percentage',
+                'last_updated'	            
+            ]
+        data_cleaning_logger.info("Updating column_order of dataframe")
+        data_cleaning_logger.info(column_order)
+
+        # Updating column order of the dataframe 
+        updated_df = updated_df[column_order].fillna(datetime_object)
+        data_cleaning_logger.info("New column order implemented")
+        data_cleaning_logger.debug(updated_df.columns)
+
+        # filtering the dataframe according to the currency_codes passed
+        filtered_currency_exchange_df = updated_df[updated_df["currency_code"].isin(currency_code_subset)]
+
+        data_cleaning_logger.info(f"New filtered dataframe based on {filtered_currency_exchange_df}")
+        data_cleaning_logger.debug(filtered_currency_exchange_df)
+
+        # Adding new rows to cover for unknowns 
+        data_cleaning_logger.info("Adding new rows to cover for unknowns")
+        new_rows_addition = self.add_new_rows(
+             [
+                {
+                    "currency_conversion_key": -1,
+                    "currency_name": "Not Applicable"
+                }, 
+                {
+                    "currency_conversion_key": 0,
+                    "currency_name": "Unknown"
+                }
+            ]
+        )
+
+        cleaned_currency_conversion_df = pd.concat([new_rows_addition, filtered_currency_exchange_df])
+        data_cleaning_logger.info("Successfully concatentated rows from together") 
+        data_cleaning_logger.debug(cleaned_currency_conversion_df)
+
+        cleaned_currency_conversion_datastore_table = self._upload_to_database(
+                                                            cleaned_currency_conversion_df,
+                                                            self.engine,
+                                                            datastore_table_name
+        )
+        data_cleaning_logger.info("Table Uploaded")
+        data_cleaning_logger.info("Job clean_currency_exchange_rates completed successfully")
+        return cleaned_currency_conversion_datastore_table
 
     def _upload_to_database(self, dataframe : pd.DataFrame, database_engine, datastore_table_name : str):
         '''
@@ -772,7 +985,6 @@ class DataCleaning:
         except: 
             print("Error uploading table to database")
             raise Exception
-    
          
     @staticmethod 
     def add_new_rows(rows_to_add : list):
@@ -856,6 +1068,16 @@ class DataCleaning:
             data_cleaning_logger.warning("Unknown value, returning None")
             return None
         
+    def convert_text_file_to_dict(self, text_file_name):
+        mapping_dictionary = {}
+        with open(f'{text_file_name}.txt', 'r') as file:
+            for line in file:
+                key, value = line.strip().split(',')
+                mapping_dictionary[key] = value
+        data_cleaning_logger.debug(f"Using mapping dictionary {mapping_dictionary}")
+
+        return mapping_dictionary
+
     def clean_dates(self, date):
             '''
             Utility method to clean dates extracted from the data sources 
@@ -904,8 +1126,30 @@ def perform_data_cleaning(target_datastore_config_file_name):
     cleaner.clean_product_table(
         "s3://data-handling-public/products.csv",
         "dim_product_details"
-    ) 
+    )
+    cleaner.clean_currency_table("country_data.json", ["US", "GB", "DE"], "dim_currency") 
+
+    cleaner.clean_currency_exchange_rates(
+    "https://www.x-rates.com/table/?from=GBP&amount=1",
+    '//table[@class="tablesorter ratesTable"]/tbody',
+    '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
+    ["currency_name", "conversion_rate", "conversion_rate_percentage"],
+    "currency_conversions",
+    "currency_code_mapping",
+    ["GBP", "USD", "EUR"],
+    "dim_currency_conversion"
+    )
 
 if __name__=="__main__":
-    perform_data_cleaning()
+    cleaner = DataCleaning("sales_data_creds_dev.yaml")
+    cleaner.clean_currency_exchange_rates(
+    "https://www.x-rates.com/table/?from=GBP&amount=1",
+    '//table[@class="tablesorter ratesTable"]/tbody',
+    '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
+    ["currency_name", "conversion_rate", "conversion_rate_percentage"],
+    "currency_conversions",
+    "currency_code_mapping",
+    ["GBP", "USD", "EUR"],
+    "dim_currency_conversion"
+    )
  
