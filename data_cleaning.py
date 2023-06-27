@@ -1144,7 +1144,7 @@ def perform_data_cleaning(target_datastore_config_file_name):
 if __name__=="__main__":
     # Creating land tables from dataset 
     currency_code_list = []
-    cleaner = DataCleaning("sales_data_creds_dev.yaml")
+    cleaner = DataCleaning("sales_data_creds_test.yaml")
     cleaner.clean_user_data("legacy_users", "db_creds.yaml", "land_user_data")
     cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "land_store_details")
     cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details")
