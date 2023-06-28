@@ -15,7 +15,17 @@ test_suite.addTest(unittest.makeSuite(TestDataCleaning))
 test_suite.addTest(unittest.makeSuite(TestDatabaseExtraction))
 test_suite.addTest(unittest.makeSuite(TestCurrencyRateExtraction))
 
-report_file = 'test_report.html'
+# Get the current date in the format "YYYY-MM-DD"
+current_date = datetime.now().strftime("%Y-%m-%d")
+
+# Create the directory path
+directory_path = f"test_results/{current_date}"
+
+# Create the directory if it doesn't exist
+os.makedirs(directory_path, exist_ok=True)
+
+# Set the report file path with the directory and file name
+report_file = f"{directory_path}"
 
 
 # Create a test runner with HTMLTestRunner
