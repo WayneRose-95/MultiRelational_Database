@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Unittest Results</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-12">
+                <h2 class="text-capitalize">Unittest Results</h2>
+                <p class='attribute'><strong>Start Time: </strong>2023-06-28 22:39:05</p>
+                <p class='attribute'><strong>Duration: </strong>78.66 s</p>
+                <p class='attribute'><strong>Summary: </strong>Total: 10, Pass: 10</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12 col-sm-10 col-md-10">
+                <table class='table table-hover table-responsive'>
+                    <thead>
+                        <tr>
+                            <th>test_data_cleaning.TestDataCleaning</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_clean_card_details</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                                <button class="btn btn-default btn-xs">View</button>
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td class="col-xs-9" colspan="3"><p>Table uploaded
+connection successful
+dict_keys(['dim_card_details'])
+SELECT dim_card_details.index, dim_card_details.card_key, dim_card_details.card_number, dim_card_details.expiry_date, dim_card_details.card_provider, dim_card_details.date_payment_confirmed 
+FROM dim_card_details
+SELECT dim_card_details.index, dim_card_details.card_key, dim_card_details.card_number, dim_card_details.expiry_date, dim_card_details.card_provider, dim_card_details.date_payment_confirmed 
+FROM dim_card_details
+connection successful
+dict_keys(['land_card_details'])
+SELECT land_card_details.index, land_card_details.card_key, land_card_details.card_number, land_card_details.expiry_date, land_card_details.card_provider, land_card_details.date_payment_confirmed 
+FROM land_card_details
+SELECT land_card_details.index, land_card_details.card_key, land_card_details.card_number, land_card_details.expiry_date, land_card_details.card_provider, land_card_details.date_payment_confirmed 
+FROM land_card_details
+Number of rows in land_card_details from Dev Database : 15286
+Number of rows in land_card_details from Test Database : 15286
+ The type of the variable <class 'pandas.core.frame.DataFrame'>
+Length of the expected_index : 15286
+Length of the table_index : 15286
+The test list: ['card_key', 'card_number', 'expiry_date', 'card_provider', 'date_payment_confirmed']
+The expected list : ['card_key', 'card_number', 'expiry_date', 'card_provider', 'date_payment_confirmed']
+Number of rows in dim_card_details from Dev Database : 15286
+Number of rows in dim_card_details from Test Database : 15286
+Length of the expected_index : 15286
+Length of the table_index : 15286
+The test list: ['card_key', 'card_number', 'expiry_date', 'card_provider', 'date_payment_confirmed']
+The expected list : ['card_key', 'card_number', 'expiry_date', 'card_provider', 'date_payment_confirmed']
+</p>
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_clean_currency_table</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                                <button class="btn btn-default btn-xs">View</button>
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td class="col-xs-9" colspan="3"><p>Table uploaded
+connection successful
+dict_keys(['land_currency'])
+SELECT land_currency.index, land_currency.currency_key, land_currency.country_name, land_currency.currency_code, land_currency.country_code, land_currency.currency_symbol 
+FROM land_currency
+SELECT land_currency.index, land_currency.currency_key, land_currency.country_name, land_currency.currency_code, land_currency.country_code, land_currency.currency_symbol 
+FROM land_currency
+connection successful
+dict_keys(['dim_currency', 'dim_currency_conversion'])
+SELECT dim_currency.index, dim_currency.currency_key, dim_currency.country_name, dim_currency.currency_code, dim_currency.country_code, dim_currency.currency_symbol, dim_currency.currency_conversion_key 
+FROM dim_currency
+SELECT dim_currency.index, dim_currency.currency_key, dim_currency.country_name, dim_currency.currency_code, dim_currency.country_code, dim_currency.currency_symbol, dim_currency.currency_conversion_key 
+FROM dim_currency
+Number of rows in land_currency_table from Dev Database : 251
+Number of rows in test_table uploaded to Test database : 251
+ The type of the variable <class 'pandas.core.frame.DataFrame'>
+Length of the expected_index : 251
+Length of the table_index 251
+The test list: ['currency_key', 'country_name', 'currency_code', 'country_code', 'currency_symbol']
+The expected list : ['currency_key', 'country_name', 'currency_code', 'country_code', 'currency_symbol']
+Number of rows in land_currency_table from Dev Database : 5
+Number of rows in test_dataframe from sql query on land currency table from Test Database : 5
+Length of the expected_index : 5
+Length of the table_index 5
+The test list: ['index', 'currency_key', 'country_name', 'currency_code', 'country_code', 'currency_symbol']
+The expected list : ['index', 'currency_key', 'country_name', 'currency_code', 'country_code', 'currency_symbol', 'currency_conversion_key']
+</p>
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_clean_dates</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_clean_orders_table</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                                <button class="btn btn-default btn-xs">View</button>
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td class="col-xs-9" colspan="3"><p>connection successful
+dict_keys(['orders_table'])
+SELECT orders_table.level_0, orders_table.index, orders_table.date_uuid, orders_table.first_name, orders_table.last_name, orders_table.user_uuid, orders_table.card_number, orders_table.store_code, orders_table.product_code, orders_table."1", orders_table.product_quantity 
+FROM orders_table
+SELECT orders_table.level_0, orders_table.index, orders_table.date_uuid, orders_table.first_name, orders_table.last_name, orders_table.user_uuid, orders_table.card_number, orders_table.store_code, orders_table.product_code, orders_table."1", orders_table.product_quantity 
+FROM orders_table
+Table uploaded
+connection successful
+dict_keys(['orders_table', 'dim_card_details', 'dim_currency', 'dim_currency_conversion', 'dim_date_times', 'dim_product_details', 'dim_store_details', 'dim_users'])
+SELECT orders_table.index, orders_table.order_key, orders_table.date_uuid, orders_table.user_uuid, orders_table.card_number, orders_table.store_code, orders_table.product_code, orders_table.product_quantity, orders_table.country_code, orders_table.card_key, orders_table.date_key, orders_table.product_key, orders_table.store_key, orders_table.user_key, orders_table.currency_key 
+FROM orders_table
+SELECT orders_table.index, orders_table.order_key, orders_table.date_uuid, orders_table.user_uuid, orders_table.card_number, orders_table.store_code, orders_table.product_code, orders_table.product_quantity, orders_table.country_code, orders_table.card_key, orders_table.date_key, orders_table.product_key, orders_table.store_key, orders_table.user_key, orders_table.currency_key 
+FROM orders_table
+Number of rows in orders_table from Dev Database : 120123
+Number of rows in orders_table from Test Database : 120123
+ The type of the variable <class 'pandas.core.frame.DataFrame'>
+Length of the expected_index : 120123
+Length of the table_index 120123
+The test list: ['order_key', 'date_uuid', 'user_uuid', 'card_number', 'store_code', 'product_code', 'product_quantity']
+The expected list : ['order_key', 'date_uuid', 'user_uuid', 'card_number', 'store_code', 'product_code', 'product_quantity']
+</p>
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_clean_product_table</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                                <button class="btn btn-default btn-xs">View</button>
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td class="col-xs-9" colspan="3"><p>['data-handling-public', 'products.csv']
+data-handling-public
+products.csv
+['Still_avaliable', 'Removed', nan, 'T3QRRH7SRP', 'BPSADIOQOK', 'H5N71TV8AY']
+Table uploaded
+connection successful
+dict_keys(['dim_product_details'])
+SELECT dim_product_details.index, dim_product_details.product_key, dim_product_details."EAN", dim_product_details.product_name, dim_product_details.product_price, dim_product_details.weight, dim_product_details.category, dim_product_details.date_added, dim_product_details.uuid, dim_product_details.availability, dim_product_details.product_code, dim_product_details.weight_class 
+FROM dim_product_details
+SELECT dim_product_details.index, dim_product_details.product_key, dim_product_details."EAN", dim_product_details.product_name, dim_product_details.product_price, dim_product_details.weight, dim_product_details.category, dim_product_details.date_added, dim_product_details.uuid, dim_product_details.availability, dim_product_details.product_code, dim_product_details.weight_class 
+FROM dim_product_details
+connection successful
+dict_keys(['land_product_details'])
+SELECT land_product_details.index, land_product_details.product_key, land_product_details."EAN", land_product_details.product_name, land_product_details.product_price, land_product_details.weight, land_product_details.category, land_product_details.date_added, land_product_details.uuid, land_product_details.availability, land_product_details.product_code 
+FROM land_product_details
+SELECT land_product_details.index, land_product_details.product_key, land_product_details."EAN", land_product_details.product_name, land_product_details.product_price, land_product_details.weight, land_product_details.category, land_product_details.date_added, land_product_details.uuid, land_product_details.availability, land_product_details.product_code 
+FROM land_product_details
+Number of rows in orders_table from Dev Database : 1848
+Number of rows in orders_table from Test Database : 1848
+ The type of the variable <class 'pandas.core.frame.DataFrame'>
+Length of the expected_index : 1848
+Length of the table_index 1848
+The test list: ['product_key', 'EAN', 'product_name', 'product_price', 'weight', 'category', 'date_added', 'uuid', 'availability', 'product_code']
+The expected list : ['product_key', 'EAN', 'product_name', 'product_price', 'weight', 'category', 'date_added', 'uuid', 'availability', 'product_code']
+Number of rows in orders_table from Dev Database : 1848
+Number of rows in orders_table from Test Database : 1848
+Length of the expected_index : 1848
+Length of the table_index 1848
+</p>
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_clean_store_data</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                                <button class="btn btn-default btn-xs">View</button>
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td class="col-xs-9" colspan="3"><p>connection successful
+dict_keys(['legacy_store_details'])
+SELECT legacy_store_details.index, legacy_store_details.address, legacy_store_details.longitude, legacy_store_details.lat, legacy_store_details.locality, legacy_store_details.store_code, legacy_store_details.staff_numbers, legacy_store_details.opening_date, legacy_store_details.store_type, legacy_store_details.latitude, legacy_store_details.country_code, legacy_store_details.continent 
+FROM legacy_store_details
+SELECT legacy_store_details.index, legacy_store_details.address, legacy_store_details.longitude, legacy_store_details.lat, legacy_store_details.locality, legacy_store_details.store_code, legacy_store_details.staff_numbers, legacy_store_details.opening_date, legacy_store_details.store_type, legacy_store_details.latitude, legacy_store_details.country_code, legacy_store_details.continent 
+FROM legacy_store_details
+Table uploaded
+connection successful
+dict_keys(['land_store_details'])
+SELECT land_store_details.index, land_store_details.store_key, land_store_details.store_address, land_store_details.longitude, land_store_details.latitude, land_store_details.city, land_store_details.store_code, land_store_details.number_of_staff, land_store_details.opening_date, land_store_details.store_type, land_store_details.country_code, land_store_details.region 
+FROM land_store_details
+SELECT land_store_details.index, land_store_details.store_key, land_store_details.store_address, land_store_details.longitude, land_store_details.latitude, land_store_details.city, land_store_details.store_code, land_store_details.number_of_staff, land_store_details.opening_date, land_store_details.store_type, land_store_details.country_code, land_store_details.region 
+FROM land_store_details
+connection successful
+dict_keys(['dim_store_details'])
+SELECT dim_store_details.index, dim_store_details.store_key, dim_store_details.store_address, dim_store_details.longitude, dim_store_details.latitude, dim_store_details.city, dim_store_details.store_code, dim_store_details.number_of_staff, dim_store_details.opening_date, dim_store_details.store_type, dim_store_details.country_code, dim_store_details.region 
+FROM dim_store_details
+SELECT dim_store_details.index, dim_store_details.store_key, dim_store_details.store_address, dim_store_details.longitude, dim_store_details.latitude, dim_store_details.city, dim_store_details.store_code, dim_store_details.number_of_staff, dim_store_details.opening_date, dim_store_details.store_type, dim_store_details.country_code, dim_store_details.region 
+FROM dim_store_details
+Number of rows in land_store_details from Dev Database : 443
+Number of rows in land_store_details from Test Database : 443
+ The type of the variable <class 'pandas.core.frame.DataFrame'>
+Length of the expected_index : 443
+Length of the table_index 443
+The test list: ['store_key', 'store_address', 'longitude', 'latitude', 'city', 'store_code', 'number_of_staff', 'opening_date', 'store_type', 'country_code', 'region']
+The expected list : ['store_key', 'store_address', 'longitude', 'latitude', 'city', 'store_code', 'number_of_staff', 'opening_date', 'store_type', 'country_code', 'region']
+Number of rows in land_store_details from Dev Database : 443
+Number of rows in land_store_details from Test Database : 443
+Length of the expected_index : 443
+Length of the table_index 443
+The test list: ['store_key', 'store_address', 'longitude', 'latitude', 'city', 'store_code', 'number_of_staff', 'opening_date', 'store_type', 'country_code', 'region']
+The expected list : ['store_key', 'store_address', 'longitude', 'latitude', 'city', 'store_code', 'number_of_staff', 'opening_date', 'store_type', 'country_code', 'region']
+</p>
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_clean_time_event_table</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                                <button class="btn btn-default btn-xs">View</button>
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td class="col-xs-9" colspan="3"><p>Table uploaded
+connection successful
+dict_keys(['land_date_times'])
+SELECT land_date_times.index, land_date_times.time_key, land_date_times.timestamp, land_date_times.day, land_date_times.month, land_date_times.year, land_date_times.time_period, land_date_times.date_uuid 
+FROM land_date_times
+SELECT land_date_times.index, land_date_times.time_key, land_date_times.timestamp, land_date_times.day, land_date_times.month, land_date_times.year, land_date_times.time_period, land_date_times.date_uuid 
+FROM land_date_times
+connection successful
+dict_keys(['dim_date_times'])
+SELECT dim_date_times.index, dim_date_times.time_key, dim_date_times.timestamp, dim_date_times.day, dim_date_times.month, dim_date_times.year, dim_date_times.time_period, dim_date_times.date_uuid 
+FROM dim_date_times
+SELECT dim_date_times.index, dim_date_times.time_key, dim_date_times.timestamp, dim_date_times.day, dim_date_times.month, dim_date_times.year, dim_date_times.time_period, dim_date_times.date_uuid 
+FROM dim_date_times
+Number of rows in land_date_times from Dev Database : 120125
+Number of rows in land_date_times from Test Database : 120125
+ The type of the variable <class 'pandas.core.frame.DataFrame'>
+Length of the expected_index : 120125
+Length of the table_index 120125
+The test list: ['time_key', 'timestamp', 'day', 'month', 'year', 'time_period', 'date_uuid']
+The expected list : ['time_key', 'timestamp', 'day', 'month', 'year', 'time_period', 'date_uuid']
+Number of rows in land_date_times from Dev Database : 120125
+Number of rows in land_date_times from Test Database : 120125
+ The type of the variable <class 'pandas.core.frame.DataFrame'>
+Length of the expected_index : 120125
+Length of the table_index 120125
+The test list: ['time_key', 'timestamp', 'day', 'month', 'year', 'time_period', 'date_uuid']
+The expected list : ['time_key', 'timestamp', 'day', 'month', 'year', 'time_period', 'date_uuid']
+</p>
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_clean_user_data</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                                <button class="btn btn-default btn-xs">View</button>
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td class="col-xs-9" colspan="3"><p>connection successful
+dict_keys(['legacy_users'])
+SELECT legacy_users.index, legacy_users.first_name, legacy_users.last_name, legacy_users.date_of_birth, legacy_users.company, legacy_users.email_address, legacy_users.address, legacy_users.country, legacy_users.country_code, legacy_users.phone_number, legacy_users.join_date, legacy_users.user_uuid 
+FROM legacy_users
+SELECT legacy_users.index, legacy_users.first_name, legacy_users.last_name, legacy_users.date_of_birth, legacy_users.company, legacy_users.email_address, legacy_users.address, legacy_users.country, legacy_users.country_code, legacy_users.phone_number, legacy_users.join_date, legacy_users.user_uuid 
+FROM legacy_users
+Table uploaded
+connection successful
+dict_keys(['dim_users'])
+SELECT dim_users.index, dim_users.user_key, dim_users.first_name, dim_users.last_name, dim_users.birth_date, dim_users.company, dim_users."e-mail_address", dim_users.address, dim_users.country, dim_users.country_index, dim_users.phone_number, dim_users.join_date, dim_users.user_uuid 
+FROM dim_users
+SELECT dim_users.index, dim_users.user_key, dim_users.first_name, dim_users.last_name, dim_users.birth_date, dim_users.company, dim_users."e-mail_address", dim_users.address, dim_users.country, dim_users.country_index, dim_users.phone_number, dim_users.join_date, dim_users.user_uuid 
+FROM dim_users
+connection successful
+dict_keys(['land_user_data'])
+SELECT land_user_data.index, land_user_data.user_key, land_user_data.first_name, land_user_data.last_name, land_user_data.birth_date, land_user_data.company, land_user_data."e-mail_address", land_user_data.address, land_user_data.country, land_user_data.country_index, land_user_data.phone_number, land_user_data.join_date, land_user_data.user_uuid 
+FROM land_user_data
+SELECT land_user_data.index, land_user_data.user_key, land_user_data.first_name, land_user_data.last_name, land_user_data.birth_date, land_user_data.company, land_user_data."e-mail_address", land_user_data.address, land_user_data.country, land_user_data.country_index, land_user_data.phone_number, land_user_data.join_date, land_user_data.user_uuid 
+FROM land_user_data
+Number of rows in land_users from Dev Database : 15286
+Number of rows in land_users from Test Database : 15286
+ The type of the variable <class 'pandas.core.frame.DataFrame'>
+Length of the expected_index : 15286
+Length of the table_index : 15286
+The test list: ['user_key', 'first_name', 'last_name', 'birth_date', 'company', 'e-mail_address', 'address', 'country', 'country_index', 'phone_number', 'join_date', 'user_uuid']
+The expected list : ['user_key', 'first_name', 'last_name', 'birth_date', 'company', 'e-mail_address', 'address', 'country', 'country_index', 'phone_number', 'join_date', 'user_uuid']
+Number of rows in dim_users from Dev Database : 15286
+Number of rows in land_users from Test Database : 15286
+Length of the expected_index : 15286
+Length of the table_index : 15286
+Columns in dim_table ['index', 'user_key', 'first_name', 'last_name', 'birth_date', 'company', 'e-mail_address', 'address', 'country', 'country_index', 'phone_number', 'join_date', 'user_uuid']
+Columns in dim_table ['user_key', 'first_name', 'last_name', 'birth_date', 'company', 'e-mail_address', 'address', 'country', 'country_index', 'phone_number', 'join_date', 'user_uuid']
+</p>
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_convert_to_kg_invalid_weights</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_convert_to_kg_valid_weights</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                                <button class="btn btn-default btn-xs">View</button>
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td class="col-xs-9" colspan="3"><p>[0.08, 0.42, 1.68, 0.718, 0.6, 0.504, 0.48, 1200.0, 0.17]
+</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="3">
+                                Total: 10, Pass: 10 -- Duration: 78.66 s
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('td').on('click', '.btn', function(e){
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                var $this = $(this);
+                var $nextRow = $this.closest('tr').next('tr');
+                $nextRow.slideToggle("fast");
+                $this.text(function(i, text){
+                    if (text === 'View') {
+                        return 'Hide';
+                    } else {
+                        return 'View';
+                    };
+                });
+            });
+        });
+    </script>
+</body>
+</html

@@ -1,5 +1,5 @@
-from data_extraction import DatabaseExtractor
-from database_utils import DatabaseConnector
+from database_scripts.data_extraction import DatabaseExtractor
+from database_scripts.database_utils import DatabaseConnector
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 from datetime import datetime

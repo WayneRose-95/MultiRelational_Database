@@ -1,5 +1,6 @@
 import unittest
 import HtmlTestRunner
+from test_data_cleaning import get_absolute_file_path
 from test_data_cleaning import TestDataCleaning
 from test_data_extraction import TestDatabaseExtraction
 from test_database_utils import TestDatabaseConnector
@@ -19,7 +20,9 @@ test_suite.addTest(unittest.makeSuite(TestCurrencyRateExtraction))
 current_date = datetime.now().strftime("%Y-%m-%d")
 
 # Create the directory path
-directory_path = f"test_results/{current_date}"
+directory_path = get_absolute_file_path(current_date, "test_results")
+# Create the directory path
+# directory_path = f"test_results/{current_date}"
 
 # Create the directory if it doesn't exist
 os.makedirs(directory_path, exist_ok=True)

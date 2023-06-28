@@ -7,15 +7,26 @@ from database_scripts.data_extraction import DatabaseExtractor
 from database_scripts.database_utils import DatabaseConnector
 from sqlalchemy import create_engine
 from pandas import Timestamp 
+import os 
+
+def get_absolute_file_path(file_name, file_directory):
+    # Retrieve the absolute path of the current script
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Construct the absolute file path for the file in the credentials directory
+    file_path = os.path.join(current_dir, "..", file_directory, file_name)
+
+    return file_path
+
 
 class TestDataCleaning(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
         # Setting up credentials files 
-        cls.database_credentials_dev = 'sales_data_creds_dev.yaml'
-        cls.database_credentials_test = 'sales_data_creds_test.yaml'
-        cls.source_database_config_file_name = "db_creds.yaml"
+        cls.database_credentials_dev = get_absolute_file_path('sales_data_creds_dev.yaml', 'credentials') # 'sales_data_creds_dev.yaml'
+        cls.database_credentials_test = get_absolute_file_path('sales_data_creds_test.yaml', 'credentials') # 'sales_data_creds_test.yaml'
+        cls.source_database_config_file_name = get_absolute_file_path('db_creds.yaml', 'credentials') # "db_creds.yaml"
 
         # Setting up table names 
         cls.source_data_table_test = "legacy_users"
@@ -40,7 +51,7 @@ class TestDataCleaning(unittest.TestCase):
         cls.pdf_link = "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
         cls.json_s3_link = "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json"
         cls.csv_s3_link = "s3://data-handling-public/products.csv"
-        cls.json_file_path = r"source_data_files\country_data.json" 
+        cls.json_file_path = get_absolute_file_path('country_data.json', 'source_data_files') # r"source_data_files\country_data.json" 
 
         # Setting up test lists
         cls.json_file_path_subset = ["US", "GB", "DE"]
@@ -483,7 +494,7 @@ class TestDataCleaning(unittest.TestCase):
     
     
     def test_clean_currency_table(self):
-        with open("country_data.json", encoding='utf-8') as country_code_file:
+        with open(self.json_file_path, encoding='utf-8') as country_code_file:
             data = json.load(country_code_file)
 
         country_codes = list(data.keys())

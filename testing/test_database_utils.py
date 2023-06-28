@@ -4,9 +4,19 @@ from unittest.mock import patch
 from sqlalchemy import create_engine
 from database_scripts.database_utils import DatabaseConnector
 import yaml
+import sys
+import os  
 
 
- 
+def get_absolute_file_path(file_name, file_directory):
+    # Retrieve the absolute path of the current script
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Construct the absolute file path for the file in the credentials directory
+    file_path = os.path.join(current_dir, "..", file_directory, file_name)
+
+    return file_path
+
 
 class TestDatabaseConnector(unittest.TestCase):
     @classmethod
@@ -14,6 +24,7 @@ class TestDatabaseConnector(unittest.TestCase):
         # Mocking the create_engine function
         cls.create_engine_patch = mock.patch('sqlalchemy.create_engine')
         cls.mock_create_engine = cls.create_engine_patch.start()
+        cls.source_database_credentials = get_absolute_file_path("db_creds.yaml", "credentials") 
         cls.test_connection = DatabaseConnector()
 
 
@@ -24,7 +35,7 @@ class TestDatabaseConnector(unittest.TestCase):
 
     def test_read_database_credentials(self):
         
-        database_credentials = self.test_connection.read_database_credentials('db_creds.yaml')
+        database_credentials = self.test_connection.read_database_credentials(self.source_database_credentials)
         
         self.assertIsInstance(database_credentials, dict)
 
@@ -41,12 +52,12 @@ class TestDatabaseConnector(unittest.TestCase):
     
     def test_create_connection_string(self):
         # Pass a valid connection_string from the output of the create_connection_string method
-        test_connection_string_valid = self.test_connection.create_connection_string("db_creds.yaml")
+        test_connection_string_valid = self.test_connection.create_connection_string(self.source_database_credentials)
         # Assert if the output is a string 
         self.assertIsInstance(test_connection_string_valid, str)
         
 
-    @mock.patch('database_utils.create_engine')
+    @mock.patch('database_scripts.database_utils.create_engine')
     def test_initialise_database_connection(self, mock_create_engine):
         # Create a mock engine with set return values 
         mock_engine = mock.MagicMock()
@@ -54,7 +65,7 @@ class TestDatabaseConnector(unittest.TestCase):
         mock_create_engine.return_value = mock_engine
         
         # Set the config_file_name 
-        config_file_name = 'db_creds.yaml'
+        config_file_name = self.source_database_credentials
         connector = DatabaseConnector()
         connection_string = connector.create_connection_string(config_file_name)
         # Call the method being tested

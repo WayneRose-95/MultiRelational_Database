@@ -7,12 +7,24 @@ import pandas as pd
 from database_scripts.data_extraction import DatabaseExtractor
 from database_scripts.database_utils import DatabaseConnector
 import tabula 
+import os 
+
+def get_absolute_file_path(file_name, file_directory):
+    # Retrieve the absolute path of the current script
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    print(current_dir)
+
+    # Construct the absolute file path for the file in the credentials directory
+    file_path = os.path.join(current_dir, "..", file_directory, file_name)
+    print(file_path)
+
+    return file_path
 
 class TestDatabaseExtraction(unittest.TestCase):
 
     @classmethod 
     def setUpClass(cls):
-        cls.config_file_name = r'credentials\db_creds.yaml'
+        cls.config_file_name = get_absolute_file_path('db_creds.yaml', 'credentials') # r'credentials\db_creds.yaml'
         cls.config_file_name_wrong = 'testing.yaml'
         cls.table_name = 'legacy_users'
         cls.table_name_wrong = 'legacy_uxers'
@@ -20,7 +32,7 @@ class TestDatabaseExtraction(unittest.TestCase):
         cls.s3_json_link = "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json"
         cls.test_url = "s3://data-handling-public/products.csv"
         cls.test_url_wrong = "s3://data-handling-private/prod.csv"
-        cls.test_json_filepath = r"source_data_files\country_data.json"
+        cls.test_json_filepath = get_absolute_file_path('country_data.json', 'source_data_files') #r"source_data_files\country_data.json"
         cls.test_json_filepath_wrong = "data.json"
         cls.test_extractor = DatabaseExtractor() 
         cls.test_connector = DatabaseConnector()
@@ -67,8 +79,8 @@ class TestDatabaseExtraction(unittest.TestCase):
             self.test_extractor.retrieve_pdf_data("Not a link to a PDF")
 
     
-    @patch('data_extraction.DatabaseExtractor._is_valid_url')
-    @patch('data_extraction.tabula.read_pdf')
+    @patch('database_scripts.data_extraction.DatabaseExtractor._is_valid_url')
+    @patch('database_scripts.data_extraction.tabula.read_pdf')
     def test_mock_retrieve_pdf_data(self, mock_read_pdf, mock_is_valid_url):
 
         # Mock the return value of _is_valid_url
@@ -123,7 +135,7 @@ class TestDatabaseExtraction(unittest.TestCase):
             )
     
     
-    @patch('data_extraction.boto3.client')
+    @patch('database_scripts.data_extraction.boto3.client')
     def test_mock_read_s3_bucket_to_dataframe(self, mock_client):
         # Mock the response from s3_client.get_object
         mock_body = MagicMock()
