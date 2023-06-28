@@ -5,6 +5,7 @@ from test_data_extraction import TestDatabaseExtraction
 from test_database_utils import TestDatabaseConnector
 from test_currency_rate_extraction import TestCurrencyRateExtraction
 from datetime import datetime 
+import os
 # Create a Test Suite
 test_suite = unittest.TestSuite()
 
@@ -14,7 +15,8 @@ test_suite.addTest(unittest.makeSuite(TestDataCleaning))
 test_suite.addTest(unittest.makeSuite(TestDatabaseExtraction))
 test_suite.addTest(unittest.makeSuite(TestCurrencyRateExtraction))
 
-report_file = f'test_results/{datetime.now()}'
+report_file = 'test_report.html'
+
 
 # Create a test runner with HTMLTestRunner
 test_runner = HtmlTestRunner.HTMLTestRunner(output=report_file)
