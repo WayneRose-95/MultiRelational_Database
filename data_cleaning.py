@@ -1113,6 +1113,36 @@ class DataCleaning:
 
 def perform_data_cleaning(target_datastore_config_file_name):
     cleaner = DataCleaning(target_datastore_config_file_name)
+    # Creating LAND_TABLES 
+    currency_code_list = []
+    cleaner.clean_user_data("legacy_users", "db_creds.yaml", "land_user_data")
+    cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "land_store_details")
+    cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details")
+    cleaner.clean_time_event_table("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json", "land_date_times")
+    cleaner.clean_card_details("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf", "land_card_details")
+    with open("currency_code_mapping.txt") as currency_code_file:
+        for line in currency_code_file:
+            country, code = line.strip().split(',')
+            currency_code_list.append(code)
+
+    with open("country_data.json", encoding='utf-8') as country_code_file:
+      data = json.load(country_code_file)
+
+    country_codes = list(data.keys())
+    cleaner.clean_currency_table("country_data.json", country_codes, "land_currency")
+
+    cleaner.clean_currency_exchange_rates(
+        "https://www.x-rates.com/table/?from=GBP&amount=1",
+        '//table[@class="tablesorter ratesTable"]/tbody',
+        '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
+        ["currency_name", "conversion_rate", "conversion_rate_percentage"],
+        "currency_conversions",
+        "currency_code_mapping",
+        currency_code_list,
+        "land_currency_conversion"
+    )
+
+    # CREATING DIMS and FACT TABLES 
     cleaner.clean_user_data("legacy_users", 'db_creds.yaml', "dim_users")
     cleaner.clean_store_data("legacy_store_details", "db_creds.yaml", "dim_store_details")
     cleaner.clean_card_details(
