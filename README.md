@@ -23,7 +23,7 @@ The business has its data hosted in various data locations
 
 - An Amazon RDS, which contains data on their users, stores and a list of their orders. 
 - An Amazon S3 Bucket, which contains data on their products in .csv files and date_time_series data stored within .json files 
-- A PDF file which contains details on credit card details hosted on AWS. 
+- A PDF file which contains credit card details hosted on AWS. 
 
 The business needs a way to centralise these sources of data into a single source of truth; a centralised datastore which contains allows end users to be able to SQL run queries across these multiple datasources to provide insights into their data. 
 
