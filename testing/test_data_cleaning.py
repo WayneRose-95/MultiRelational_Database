@@ -5,18 +5,10 @@ from unittest.mock import patch
 from database_scripts.data_cleaning import DataCleaning 
 from database_scripts.data_extraction import DatabaseExtractor
 from database_scripts.database_utils import DatabaseConnector
+from database_scripts.file_handler import get_absolute_file_path
 from sqlalchemy import create_engine
 from pandas import Timestamp 
 import os 
-
-def get_absolute_file_path(file_name, file_directory):
-    # Retrieve the absolute path of the current script
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Construct the absolute file path for the file in the credentials directory
-    file_path = os.path.join(current_dir, "..", file_directory, file_name)
-
-    return file_path
 
 
 class TestDataCleaning(unittest.TestCase):

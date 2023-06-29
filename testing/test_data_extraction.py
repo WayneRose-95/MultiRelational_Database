@@ -6,19 +6,10 @@ from sqlalchemy import create_engine
 import pandas as pd 
 from database_scripts.data_extraction import DatabaseExtractor
 from database_scripts.database_utils import DatabaseConnector
+from database_scripts.file_handler import get_absolute_file_path
 import tabula 
 import os 
 
-def get_absolute_file_path(file_name, file_directory):
-    # Retrieve the absolute path of the current script
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    print(current_dir)
-
-    # Construct the absolute file path for the file in the credentials directory
-    file_path = os.path.join(current_dir, "..", file_directory, file_name)
-    print(file_path)
-
-    return file_path
 
 class TestDatabaseExtraction(unittest.TestCase):
 

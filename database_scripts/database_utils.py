@@ -1,7 +1,7 @@
 import yaml
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
-from file_handler import get_absolute_file_path
+from database_scripts.file_handler import get_absolute_file_path
 import pandas as pd 
 import os 
 import logging

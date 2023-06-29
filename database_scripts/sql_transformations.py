@@ -6,7 +6,10 @@ from sqlalchemy.orm import sessionmaker
 import logging
 import os 
 
-log_filename = "logs/sql_transformations.log"
+'''
+LOG DEFINITION
+'''
+log_filename = get_absolute_file_path("sql_transformations.log", "logs") # "logs/sql_transformations.log"
 if not os.path.exists(log_filename):
     os.makedirs(os.path.dirname(log_filename), exist_ok=True)
 

@@ -1,5 +1,6 @@
 from database_scripts.database_utils import DatabaseConnector 
 from database_scripts.currency_rate_extraction import CurrencyRateExtractor
+from database_scripts.file_handler import get_absolute_file_path
 from sqlalchemy import inspect
 from sqlalchemy import select
 from sqlalchemy import Table
@@ -14,16 +15,12 @@ import re
 import os 
 import logging
 
-def get_absolute_file_path(file_name, file_directory):
-    # Retrieve the absolute path of the current script
-    current_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # Construct the absolute file path for the file in the credentials directory
-    file_path = os.path.join(current_dir, "..", file_directory, file_name)
 
-    return file_path
-
-log_filename = "logs/data_extraction.log"
+'''
+LOGS DEFINITION
+'''
+log_filename = get_absolute_file_path("data_extraction.log", "logs") # "logs/data_extraction.log"
 if not os.path.exists(log_filename):
     os.makedirs(os.path.dirname(log_filename), exist_ok=True)
 

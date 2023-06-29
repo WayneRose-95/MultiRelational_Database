@@ -3,22 +3,18 @@ from data_cleaning import data_cleaning_logger as data_cleaning_logger
 from data_extraction import data_extraction_logger as data_extraction_logger
 from database_utils import database_utils_logger as database_utils_logger
 from sql_transformations import sql_transformations_logger as sql_transformations_logger
+from file_handler import get_absolute_file_path
 from data_cleaning import perform_data_cleaning
 from sql_transformations import perform_database_operations
 import time 
 import os 
 import logging
 
-def get_absolute_file_path(file_name, file_directory):
-    # Retrieve the absolute path of the current script
-    current_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # Construct the absolute file path for the file in the credentials directory
-    file_path = os.path.join(current_dir, "..", file_directory, file_name)
-
-    return file_path
-
-log_filename = "logs/main.log"
+'''
+LOG DEFINITION
+'''
+log_filename = get_absolute_file_path("main.log", "logs") # "logs/main.log"
 if not os.path.exists(log_filename):
     os.makedirs(os.path.dirname(log_filename), exist_ok=True)
 

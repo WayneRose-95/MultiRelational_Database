@@ -3,7 +3,7 @@ from selenium.webdriver import ChromeOptions
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import NoSuchElementException
-
+from database_scripts.file_handler import get_absolute_file_path
 
 # from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
@@ -15,16 +15,12 @@ import os
 import logging
 import pandas as pd 
 
-def get_source_data_file_path(file_name, file_directory):
-    # Retrieve the absolute path of the current script
-    current_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # Construct the absolute file path for the file in the credentials directory
-    file_path = os.path.join(current_dir, "..", file_directory, file_name)
+'''
+LOG DEFINITION
+'''
 
-    return file_path
-
-log_filename = "logs/currency_rate_extractor.log"
+log_filename = get_absolute_file_path("currency_rate_extractor.log", "logs") # "logs/currency_rate_extractor.log"
 if not os.path.exists(log_filename):
     os.makedirs(os.path.dirname(log_filename), exist_ok=True)
 
@@ -142,7 +138,7 @@ class CurrencyRateExtractor:
         return dataframe, timestamp 
 
 if __name__ == "__main__":
-    currency_conversions_file = get_source_data_file_path("currency_conversions","source_data_files")
+    currency_conversions_file = get_absolute_file_path("currency_conversions","source_data_files")
     sample_extractor = CurrencyRateExtractor()
     dataframe, timestamp = sample_extractor.scrape_information(
     "https://www.x-rates.com/table/?from=GBP&amount=1",
