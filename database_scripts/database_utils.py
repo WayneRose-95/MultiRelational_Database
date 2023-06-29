@@ -1,29 +1,17 @@
 import yaml
 from sqlalchemy import create_engine
-from sqlalchemy.exc import OperationalError 
+from sqlalchemy.exc import OperationalError
+from file_handler import get_absolute_file_path
 import pandas as pd 
 import os 
 import logging
 
 
-'''
-YAML_FILE_PATH defintion 
-'''
-
-def get_credentials_file_path(file_name, file_directory):
-    # Retrieve the absolute path of the current script
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Construct the absolute file path for the file in the credentials directory
-    file_path = os.path.join(current_dir, "..", file_directory, file_name)
-
-    return file_path
-
 
 '''
 LOG CREATION 
 '''
-log_filename = "logs/database_utils.log"
+log_filename = get_absolute_file_path("database_utils.log", "logs") # "logs/database_utils.log"
 if not os.path.exists(log_filename):
     os.makedirs(os.path.dirname(log_filename), exist_ok=True)
 
@@ -174,9 +162,9 @@ class DatabaseConnector:
 
 
 if __name__ == "__main__":
-    yaml_file_path = get_credentials_file_path("db_creds.yaml", "credentials")
+    yaml_file_path = get_absolute_file_path("db_creds.yaml", "credentials")
     new_database = DatabaseConnector()
     new_database.read_database_credentials(yaml_file_path)
     new_database.create_connection_string(yaml_file_path)
     new_database.initialise_database_connection(yaml_file_path)
-    # C:\Users\EGuis\MultiRelational_Database\
+    
