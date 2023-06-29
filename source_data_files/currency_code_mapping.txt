@@ -1,0 +1,52 @@
+US Dollar,USD
+Euro,EUR
+Indian Rupee,INR
+Australian Dollar,AUD
+Canadian Dollar,CAD
+Singapore Dollar,SGD
+Swiss Franc,CHF
+Malaysian Ringgit,MYR
+Japanese Yen,JPY
+Chinese Yuan Renminbi,CNY
+Argentine Peso,ARS
+Bahraini Dinar,BHD
+Botswana Pula,BWP
+Brazilian Real,BRL
+Bruneian Dollar,BND
+Bulgarian Lev,BGN
+Chilean Peso,CLP
+Colombian Peso,COP
+Czech Koruna,CZK
+Danish Krone,DKK
+Emirati Dirham,AED
+Hong Kong Dollar,HKD
+Hungarian Forint,HUF
+Icelandic Krona,ISK
+Indonesian Rupiah,IDR
+Iranian Rial,IRR
+Israeli Shekel,ILS
+Kazakhstani Tenge,KZT
+Kuwaiti Dinar,KWD
+Libyan Dinar,LYD
+Mauritian Rupee,MUR
+Mexican Peso,MXN
+Nepalese Rupee,NPR
+New Zealand Dollar,NZD
+Norwegian Krone,NOK
+Omani Rial,OMR
+Pakistani Rupee,PKR
+Philippine Peso,PHP
+Polish Zloty,PLN
+Qatari Riyal,QAR
+Romanian New Leu,RON
+Russian Ruble,RUB
+Saudi Arabian Riyal,SAR
+South African Rand,ZAR
+South Korean Won,KRW
+Sri Lankan Rupee,LKR
+Swedish Krona,SEK
+Taiwan New Dollar,TWD
+Thai Baht,THB
+Trinidadian Dollar,TTD
+Turkish Lira,TRY
+Venezuelan Bolivar,VES
