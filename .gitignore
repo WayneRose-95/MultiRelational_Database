@@ -128,13 +128,13 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-db_creds.yaml
-sales_data_creds.yaml 
-sales_data_creds_dev.yaml
-sales_data_creds_test.yaml
-test_file.txt 
-test.yaml 
-test_config_yaml.yaml
+credentials/db_creds.yaml
+credentials/sales_data_creds.yaml 
+credentials/sales_data_creds_dev.yaml
+credentials/sales_data_creds_test.yaml
+testing/test_file.txt 
+testing/test.yaml 
+testing/test_config_yaml.yaml
 
 # .ipynb files 
 *.ipynb
