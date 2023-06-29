@@ -1,9 +1,14 @@
 # MultiRelational_Database
+A database model for a fictional retail chain of stores 
 
+[![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
 <h3 align="left">Languages and Tools:</h3>
 <p align="left">
 <a href="https://git-scm.com/" target="_blank" rel="noreferrer"> <img src="https://www.vectorlogo.zone/logos/git-scm/git-scm-icon.svg" alt="git" width="40" height="40"/>
 <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/postgresql/postgresql-original-wordmark.svg" alt="postgresql" width="40" height="40"/> </a> <a href="https://www.python.org" target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/python/python-original.svg" alt="python" width="40" height="40"/> </a> <a href="https://www.selenium.dev" target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/detain/svg-logos/780f25886640cef088af994181646db2f6b1a3f8/svg/selenium-logo.svg" alt="selenium" width="40" height="40"/> </a> </p>
+
+# Running The Program
+
 
 # Introduction and Case Study 
 ![Clear Pivot Image](https://github.com/WayneRose-95/MultiRelational_Database/assets/89411656/8906b516-deb4-40ec-83f4-24fea40eabd4)
@@ -31,4 +36,9 @@ The raw data from the source systems will be:
 - Transformed using the Pandas Package in Python  
 - Loaded into a Postgresql database
 
-From which after the ETL process has completed, relationships amongst tables will be formed to create the STAR schema design.  
+From which after the ETL process has completed, relationships amongst tables will be formed to create the STAR schema design. 
+
+## The Data Model 
+Below is a design of the STAR schema for Clear Pivot
+![image](https://github.com/WayneRose-95/MultiRelational_Database/assets/89411656/af09fa64-4b4d-4bef-96c9-8d076272d2fe)
+
