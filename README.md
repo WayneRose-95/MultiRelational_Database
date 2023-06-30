@@ -37,8 +37,51 @@ The raw data from the source systems will be:
 - Loaded into a Postgresql database
 
 From which after the ETL process has completed, relationships amongst tables will be formed to create the STAR schema design. 
+![image](https://github.com/WayneRose-95/MultiRelational_Database/assets/89411656/3febf8dc-481d-4a4b-be25-5a5b09885b48)
+
 
 ## The Data Model 
 Below is a design of the STAR schema for Clear Pivot
-![image](https://github.com/WayneRose-95/MultiRelational_Database/assets/89411656/af09fa64-4b4d-4bef-96c9-8d076272d2fe)
+![image](https://github.com/WayneRose-95/MultiRelational_Database/assets/89411656/1809e536-bdfc-4a34-a734-63bbc4cff305)
+
+# Python Script Usage
+The project consists of three main scripts which are responsible for the ETL process. 
+These are listed below
+![image](https://github.com/WayneRose-95/MultiRelational_Database/assets/89411656/d235f97b-8b4c-45aa-86d4-5d3d2b18a987)
+
+The functionality of each of these scripts is called via 
+
+````````````````````````````````````
+python main.py 
+`````````````````````````````````````
+# Business Questions 
+After creating the STAR schema model Quick Pivot's Operations department wants to gain answers to the following questions: 
+
+- How many stores does the business have an in which countries? 
+- Which locations currently have the most stores? 
+- Which months produce the average highest cost of sales typically? 
+- What percentage of sales come through each type of store? 
+- Which month in in each produced the highest cost of sales? 
+- What is our staff headcount? 
+- Which German store type is selling the most? 
+- How quickly is the company making sales?
+
+These questions are answered in the **sql_scripts.sql** script within this repository
+
+# Future Implementations and Improvements 
+
+- Automation of SQL Sripts to set datatypes in tables, and join dims and facts together
+- Addition of extra rows in dimension tables to account for unknown and empty records
+- Implementation of loggging for class modules
+- Creation of unittests scripts for class modules 
+- Create a backups directory containing the databases
+- Create a currency table
+- Create a currency conversion table
+- Adjust the order of the ETL process
+- Create LAND tables for dimension table
+- Add CTRL tables for ETL process
+- Addition of slowly changing dimensions (SCDs)
+
+
+
 
