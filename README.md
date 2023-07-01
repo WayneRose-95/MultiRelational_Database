@@ -1,5 +1,8 @@
 # MultiRelational_Database
 A database model for a fictional retail chain of stores 
+# Project Status 
+In Development 
+Current Feature: README and Wiki Documentation 
 
 [![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
 <h3 align="left">Languages and Tools:</h3>
