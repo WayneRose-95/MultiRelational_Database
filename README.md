@@ -37,7 +37,10 @@ The raw data from the source systems will be:
 - Loaded into a Postgresql database
 
 From which after the ETL process has completed, relationships amongst tables will be formed to create the STAR schema design. 
-![image](https://github.com/WayneRose-95/MultiRelational_Database/assets/89411656/3febf8dc-481d-4a4b-be25-5a5b09885b48)
+
+### The ETL Process
+![image](https://github.com/WayneRose-95/MultiRelational_Database/assets/89411656/ec88c4c0-f9e4-492a-8ce4-728d2e17757e)
+
 
 
 ## The Data Model 
