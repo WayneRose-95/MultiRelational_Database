@@ -47,7 +47,8 @@ Below is a design of the STAR schema for Clear Pivot
 # Python Script Usage
 The project consists of three main scripts which are responsible for the ETL process. 
 These are listed below
-![image](https://github.com/WayneRose-95/MultiRelational_Database/assets/89411656/d235f97b-8b4c-45aa-86d4-5d3d2b18a987)
+![image](https://github.com/WayneRose-95/MultiRelational_Database/assets/89411656/9e9753b6-a4a7-4bae-9060-89c74ce23a42)
+
 
 The functionality of each of these scripts is called via 
 
