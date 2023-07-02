@@ -1,8 +1,14 @@
 # MultiRelational_Database
 A database model for a fictional retail chain of stores 
 
+# Project Status 
+In Development 
+Current Feature: README and Wiki Documentation Last Updated 01/07/2023 (DD/MM/YYYY) 
+
+<h1 align="left">Languages and Tools</h1>
+
 [![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
-<h3 align="left">Languages and Tools:</h3>
+
 <p align="left">
 <a href="https://git-scm.com/" target="_blank" rel="noreferrer"> <img src="https://www.vectorlogo.zone/logos/git-scm/git-scm-icon.svg" alt="git" width="40" height="40"/>
 <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/postgresql/postgresql-original-wordmark.svg" alt="postgresql" width="40" height="40"/> </a> <a href="https://www.python.org" target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/python/python-original.svg" alt="python" width="40" height="40"/> </a> <a href="https://www.selenium.dev" target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/detain/svg-logos/780f25886640cef088af994181646db2f6b1a3f8/svg/selenium-logo.svg" alt="selenium" width="40" height="40"/> </a> </p>
@@ -37,7 +43,10 @@ The raw data from the source systems will be:
 - Loaded into a Postgresql database
 
 From which after the ETL process has completed, relationships amongst tables will be formed to create the STAR schema design. 
-![image](https://github.com/WayneRose-95/MultiRelational_Database/assets/89411656/3febf8dc-481d-4a4b-be25-5a5b09885b48)
+
+### The ETL Process
+![image](https://github.com/WayneRose-95/MultiRelational_Database/assets/89411656/ec88c4c0-f9e4-492a-8ce4-728d2e17757e)
+
 
 
 ## The Data Model 
