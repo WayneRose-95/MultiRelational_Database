@@ -1,0 +1,10 @@
+boto3==1.26.140
+HtmlTestRunner==0.8.0
+pandas==2.0.3
+PyYAML==5.4.1
+PyYAML==6.0
+selenium==4.10.0
+SQLAlchemy==2.0.17
+tabula==1.0.5
+webdriver_manager==3.8.6
+Python==3.10.9
