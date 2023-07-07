@@ -1,5 +1,7 @@
 -- Table: public.land_user_data
 
+-- Table: public.land_user_data
+
 DROP TABLE IF EXISTS public.land_user_data;
 
 CREATE TABLE IF NOT EXISTS public.land_user_data
@@ -10,13 +12,13 @@ CREATE TABLE IF NOT EXISTS public.land_user_data
     last_name character varying(255) COLLATE pg_catalog."default",
     birth_date date,
     company character varying(255) COLLATE pg_catalog."default",
-    "e-mail_address" character varying(255) COLLATE pg_catalog."default",
+    e-mail_address character varying(255) COLLATE pg_catalog."default",
     address character varying(600) COLLATE pg_catalog."default",
     country character varying(100) COLLATE pg_catalog."default",
     country_index character varying(10) COLLATE pg_catalog."default",
     phone_number character varying(50) COLLATE pg_catalog."default",
     join_date date,
-    user_uuid uuid NOT NULL
+    user_uuid uuid 
 )
 
 TABLESPACE pg_default;

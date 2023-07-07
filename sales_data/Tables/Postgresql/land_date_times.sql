@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.land_date_times
     month character varying(30) COLLATE pg_catalog."default",
     year character varying(30) COLLATE pg_catalog."default",
     time_period character varying(40) COLLATE pg_catalog."default",
-    date_uuid uuid NOT NULL
+    date_uuid uuid 
 )
 
 TABLESPACE pg_default;
