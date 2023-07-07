@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS public.dim_product_details
     uuid uuid,
     availability boolean,
     product_code character varying(50) COLLATE pg_catalog."default",
-    weight_class character varying(50) COLLATE pg_catalog."default"
+    weight_class character varying(50) COLLATE pg_catalog."default",
+    CONSTRAINT dim_product_details_pkey PRIMARY KEY (product_key)
 )
 
 TABLESPACE pg_default;

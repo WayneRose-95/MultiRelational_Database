@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS public.dim_users
     country_index character varying(10) COLLATE pg_catalog."default",
     phone_number text COLLATE pg_catalog."default",
     join_date date,
-    unique_id uuid
+    unique_id uuid,
+    CONSTRAINT dim_users_pkey PRIMARY KEY (user_key)
 )
 
 TABLESPACE pg_default;

@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS public.dim_card_details
     card_number character varying(30) COLLATE pg_catalog."default",
     expiry_date character varying(10) COLLATE pg_catalog."default",
     card_provider character varying(255) COLLATE pg_catalog."default",
-    date_payment_confirmed date
+    date_payment_confirmed date,
+    CONSTRAINT dim_card_details_pkey PRIMARY KEY (card_key)
 )
 
 TABLESPACE pg_default;
