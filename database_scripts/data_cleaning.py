@@ -764,7 +764,9 @@ class DataCleaning:
         data_cleaning_logger.debug("Adding a new column product_key")
         # Add a new column product_key, which is a list of numbers ranging for the length of the dataframe 
         products_table["product_key"] = products_table.index
-        
+        # Add a new column weight_class which will be populated by a sql script 
+        data_cleaning_logger.info("Adding a new column weight_class")
+        products_table["weight_class"] = np.nan
         data_cleaning_logger.info("Dropping Unamaed : 0 column")
         # Drop the "Unamed:  0" column within the dataframe 
         products_table = products_table.drop("Unnamed: 0", axis=1)
@@ -783,7 +785,8 @@ class DataCleaning:
             "uuid",
             "availability",
             "product_code",
-            "product_key"
+            "product_key",
+            "weight_class"
         ]
         data_cleaning_logger.info(products_table.columns)
 
@@ -796,6 +799,7 @@ class DataCleaning:
             "product_name", 
             "product_price",
             "weight",
+            "weight_class",
             "category",
             "date_added",
             "uuid",
