@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS public.dim_users
     last_name character varying(255) COLLATE pg_catalog."default",
     birth_date date,
     company text COLLATE pg_catalog."default",
-    "e-mail_address" text COLLATE pg_catalog."default",
+    email_address text COLLATE pg_catalog."default",
     address text COLLATE pg_catalog."default",
     country text COLLATE pg_catalog."default",
     country_index character varying(10) COLLATE pg_catalog."default",
