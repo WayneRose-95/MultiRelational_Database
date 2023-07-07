@@ -6,6 +6,7 @@ from sqlalchemy.exc import OperationalError
 from datetime import datetime
 from typing import Optional
 import pandas as pd 
+import numpy as np
 import re 
 import yaml
 import os 
@@ -79,6 +80,9 @@ class DataCleaning:
 
         datastore_table_name : str 
         The name of the table which will be uploaded to the datastore
+
+        dimension_table_name : str
+        The name of the dimension table to be uploaded to the datastore
 
         Returns: 
         legacy_users_dataframe: Dataframe 
@@ -212,23 +216,15 @@ class DataCleaning:
                                     
                                 )
         data_cleaning_logger.info(f"Successfully loaded {datastore_table_name} to database")
-
-        # data_cleaning_logger.info(f"Attempting to upload dimension_table to database")
-        # dimension_table = self._upload_to_database(
-        #     legacy_users_database_table,
-        #     self.engine,
-        #     dimension_table_name,
-        #     table_condition="append"
-        # )
-        # data_cleaning_logger.info(f"Successfully uploaded {dimension_table_name} to database")
-
+        data_cleaning_logger.info(f"Successfully loaded {dimension_table_name} to database")
+        print(f"Successfully loaded {datastore_table_name} to database")
+        print(f"Successfully loaded {dimension_table_name} to database")
         data_cleaning_logger.info(f"Job clean_user_data completed successfully.")
-
 
         return legacy_users_database_table
         
     
-    def clean_store_data(self, source_table_name : str , source_database_config_file_name : str, datastore_table_name : str):
+    def clean_store_data(self, source_table_name : str , source_database_config_file_name : str, datastore_table_name : str, dimension_table_name : str):
         '''
         Method to reads in store_data from an RDS, 
         cleans it then uploads it to the datastore
@@ -243,9 +239,12 @@ class DataCleaning:
         datastore_table_name : str 
         The name of the table which will be uploaded to the datastore
 
+        dimension_table_name : str
+        The name of the dimension table to be uploaded to the datastore 
+
         Returns: 
 
-        legacy_store_dataframe : DataFrame 
+        legacy_store_database_table : DataFrame 
         A cleaned version of the source data as a Pandas DataFrame 
 
         '''
@@ -367,20 +366,25 @@ class DataCleaning:
         legacy_store_dataframe = pd.concat([new_rows_addition, legacy_store_dataframe]).reset_index(drop=True)
 
         data_cleaning_logger.debug(f"Number of Rows : {len(legacy_store_dataframe)}")
-
+        # Upload the table to the database 
         data_cleaning_logger.info("Uploading table to the datastore")
         legacy_store_database_table = self._upload_to_database(
                                             legacy_store_dataframe, 
                                             self.engine, 
-                                            datastore_table_name
+                                            datastore_table_name,
+                                            dimension_table_name
                                             )
-        data_cleaning_logger.info("Table uploaded to datastore")
+        # Print statements and logger statements showing that the database has been uploaded successfully 
+        data_cleaning_logger.info(f"Successfully loaded {datastore_table_name} to database")
+        data_cleaning_logger.info(f"Successfully loaded {dimension_table_name} to database")
+        print(f"Successfully loaded {datastore_table_name} to database")
+        print(f"Successfully loaded {dimension_table_name} to database")
         data_cleaning_logger.info("Job clean_store_data has completed succesfully")
         return legacy_store_database_table
     
         
         
-    def clean_card_details(self, link_to_pdf : str, datastore_table_name : str):
+    def clean_card_details(self, link_to_pdf : str, datastore_table_name : str, dimension_table_name : str):
         '''
         Method to clean a pdf file with card details and upload it to a datastore 
 
@@ -392,9 +396,12 @@ class DataCleaning:
         datastore_table_name : str 
         The name of the table to be uploaded to the datastore 
 
+        dimension_table_name : str 
+        The name of the table to be uploaded to the datastore
+
         Returns 
 
-        card_details_table 
+        card_details_database_table 
         A dataframe consisting of card_details read from the pdf 
 
         '''
@@ -496,9 +503,13 @@ class DataCleaning:
         card_details_database_table = self._upload_to_database(
                                             card_details_table,
                                             self.engine,
-                                            datastore_table_name
+                                            datastore_table_name,
+                                            dimension_table_name
                                         )
-        data_cleaning_logger.info("Table uploaded")
+        data_cleaning_logger.info(f"Successfully loaded {datastore_table_name} to database")
+        data_cleaning_logger.info(f"Successfully loaded {dimension_table_name} to database")
+        print(f"Successfully loaded {datastore_table_name} to database")
+        print(f"Successfully loaded {dimension_table_name} to database")
         data_cleaning_logger.info("Job clean_card_details has completed successfully.")
         return card_details_database_table
 
@@ -526,7 +537,7 @@ class DataCleaning:
             'store_code',
             'product_code',
             'null_column',
-            'product_quantity'
+            'product_quantity',
             
         ]
         data_cleaning_logger.info("Names of columns")
@@ -542,18 +553,53 @@ class DataCleaning:
         data_cleaning_logger.debug(orders_dataframe.columns)
         data_cleaning_logger.info(f"Number of rows : {len(orders_dataframe)}")
 
+        # Addition of FK key columns and country_code column 
+        foreign_key_columns = [
+            "card_key",
+            "date_key",
+            "product_key",
+            "store_key",
+            "user_key",
+            "currency_key",
+            "country_code"
+        ]
+
+        # Set the columns to null 
+        for column in foreign_key_columns:
+            orders_dataframe[column] = np.nan
+        
+        column_order = [
+            "order_key",
+            "date_uuid",
+            "user_uuid",
+            "card_key",
+            "date_key",
+            "product_key",
+            "store_key",
+            "user_key",
+            "currency_key",
+            "card_number",
+            "store_code",
+            "product_code",
+            "product_quantity",
+            "country_code"
+        ]
+
+        orders_dataframe = orders_dataframe[column_order]
+
        
         # Lastly, try to upload the cleaned table to the database 
         orders_datatable = self._upload_to_database(
                                     orders_dataframe,
                                     self.engine,
-                                    datastore_table_name
+                                    datastore_table_name, 
+                                    
                                 )
         data_cleaning_logger.info("Table uploaded")
         data_cleaning_logger.info("Job clean_orders_table has completed successfully.")
         return orders_datatable 
 
-    def clean_time_event_table(self, s3_bucket_url : str , datastore_table_name : str):
+    def clean_time_event_table(self, s3_bucket_url : str , datastore_table_name : str, dimension_table_name : str):
         '''
         Method to read in a time_dimension table from an AWS S3 Bucket, 
         clean it, and upload it to the datastore.
@@ -563,6 +609,9 @@ class DataCleaning:
         A link to the s3 bucket hosted on AWS 
 
         datastore_table_name : str 
+        The name of the table to be uploaded to the datastore 
+
+        dimension_table_name : str 
         The name of the table to be uploaded to the datastore 
         '''
         data_cleaning_logger.info("Starting job clean_time_event_table")
@@ -641,13 +690,17 @@ class DataCleaning:
         time_datastore_table = self._upload_to_database(
                                     time_df,
                                     self.engine,
-                                    datastore_table_name
+                                    datastore_table_name, 
+                                    dimension_table_name
                                 )
-        data_cleaning_logger.info("Table uploaded")
+        data_cleaning_logger.info(f"Successfully loaded {datastore_table_name} to database")
+        data_cleaning_logger.info(f"Successfully loaded {dimension_table_name} to database")
+        print(f"Successfully loaded {datastore_table_name} to database")
+        print(f"Successfully loaded {dimension_table_name} to database")
         data_cleaning_logger.info("Job clean_time_event_table has completed successfully")
         return time_datastore_table
 
-    def clean_product_table(self, s3_bucket_url : str, datastore_table_name : str):
+    def clean_product_table(self, s3_bucket_url : str, datastore_table_name : Optional[str], dimension_table_name : Optional[str]):
         '''
         Method to read in a .csv file from an S3 Bucket on AWS, 
         CLean the data, and then upload it to the datastore 
@@ -658,6 +711,9 @@ class DataCleaning:
         The link to the s3_bucket 
 
         datastore_table_name : str
+        The name of the table uploaded to the datastore
+
+        dimension_table_name : str 
         The name of the table uploaded to the datastore
 
         Returns 
@@ -770,19 +826,32 @@ class DataCleaning:
 
         data_cleaning_logger.info("Concatenating new rows to the start of the dataframe")
         products_table = pd.concat([new_rows_addition, products_table]).reset_index(drop=True)
-
         
+        # Define a mapping dictionary for the conversion
+        mapping = {"Still_avaliable": True, "Removed": False}
+        # Apply the mapping to the availability column 
+        dim_products_table = products_table.assign(availability=products_table["availability"].map(mapping))
         # Try to upload the table to the database. 
         products_datastore_table = self._upload_to_database(
                                             products_table,
                                             self.engine,
                                             datastore_table_name
                                         )
-        data_cleaning_logger.info("Table uploaded")
-        data_cleaning_logger.info("Job clean_time_event_table has completed successfully")
+        data_cleaning_logger.info(f"Successfully loaded {datastore_table_name} to database")
+        print(f"Successfully loaded {datastore_table_name} to database")
+        
+        products_dim_datastore_table = self._upload_to_database(
+                                            dim_products_table,
+                                            self.engine,
+                                            "dim_product_details"
+                                        )
+        #TODO: Is there a way to not hard-code in the name of the table here? 
+        data_cleaning_logger.info(f"Successfully loaded {dimension_table_name} to database")
+        print(f"Successfully loaded {dimension_table_name} to database")
+        data_cleaning_logger.info("Job clean_product_table has completed successfully")
         return products_datastore_table
     
-    def clean_currency_table(self, source_file_name : str , country_code_subset : list , datastore_table_name : str):
+    def clean_currency_table(self, source_file_name : str , country_code_subset : list , datastore_table_name : str, dimension_table_name : str):
         data_cleaning_logger.info("Starting Job clean_currency_table")
 
         data_cleaning_logger.info(f"Reading in file {source_file_name}")
@@ -822,6 +891,30 @@ class DataCleaning:
         currency_table = currency_table[column_order]
         data_cleaning_logger.info(currency_table.columns)
 
+        new_rows_addition = self.add_new_rows(
+             [
+                {
+                    "currency_key": -1,
+                    "country_name": "Not Applicable"
+                }, 
+                {
+                    "currency_key": 0,
+                    "country_name": "Unknown"
+                }
+            ]
+        )
+        data_cleaning_logger.info("New rows added")
+        data_cleaning_logger.info(new_rows_addition)
+
+        data_cleaning_logger.info("Concatenating new rows to the start of the table")
+        filtered_currency_table = pd.concat([new_rows_addition, currency_table]).reset_index(drop=True)
+
+        # Uploading land_table_to_datastore 
+        currency_datastore_table = self._upload_to_database(
+            filtered_currency_table,
+            self.engine,
+            datastore_table_name
+        )
         # Filtering rows from the table based on the subset given 
         data_cleaning_logger.info(f"Filtering rows based on country codes : {country_code_subset}")
         filtered_currency_table = currency_table[currency_table["country_code"].isin(country_code_subset)]
@@ -856,8 +949,11 @@ class DataCleaning:
         currency_datastore_table = self._upload_to_database(
             filtered_currency_table,
             self.engine,
-            datastore_table_name
+            "dim_currency"
         )
+        #TODO: Is there a way to not hard code the dim_currency here? 
+        data_cleaning_logger.info(f"Successfully loaded {datastore_table_name} to database")
+        data_cleaning_logger.info(f"Successfully loaded {dimension_table_name} to database")
         data_cleaning_logger.info("Job clean_currency_table has completed successfully.")
         return currency_datastore_table
     
@@ -870,7 +966,8 @@ class DataCleaning:
             source_file_name : str,
             currency_mapping_document_name : str,
             currency_code_subset : list,
-            datastore_table_name : str
+            datastore_table_name : str, 
+            dimension_table_name : str
             ):
         
         data_cleaning_logger.info("Starting job clean_currency_exchange_rates")
@@ -960,6 +1057,32 @@ class DataCleaning:
         data_cleaning_logger.info("New column order implemented")
         data_cleaning_logger.debug(updated_df.columns)
 
+         # Adding new rows to cover for unknowns 
+        data_cleaning_logger.info("Adding new rows to cover for unknowns")
+        new_rows_addition = self.add_new_rows(
+             [
+                {
+                    "currency_conversion_key": -1,
+                    "currency_name": "Not Applicable"
+                }, 
+                {
+                    "currency_conversion_key": 0,
+                    "currency_name": "Unknown"
+                }
+            ]
+        )
+
+        cleaned_currency_conversion_df = pd.concat([new_rows_addition, updated_df])
+        data_cleaning_logger.info("Successfully concatentated rows from together") 
+
+        cleaned_currency_conversion_datastore_table = self._upload_to_database(
+                                                            cleaned_currency_conversion_df,
+                                                            self.engine,
+                                                            datastore_table_name
+        )
+        data_cleaning_logger.info("Table Uploaded")
+
+
         # filtering the dataframe according to the currency_codes passed
         filtered_currency_exchange_df = updated_df[updated_df["currency_code"].isin(currency_code_subset)]
 
@@ -981,20 +1104,21 @@ class DataCleaning:
             ]
         )
 
-        cleaned_currency_conversion_df = pd.concat([new_rows_addition, filtered_currency_exchange_df])
+        filtered_currency_conversion_df = pd.concat([new_rows_addition, filtered_currency_exchange_df])
         data_cleaning_logger.info("Successfully concatentated rows from together") 
         data_cleaning_logger.debug(cleaned_currency_conversion_df)
 
-        cleaned_currency_conversion_datastore_table = self._upload_to_database(
-                                                            cleaned_currency_conversion_df,
+        cleaned_dim_currency_conversion_datastore_table = self._upload_to_database(
+                                                            filtered_currency_conversion_df,
                                                             self.engine,
-                                                            datastore_table_name
+                                                            "dim_currency_conversion"
         )
+        #TODO: Is there a way to not hard code the "dim_currency_conversion" variable? 
         data_cleaning_logger.info("Table Uploaded")
         data_cleaning_logger.info("Job clean_currency_exchange_rates completed successfully")
         return cleaned_currency_conversion_datastore_table
 
-    def _upload_to_database(self, dataframe : pd.DataFrame, database_engine, datastore_table_name : str, dimension_table_name : Optional[str]):
+    def _upload_to_database(self, dataframe : pd.DataFrame, database_engine, datastore_table_name : Optional[str], dimension_table_name : Optional[str] = None):
         '''
         Method to upload the completed dataframe to the datastore 
         Method uses the upload_to_db method in the DatabaseConnector class to upload the table to the database 
@@ -1237,33 +1361,25 @@ if __name__=="__main__":
 
     #                       )
 
-    # Creating land tables from dataset 
-    currency_code_list = []
+   
+
     cleaner = DataCleaning(file_pathway_to_datastore)
     cleaner.clean_user_data("legacy_users", file_pathway_to_source_database, "land_user_data", "dim_users")
-    # cleaner.clean_store_data("legacy_store_details", file_pathway_to_source_database, "land_store_details")
-    # cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details")
-    # cleaner.clean_time_event_table("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json", "land_date_times")
-    # cleaner.clean_card_details("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf", "land_card_details")
-    # with open(f"{file_pathway_to_source_text_file}.txt") as currency_code_file:
-    #     for line in currency_code_file:
-    #         country, code = line.strip().split(',')
-    #         currency_code_list.append(code)
-
-    # with open(file_pathway_to_json_source_file, encoding='utf-8') as country_code_file:
-    #   data = json.load(country_code_file)
-
-    # country_codes = list(data.keys())
-    # cleaner.clean_currency_table(file_pathway_to_json_source_file, country_codes, "land_currency")
-
-    # cleaner.clean_currency_exchange_rates(
-    #     "https://www.x-rates.com/table/?from=GBP&amount=1",
-    #     '//table[@class="tablesorter ratesTable"]/tbody',
-    #     '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
-    #     ["currency_name", "conversion_rate", "conversion_rate_percentage"],
-    #     file_pathway_to_exported_csv_file,
-    #     file_pathway_to_source_text_file,
-    #     currency_code_list,
-    #     "land_currency_conversion"
-    # )
+    cleaner.clean_store_data("legacy_store_details", file_pathway_to_source_database, "land_store_details", "dim_store_details")
+    cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details", "dim_product_details")
+    cleaner.clean_time_event_table("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json", "land_date_times", "dim_date_times")
+    cleaner.clean_card_details("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf", "land_card_details", "dim_card_details")
+    cleaner.clean_currency_table(file_pathway_to_json_source_file, ["US", "GB", "DE"], "land_currency", "dim_currency")
+    cleaner.clean_currency_exchange_rates(
+        "https://www.x-rates.com/table/?from=GBP&amount=1",
+        '//table[@class="tablesorter ratesTable"]/tbody',
+        '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
+        ["currency_name", "conversion_rate", "percentage_change"],
+        file_pathway_to_exported_csv_file,
+        file_pathway_to_source_text_file,
+        ["USD", "GBP", "EUR"],
+        "land_currency_conversion",
+        "dim_currency_conversion"
+    )
+    cleaner.clean_orders_table("orders_table", file_pathway_to_source_database, "orders_table") 
 

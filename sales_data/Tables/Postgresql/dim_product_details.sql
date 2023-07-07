@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS public.dim_product_details
 (
     index bigint,
     product_key bigint,
-    "EAN" character varying(50) COLLATE pg_catalog."default",
+    EAN character varying(50) COLLATE pg_catalog."default",
     product_name character varying(500) COLLATE pg_catalog."default",
     product_price double precision,
     weight double precision,
