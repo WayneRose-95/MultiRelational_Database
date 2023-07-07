@@ -14,8 +14,7 @@ CREATE TABLE IF NOT EXISTS public.land_card_details
 
 TABLESPACE pg_default;
 
-ALTER TABLE public.land_card_details
-    OWNER to postgres;
+
 -- Index: ix_land_card_details_index
 
 DROP INDEX IF EXISTS public.ix_land_card_details_index;

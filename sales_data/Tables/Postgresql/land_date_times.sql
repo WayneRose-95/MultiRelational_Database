@@ -6,12 +6,12 @@ CREATE TABLE IF NOT EXISTS public.land_date_times
 (
     index bigint,
     date_key bigint,
-    "timestamp" TIME,
+    "timestamp" time without time zone,
     day character varying(30) COLLATE pg_catalog."default",
     month character varying(30) COLLATE pg_catalog."default",
     year character varying(30) COLLATE pg_catalog."default",
     time_period character varying(40) COLLATE pg_catalog."default",
-    date_uuid uuid
+    date_uuid uuid NOT NULL
 )
 
 TABLESPACE pg_default;

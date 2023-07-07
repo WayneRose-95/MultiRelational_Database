@@ -6,18 +6,19 @@ CREATE TABLE IF NOT EXISTS public.land_product_details
 (
     index bigint,
     product_key bigint,
-    "EAN" text COLLATE pg_catalog."default",
-    product_name text COLLATE pg_catalog."default",
-    product_price text COLLATE pg_catalog."default",
+    "EAN" character varying(50) COLLATE pg_catalog."default",
+    product_name character varying(500) COLLATE pg_catalog."default",
+    product_price double precision,
     weight double precision,
-    category text COLLATE pg_catalog."default",
+    category character varying(50) COLLATE pg_catalog."default",
     date_added timestamp without time zone,
-    uuid text COLLATE pg_catalog."default",
+    uuid uuid NOT NULL,
     availability text COLLATE pg_catalog."default",
-    product_code text COLLATE pg_catalog."default"
+    product_code character varying(50) COLLATE pg_catalog."default"
 )
 
 TABLESPACE pg_default;
+
 
 -- Index: ix_land_product_details_index
 
