@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.dim_product_details
     weight double precision,
     category character varying(50) COLLATE pg_catalog."default",
     date_added date,
-    uuid uuid NOT NULL,
+    uuid uuid,
     availability boolean,
     product_code character varying(50) COLLATE pg_catalog."default",
     weight_class character varying(50) COLLATE pg_catalog."default"

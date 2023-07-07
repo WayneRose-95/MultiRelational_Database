@@ -4,6 +4,7 @@ from database_scripts.file_handler import get_absolute_file_path
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 from datetime import datetime
+from typing import Optional
 import pandas as pd 
 import re 
 import yaml
@@ -65,7 +66,7 @@ class DataCleaning:
             print("Error connecting to database")
             raise Exception    
 
-    def clean_user_data(self, source_table_name : str, source_database_config_file_name : str, datastore_table_name : str):
+    def clean_user_data(self, source_table_name : str, source_database_config_file_name : str, datastore_table_name : str, dimension_table_name : str):
         '''
         Method to clean the user data table 
 
@@ -99,7 +100,7 @@ class DataCleaning:
                 'last_name', 
                 'birth_date', 
                 'company', 
-                'e-mail_address', 
+                'email_address', 
                 'address', 
                 'country', 
                 'country_index',
@@ -119,13 +120,13 @@ class DataCleaning:
         # legacy_users_dataframe["birth_date"] = pd.to_datetime(legacy_users_dataframe['birth_date'], errors='coerce')
         
         data_cleaning_logger.info("Setting columns as the appropriate datatypes")
-        # Renaming the columns as appropriate data types 
+        # # Renaming the columns as appropriate data types 
         legacy_users_dataframe = legacy_users_dataframe.astype(
             {
                 "first_name": "string",
                 "last_name": "string",
                 "company": "string",
-                "e-mail_address": "string",
+                "email_address": "string",
                 "address": "string", 
                 "country": "string",
                 "country_index": "string", 
@@ -139,7 +140,7 @@ class DataCleaning:
                 "first_name": "string",
                 "last_name": "string",
                 "company": "string",
-                "e-mail_address": "string",
+                "email_address": "string",
                 "address": "string", 
                 "country": "string",
                 "country_index": "string", 
@@ -162,6 +163,22 @@ class DataCleaning:
         legacy_users_dataframe['user_key'] = legacy_users_dataframe.index 
 
         data_cleaning_logger.info("Creating a new dataframe to handle unknowns")
+        data_cleaning_logger.info("Reordering the columns")
+        column_order = [
+            "user_key",
+            "first_name",
+            "last_name",
+            "birth_date",
+            "company",
+            "email_address",
+            "address",
+            "country",
+            "country_index",
+            "phone_number",
+            "join_date",
+            "user_uuid"
+        ]
+        legacy_users_dataframe = legacy_users_dataframe[column_order]
 
         new_rows_addition = self.add_new_rows(
             [
@@ -190,9 +207,23 @@ class DataCleaning:
         legacy_users_database_table = self._upload_to_database(
                                     legacy_users_dataframe, 
                                     self.engine, 
-                                    datastore_table_name
+                                    datastore_table_name,
+                                    dimension_table_name
+                                    
                                 )
-        data_cleaning_logger.info("Job clean_user_data completed successfully")
+        data_cleaning_logger.info(f"Successfully loaded {datastore_table_name} to database")
+
+        # data_cleaning_logger.info(f"Attempting to upload dimension_table to database")
+        # dimension_table = self._upload_to_database(
+        #     legacy_users_database_table,
+        #     self.engine,
+        #     dimension_table_name,
+        #     table_condition="append"
+        # )
+        # data_cleaning_logger.info(f"Successfully uploaded {dimension_table_name} to database")
+
+        data_cleaning_logger.info(f"Job clean_user_data completed successfully.")
+
 
         return legacy_users_database_table
         
@@ -562,7 +593,7 @@ class DataCleaning:
         time_df.index = time_df.index + 1 
 
         data_cleaning_logger.debug(f"Setting the time_key column to start at 1")
-        time_df["time_key"] = time_df.index
+        time_df["date_key"] = time_df.index
 
         data_cleaning_logger.info("Resetting the index of the table")
         # Reset the index 
@@ -571,7 +602,7 @@ class DataCleaning:
         data_cleaning_logger.info("Changing the column order of the table")
         # Lastly, change the column order
         column_order = [
-            'time_key',
+            'date_key',
             'timestamp',
             'day',
             'month',
@@ -590,12 +621,12 @@ class DataCleaning:
         new_rows_addition = self.add_new_rows(
             [
                 {
-                    "time_key": -1,
-                    "timestamp": "Not Applicable"
+                    "date_key": -1,
+                    "timestamp": "00:00:00"
                 }, 
                 {
-                    "time_key": 0,
-                    "timestamp": "Unknown"
+                    "date_key": 0,
+                    "timestamp": "00:00:00"
                 }
             ]
         )
@@ -963,7 +994,7 @@ class DataCleaning:
         data_cleaning_logger.info("Job clean_currency_exchange_rates completed successfully")
         return cleaned_currency_conversion_datastore_table
 
-    def _upload_to_database(self, dataframe : pd.DataFrame, database_engine, datastore_table_name : str):
+    def _upload_to_database(self, dataframe : pd.DataFrame, database_engine, datastore_table_name : str, dimension_table_name : Optional[str]):
         '''
         Method to upload the completed dataframe to the datastore 
         Method uses the upload_to_db method in the DatabaseConnector class to upload the table to the database 
@@ -983,9 +1014,18 @@ class DataCleaning:
         A pandas dataframe 
         '''
         try:
-            self.uploader.upload_to_db(dataframe, database_engine, datastore_table_name)
-            print(f"Table uploaded")
+            self.uploader.upload_to_db(dataframe, database_engine, datastore_table_name, table_condition="replace")
+            print(f"{datastore_table_name} table uploaded")
+
+            if dimension_table_name:
+                try:
+                    self.uploader.upload_to_db(dataframe, database_engine, dimension_table_name, table_condition="append")
+                    print(f"{dimension_table_name} table uploaded")
+                except: 
+                     print("Error uploading table to database")
+                     raise Exception
             return dataframe
+
         except: 
             print("Error uploading table to database")
             raise Exception
@@ -1188,19 +1228,19 @@ if __name__=="__main__":
     file_pathway_to_json_source_file = get_absolute_file_path("country_data.json", "source_data_files")
     file_pathway_to_exported_csv_file = get_absolute_file_path("currency_conversions_test", "source_data_files")
 
-    perform_data_cleaning(
-        file_pathway_to_datastore,
-        file_pathway_to_source_database,
-        file_pathway_to_source_text_file,
-        file_pathway_to_json_source_file,
-        file_pathway_to_exported_csv_file       
+    # perform_data_cleaning(
+    #     file_pathway_to_datastore,
+    #     file_pathway_to_source_database,
+    #     file_pathway_to_source_text_file,
+    #     file_pathway_to_json_source_file,
+    #     file_pathway_to_exported_csv_file       
 
-                          )
+    #                       )
 
-    # # Creating land tables from dataset 
-    # currency_code_list = []
-    # cleaner = DataCleaning(file_pathway_to_datastore)
-    # cleaner.clean_user_data("legacy_users", file_pathway_to_source_database, "land_user_data")
+    # Creating land tables from dataset 
+    currency_code_list = []
+    cleaner = DataCleaning(file_pathway_to_datastore)
+    cleaner.clean_user_data("legacy_users", file_pathway_to_source_database, "land_user_data", "dim_users")
     # cleaner.clean_store_data("legacy_store_details", file_pathway_to_source_database, "land_store_details")
     # cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details")
     # cleaner.clean_time_event_table("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json", "land_date_times")
