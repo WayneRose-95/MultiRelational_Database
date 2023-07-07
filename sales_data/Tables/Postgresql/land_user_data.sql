@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS public.land_user_data
     first_name character varying(255) COLLATE pg_catalog."default",
     last_name character varying(255) COLLATE pg_catalog."default",
     birth_date date,
-    company text COLLATE pg_catalog."default",
+    company character varying(255) COLLATE pg_catalog."default",
     "e-mail_address" character varying(255) COLLATE pg_catalog."default",
     address character varying(600) COLLATE pg_catalog."default",
     country character varying(100) COLLATE pg_catalog."default",
