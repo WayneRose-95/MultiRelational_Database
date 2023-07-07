@@ -876,7 +876,7 @@ class DataCleaning:
         data_cleaning_logger.debug(currency_table.columns)
 
         # Adding a new column currency_key to start from 1 onwards
-        currency_table["currency_key"] = range(1,len(currency_table) + 1)
+        currency_table["currency_key"] = currency_table.index + 1
 
         # Rearranging the column order
         data_cleaning_logger.info("Rearranging column order")
@@ -920,7 +920,7 @@ class DataCleaning:
         filtered_currency_table = currency_table[currency_table["country_code"].isin(country_code_subset)]
         data_cleaning_logger.debug(f"Number of rows {len(filtered_currency_table)}")
 
-        filtered_currency_table["currency_key"] = range(1, len(filtered_currency_table) + 1)
+        filtered_currency_table["currency_key"] = filtered_currency_table.index + 1
 
 
         filtered_currency_table = filtered_currency_table[column_order]
