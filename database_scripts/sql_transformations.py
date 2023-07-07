@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import text 
 from data_cleaning import get_absolute_file_path
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import ProgrammingError
 import logging
 import os 
 
@@ -43,6 +44,30 @@ class SQLAlterations:
         sql_transformations_logger.debug(f"Connecting to datastore using {self.engine}")
         # Connect to the database using the Engine returned from the method 
         self.engine.connect() 
+    
+    def create_database(self, database_name: str, database_username: str):
+        # Check if the database already exists
+        database_check = self.engine.connect().scalar(
+            text(f"SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_database WHERE datname = '{database_name}')")
+        )
+
+        if not database_check:
+            # Create the database with the provided database_name and database_username
+            try:
+                self.engine.connect().execute(
+                    text(f"""CREATE DATABASE  {database_name} 
+                        WITH OWNER = '{database_username}'
+                        ENCODING = 'UTF8' 
+                        LC_COLLATE = 'English_United Kingdom.1252' 
+                        LC_CTYPE = 'English_United Kingdom.1252' 
+                        TABLESPACE = pg_default 
+                        CONNECTION LIMIT = -1""")
+                )
+            except ProgrammingError:
+                print(f"Database {database_name} already exists. Skipping database creation.")
+                sql_transformations_logger.warning(f"Database {database_name} already exists. Skipping database creation.")
+
+
 
     def alter_and_update(self, sql_file_path : str):
         # Create a session object using sessionmaker 
@@ -98,7 +123,9 @@ def perform_database_operations(target_datastore_config_file_name):
 
 
 if __name__ == "__main__":
-    perform_database_operations(get_absolute_file_path('sales_data_creds_test.yaml', 'credentials')) # 'sales_data_creds_test.yaml'
+    # perform_database_operations(get_absolute_file_path('sales_data_creds_test.yaml', 'credentials')) # 'sales_data_creds_test.yaml'
+    sql = SQLAlterations(get_absolute_file_path('sales_data_creds_dev.yaml', 'credentials'))
+    sql.create_database('Sales_Data_Test', "Sales_Data_Admin") # 'Sales_Data_Test', "Sales_Data_Admin"
 
 
 

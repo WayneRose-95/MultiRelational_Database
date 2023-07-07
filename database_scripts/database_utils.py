@@ -103,7 +103,7 @@ class DatabaseConnector:
         database_utils_logger.debug(f"Connection string created {connection_string}")
         return connection_string
 
-    def initialise_database_connection(self, config_file_name):
+    def initialise_database_connection(self, config_file_name, isolation_level="AUTOCOMMIT"):
         '''
         Method to establish a connection to the database 
 
@@ -113,7 +113,13 @@ class DatabaseConnector:
 
         Returns: 
         database_engine: engine 
-        A database engine object 
+        A database engine object
+
+        isolation_level : str = AUTOCOMMIT 
+
+        The level of isolation for the database transaction. 
+        By default, this is set to AUTOCOMMIT
+
 
         '''
         
@@ -122,7 +128,7 @@ class DatabaseConnector:
         # Lastly try to connect to the database using your connection string variable
         try:
             database_utils_logger.info("Creating database engine using sqlaclhemy's create_engine")
-            database_engine = create_engine(connection_string)
+            database_engine = create_engine(connection_string, isolation_level="AUTOCOMMIT")
             database_utils_logger.info(f"Database Engine : {database_engine} created attempting to connect")
             database_engine.connect()
             database_utils_logger.info("connection successful")
@@ -135,7 +141,7 @@ class DatabaseConnector:
     
         
          
-    def upload_to_db(self, dataframe : pd.DataFrame , connection,  table_name : str): 
+    def upload_to_db(self, dataframe : pd.DataFrame , connection,  table_name : str, table_condition="append"): 
         '''
         Method to upload the table to the database 
 
@@ -152,7 +158,7 @@ class DatabaseConnector:
         try:
             database_utils_logger.info(f"Attempting to upload table {table_name} to the database")
             
-            dataframe.to_sql(table_name, con=connection, if_exists='replace')
+            dataframe.to_sql(table_name, con=connection, if_exists=table_condition)
             database_utils_logger.info("Table Uploaded")
         except:
             database_utils_logger.exception(f"Error uploading table to the database. Connection used : {connection}")
