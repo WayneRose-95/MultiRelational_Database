@@ -1035,7 +1035,7 @@ class DataCleaning:
         data_cleaning_logger.info("New dataframe created")
 
         data_cleaning_logger.debug(uk_row_df)
-        updated_df = pd.concat([uk_row_df, df_with_datetime]).reset_index(drop=True).fillna(datetime_object)
+        updated_df = pd.concat([uk_row_df, df_with_datetime]).reset_index(drop=True)
 
         # Adding 1 to index column to start from 1 instead of 0 
         data_cleaning_logger.debug("Adding 1 to the index column to start from 1")
@@ -1051,14 +1051,14 @@ class DataCleaning:
                 'currency_name', 
                 'currency_code',
                 'conversion_rate',	
-                'conversion_rate_percentage',
+                'percentage_change',
                 'last_updated'	            
             ]
         data_cleaning_logger.info("Updating column_order of dataframe")
         data_cleaning_logger.info(column_order)
 
         # Updating column order of the dataframe 
-        updated_df = updated_df[column_order].fillna(datetime_object)
+        updated_df = updated_df[column_order]
         data_cleaning_logger.info("New column order implemented")
         data_cleaning_logger.debug(updated_df.columns)
 
@@ -1369,12 +1369,12 @@ if __name__=="__main__":
    
 
     cleaner = DataCleaning(file_pathway_to_datastore)
-    cleaner.clean_user_data("legacy_users", file_pathway_to_source_database, "land_user_data", "dim_users")
-    cleaner.clean_store_data("legacy_store_details", file_pathway_to_source_database, "land_store_details", "dim_store_details")
-    cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details", "dim_product_details")
-    cleaner.clean_time_event_table("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json", "land_date_times", "dim_date_times")
-    cleaner.clean_card_details("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf", "land_card_details", "dim_card_details")
-    cleaner.clean_currency_table(file_pathway_to_json_source_file, ["US", "GB", "DE"], "land_currency", "dim_currency")
+    # cleaner.clean_user_data("legacy_users", file_pathway_to_source_database, "land_user_data", "dim_users")
+    # cleaner.clean_store_data("legacy_store_details", file_pathway_to_source_database, "land_store_details", "dim_store_details")
+    # cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details", "dim_product_details")
+    # cleaner.clean_time_event_table("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json", "land_date_times", "dim_date_times")
+    # cleaner.clean_card_details("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf", "land_card_details", "dim_card_details")
+    # cleaner.clean_currency_table(file_pathway_to_json_source_file, ["US", "GB", "DE"], "land_currency", "dim_currency")
     cleaner.clean_currency_exchange_rates(
         "https://www.x-rates.com/table/?from=GBP&amount=1",
         '//table[@class="tablesorter ratesTable"]/tbody',
@@ -1386,5 +1386,5 @@ if __name__=="__main__":
         "land_currency_conversion",
         "dim_currency_conversion"
     )
-    cleaner.clean_orders_table("orders_table", file_pathway_to_source_database, "orders_table") 
+    # cleaner.clean_orders_table("orders_table", file_pathway_to_source_database, "orders_table") 
 
