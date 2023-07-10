@@ -5,8 +5,8 @@ DROP TABLE IF EXISTS public.dim_date_times;
 CREATE TABLE IF NOT EXISTS public.dim_date_times
 (
     index bigint,
-    date_key bigint,
-    timestamp time without time zone,
+    date_key bigint NOT NULL,
+    event_time time without time zone,
     month character varying(30) COLLATE pg_catalog."default",
     year character varying(30) COLLATE pg_catalog."default",
     day character varying(30) COLLATE pg_catalog."default",
@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS public.dim_date_times
 )
 
 TABLESPACE pg_default;
+
+-- Index: ix_dim_date_times_index
 
 DROP INDEX IF EXISTS public.ix_dim_date_times_index;
 

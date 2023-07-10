@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS public.land_date_times
 (
     index bigint,
     date_key bigint,
-    timestamp time without time zone,
+    event_time time without time zone,
     day character varying(30) COLLATE pg_catalog."default",
     month character varying(30) COLLATE pg_catalog."default",
     year character varying(30) COLLATE pg_catalog."default",
