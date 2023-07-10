@@ -23,6 +23,7 @@ ALTER COLUMN longitude TYPE FLOAT USING longitude::double precision,
 ALTER COLUMN latitude TYPE FLOAT USING latitude::double precision,
 ALTER COLUMN store_code TYPE VARCHAR(20),
 ALTER COLUMN city TYPE VARCHAR(255),
+ALTER COLUMN store_address TYPE VARCHAR(500),
 ALTER COLUMN number_of_staff TYPE SMALLINT USING number_of_staff::smallint,
 ALTER COLUMN opening_date TYPE DATE USING opening_date::date,
 ALTER COLUMN store_type TYPE VARCHAR(255),
@@ -36,6 +37,8 @@ ALTER COLUMN product_price TYPE FLOAT USING product_price::double precision,
 ALTER COLUMN weight TYPE FLOAT, 
 ALTER COLUMN "EAN" TYPE VARCHAR(50),
 ALTER COLUMN product_code TYPE VARCHAR(50),
+ALTER COLUMN product_name TYPE VARCHAR(200),
+ALTER COLUMN category TYPE VARCHAR(50),
 ALTER COLUMN date_added TYPE DATE, 
 ALTER COLUMN uuid TYPE uuid USING uuid::uuid,
 ALTER COLUMN availability TYPE BOOLEAN,
@@ -51,6 +54,7 @@ ALTER COLUMN company TYPE VARCHAR(255),
 ALTER COLUMN email_address TYPE VARCHAR(255),
 ALTER COLUMN address TYPE VARCHAR(500),
 ALTER COLUMN country_index TYPE VARCHAR(20),
+ALTER COLUMN country TYPE VARCHAR(100),
 ALTER COLUMN phone_number TYPE VARCHAR(30),
 ALTER COLUMN user_uuid TYPE UUID USING user_uuid::uuid,
 ALTER COLUMN join_date TYPE DATE USING join_date::date;
@@ -114,6 +118,7 @@ ALTER COLUMN longitude TYPE FLOAT USING longitude::double precision,
 ALTER COLUMN latitude TYPE FLOAT USING latitude::double precision,
 ALTER COLUMN store_code TYPE VARCHAR(20),
 ALTER COLUMN city TYPE VARCHAR(255),
+ALTER COLUMN store_address TYPE VARCHAR(500),
 ALTER COLUMN number_of_staff TYPE SMALLINT USING number_of_staff::smallint,
 ALTER COLUMN opening_date TYPE DATE USING opening_date::date,
 ALTER COLUMN store_type TYPE VARCHAR(255),
@@ -130,6 +135,7 @@ ALTER COLUMN company TYPE VARCHAR(255),
 ALTER COLUMN email_address TYPE VARCHAR(255),
 ALTER COLUMN address TYPE VARCHAR(500),
 ALTER COLUMN country_index TYPE VARCHAR(20),
+ALTER COLUMN country TYPE VARCHAR(100),
 ALTER COLUMN phone_number TYPE VARCHAR(30),
 ALTER COLUMN user_uuid TYPE UUID USING user_uuid::uuid,
 ALTER COLUMN join_date TYPE DATE USING join_date::date;
@@ -139,7 +145,8 @@ ALTER COLUMN join_date TYPE DATE USING join_date::date;
 ALTER TABLE land_currency
 ALTER COLUMN country_name TYPE VARCHAR(100),
 ALTER COLUMN currency_code TYPE VARCHAR(20),
-ALTER COLUMN country_code TYPE VARCHAR(5);
+ALTER COLUMN country_code TYPE VARCHAR(5),
+ALTER COLUMN currency_symbol TYPE VARCHAR(5);
 
 -- Altering schema for land_currency_conversion table 
 ALTER TABLE land_currency_conversion 
@@ -150,7 +157,23 @@ ALTER COLUMN conversion_rate TYPE NUMERIC(20,6) USING conversion_rate::numeric(2
 ALTER COLUMN percentage_change TYPE NUMERIC(20,6) USING percentage_change::numeric(20,6),
 ALTER COLUMN last_updated TYPE TIMESTAMP WITH TIME ZONE USING last_updated::timestamp with time zone;
 
+-- Altering Schema for land_product_details_table 
+ALTER TABLE land_product_details 
+ALTER COLUMN product_price TYPE FLOAT USING product_price::double precision,
+ALTER COLUMN weight TYPE FLOAT, 
+ALTER COLUMN "EAN" TYPE VARCHAR(50),
+ALTER COLUMN product_code TYPE VARCHAR(50),
+ALTER COLUMN category TYPE VARCHAR(50),
+ALTER COLUMN product_name TYPE VARCHAR(200),
+ALTER COLUMN date_added TYPE DATE, 
+ALTER COLUMN uuid TYPE uuid USING uuid::uuid,
+ALTER COLUMN availability TYPE VARCHAR(50),
+ALTER COLUMN weight_class TYPE VARCHAR(50);
+
 -- Altering table names for dim_products_table and dim_date_times 
 ALTER TABLE dim_product_details 
+RENAME "EAN" TO EAN;
+
+ALTER TABLE land_product_details
 RENAME "EAN" TO EAN;
 
