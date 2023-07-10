@@ -883,10 +883,13 @@ class DataCleaning:
         # Adding a new column currency_key to start from 1 onwards
         currency_table["currency_key"] = currency_table.index + 1
 
+        # Adding a new column of nulls for the currency_conversion_key
+        currency_table["currency_conversion_key"] = np.nan
         # Rearranging the column order
         data_cleaning_logger.info("Rearranging column order")
         column_order = [
-            'currency_key', 
+            'currency_key',
+            'currency_conversion_key', 
             'currency_code', 
             'country_code', 
             'country_name', 
@@ -900,11 +903,13 @@ class DataCleaning:
              [
                 {
                     "currency_key": -1,
-                    "country_name": "Not Applicable"
+                    "currency_conversion_key": -1,
+                    "currency_code": "Not Applicable"
                 }, 
                 {
                     "currency_key": 0,
-                    "country_name": "Unknown"
+                    "currency_conversion_key": 0, 
+                    "currency_code": "Unknown"
                 }
             ]
         )
@@ -920,6 +925,7 @@ class DataCleaning:
             self.engine,
             datastore_table_name
         )
+        data_cleaning_logger.info(f"Successfully loaded {datastore_table_name} to database")
         # Filtering rows from the table based on the subset given 
         data_cleaning_logger.info(f"Filtering rows based on country codes : {country_code_subset}")
         filtered_currency_table = currency_table[currency_table["country_code"].isin(country_code_subset)]
@@ -935,11 +941,13 @@ class DataCleaning:
              [
                 {
                     "currency_key": -1,
-                    "country_name": "Not Applicable"
+                    "currency_conversion_key": -1,
+                    "currency_code": "Not Applicable"
                 }, 
                 {
                     "currency_key": 0,
-                    "country_name": "Unknown"
+                     "currency_conversion_key": 0, 
+                    "currency_code": "Unknown"
                 }
             ]
         )
@@ -957,7 +965,7 @@ class DataCleaning:
             "dim_currency"
         )
         #TODO: Is there a way to not hard code the dim_currency here? 
-        data_cleaning_logger.info(f"Successfully loaded {datastore_table_name} to database")
+        
         data_cleaning_logger.info(f"Successfully loaded {dimension_table_name} to database")
         data_cleaning_logger.info("Job clean_currency_table has completed successfully.")
         return currency_datastore_table
@@ -1369,12 +1377,12 @@ if __name__=="__main__":
    
 
     cleaner = DataCleaning(file_pathway_to_datastore)
-    # cleaner.clean_user_data("legacy_users", file_pathway_to_source_database, "land_user_data", "dim_users")
-    # cleaner.clean_store_data("legacy_store_details", file_pathway_to_source_database, "land_store_details", "dim_store_details")
-    # cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details", "dim_product_details")
-    # cleaner.clean_time_event_table("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json", "land_date_times", "dim_date_times")
-    # cleaner.clean_card_details("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf", "land_card_details", "dim_card_details")
-    # cleaner.clean_currency_table(file_pathway_to_json_source_file, ["US", "GB", "DE"], "land_currency", "dim_currency")
+    cleaner.clean_user_data("legacy_users", file_pathway_to_source_database, "land_user_data", "dim_users")
+    cleaner.clean_store_data("legacy_store_details", file_pathway_to_source_database, "land_store_details", "dim_store_details")
+    cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details", "dim_product_details")
+    cleaner.clean_time_event_table("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json", "land_date_times", "dim_date_times")
+    cleaner.clean_card_details("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf", "land_card_details", "dim_card_details")
+    cleaner.clean_currency_table(file_pathway_to_json_source_file, ["US", "GB", "DE"], "land_currency", "dim_currency")
     cleaner.clean_currency_exchange_rates(
         "https://www.x-rates.com/table/?from=GBP&amount=1",
         '//table[@class="tablesorter ratesTable"]/tbody',
@@ -1386,5 +1394,5 @@ if __name__=="__main__":
         "land_currency_conversion",
         "dim_currency_conversion"
     )
-    # cleaner.clean_orders_table("orders_table", file_pathway_to_source_database, "orders_table") 
+    cleaner.clean_orders_table("orders_table", file_pathway_to_source_database, "orders_table") 
 

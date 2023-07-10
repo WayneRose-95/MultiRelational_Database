@@ -9,7 +9,7 @@ WHERE orders_table.card_number::varchar = dim_card_details.card_number;
 
 -- Updating orders_table with the keys from the dim_date_times table
 UPDATE orders_table
-SET date_key = dim_date_times.time_key
+SET date_key = dim_date_times.date_key
 FROM dim_date_times
 WHERE orders_table.date_uuid::uuid = dim_date_times.date_uuid;
 

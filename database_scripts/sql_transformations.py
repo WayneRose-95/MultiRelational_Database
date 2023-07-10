@@ -125,13 +125,14 @@ def perform_database_operations(target_datastore_config_file_name):
 if __name__ == "__main__":
     # perform_database_operations(get_absolute_file_path('sales_data_creds_test.yaml', 'credentials')) # 'sales_data_creds_test.yaml'
     sql = SQLAlterations(get_absolute_file_path('sales_data_creds_test.yaml', 'credentials'))
-    sql.create_database('Sales_Data_Test', "Sales_Data_Admin") # 'Sales_Data_Test', "Sales_Data_Admin"
+    # sql.create_database('Sales_Data_Test', "Sales_Data_Admin") # 'Sales_Data_Test', "Sales_Data_Admin"
     sql.alter_and_update(get_absolute_file_path("alter_table_schema.sql", f"sales_data\DDL"))
-    # sql.alter_and_update(get_absolute_file_path("add_weight_class_column_script.sql", r"sales_data\DML"))
-    # sql.alter_and_update(get_absolute_file_path("orders_table_FK_constraints.sql", r"sales_data\DDL"))
-    # sql.alter_and_update(get_absolute_file_path("update_orders_table_foreign_keys.sql", r"sales_data\DML")) # r'sales_data\DML\update_orders_table_foreign_keys.sql')
-    # sql.alter_and_update(get_absolute_file_path("dim_currency_FK_constraint.sql", r"sales_data\DDL"))
-    # sql.alter_and_update(get_absolute_file_path("update_dim_currency_table_foreign_keys.sql", r"sales_data\DML")) # r'sales_data\DML\update_dim_currency_table_foreign_keys.sql')
+    sql.alter_and_update(get_absolute_file_path("add_weight_class_column_script.sql", r"sales_data\DML"))
+    sql.alter_and_update(get_absolute_file_path("add_primary_keys.sql", r"sales_data\DDL")) # r'sales_data\DDL\add_primary_keys.sql')
+    sql.alter_and_update(get_absolute_file_path("orders_table_FK_constraints.sql", r"sales_data\DDL"))
+    sql.alter_and_update(get_absolute_file_path("update_orders_table_foreign_keys.sql", r"sales_data\DML")) # r'sales_data\DML\update_orders_table_foreign_keys.sql')
+    sql.alter_and_update(get_absolute_file_path("dim_currency_FK_constraint.sql", r"sales_data\DDL"))
+    sql.alter_and_update(get_absolute_file_path("update_dim_currency_table_foreign_keys.sql", r"sales_data\DML")) # r'sales_data\DML\update_dim_currency_table_foreign_keys.sql')
 
 
 
