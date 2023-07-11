@@ -47,7 +47,7 @@ class DatabaseExtractor:
     def __init__(self):
         self.database_connector = DatabaseConnector()
 
-    def list_db_tables(self, config_file_name : str):
+    def list_db_tables(self, config_file_name : str, database_name : str):
         '''
         Method to list the tables within a database 
 
@@ -60,7 +60,7 @@ class DatabaseExtractor:
             
             data_extraction_logger.info("Initialising database connection")
             # Initialise the connection using an instance of the DatabaseConnector class
-            engine = self.database_connector.initialise_database_connection(config_file_name)
+            engine = self.database_connector.initialise_database_connection(config_file_name, connect_to_database=True, new_db_name=database_name)
             data_extraction_logger.info(f"Initialising database connection using {config_file_name}")
             data_extraction_logger.debug(f"Using {engine}")
 
@@ -86,7 +86,7 @@ class DatabaseExtractor:
 
 
 
-    def read_rds_table(self, table_name :str, config_file_name : str):
+    def read_rds_table(self, table_name :str, config_file_name : str, database_name : str):
         '''
         Method to read a table from an RDS and return a Pandas Dataframe 
 
@@ -100,7 +100,7 @@ class DatabaseExtractor:
         try:
             
             # Initialise the connection 
-            connection = self.database_connector.initialise_database_connection(config_file_name)
+            connection = self.database_connector.initialise_database_connection(config_file_name, connect_to_database=True, new_db_name=database_name)
             data_extraction_logger.info("Initialising connection to the database")
             data_extraction_logger.info(f"Using {connection}")
 
@@ -464,7 +464,7 @@ if __name__ == "__main__":
     source_data_file_path = get_absolute_file_path("currency_conversions_test", "source_data_files")
     source_json_file_path = get_absolute_file_path("country_data.json", "source_data_files")
     extract = DatabaseExtractor() 
-    extract.list_db_tables(credentials_file_path)
+    extract.list_db_tables(credentials_file_path, 'postgres')
     extract.extract_currency_conversion_data(
         "https://www.x-rates.com/table/?from=GBP&amount=1",
         '//table[@class="tablesorter ratesTable"]/tbody',
@@ -473,7 +473,7 @@ if __name__ == "__main__":
         source_data_file_path
     )
     extract.read_json_local(source_json_file_path)
-    extract.read_rds_table('legacy_users', credentials_file_path)
+    extract.read_rds_table('legacy_users', credentials_file_path, 'postgres')
     extract.retrieve_pdf_data("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf")
     extract._parse_s3_url("s3://data-handling-public/products.csv")
     extract.read_s3_bucket_to_dataframe("s3://data-handling-public/products.csv")

@@ -53,21 +53,30 @@ class SQLAlterations:
             
             connection = create_engine(self.connection_string)
             database_engine = connection.connect()
-            if database_engine: 
-                print("Connection Successful")
-
+            if database_engine:
                 # Disable transactional behavior
                 database_engine.execution_options(isolation_level="AUTOCOMMIT")
 
-                # Create a new database
-                create_db_stmt = text(f'CREATE DATABASE {database_name}')
-                database_engine.execute(create_db_stmt)
+                # Check if the database exists
+                check_db_stmt = text(f"SELECT 1 FROM pg_database WHERE datname = '{database_name}'")
+                result = database_engine.execute(check_db_stmt)
+
+                if result.scalar():
+                    # Database already exists, so skip database creation
+                    print(f"Database '{database_name}' already exists. Skipping database creation.")
+                    sql_transformations_logger.warning(f"Database '{database_name}' already exists. Skipping database creation.")
+                else:
+                    # Create a new database
+                    create_db_stmt = text(f'CREATE DATABASE {database_name}')
+                    database_engine.execute(create_db_stmt)
+                    print(f"Database '{database_name}' created successfully.")
+                    sql_transformations_logger.info(f"Database '{database_name}' created successfully.")
 
                 # Close the connection
                 database_engine.close()
-            
-                # print(f"Database {database_name} already exists. Skipping database creation.")
-                # sql_transformations_logger.warning(f"Database {database_name} already exists. Skipping database creation.")
+            else:
+                print("Connection to the database failed.")
+                sql_transformations_logger.error("Connection to the database failed.")
 
 
 
@@ -127,7 +136,7 @@ def perform_database_operations(target_datastore_config_file_name):
 if __name__ == "__main__":
     # perform_database_operations(get_absolute_file_path('sales_data_creds_test.yaml', 'credentials')) # 'sales_data_creds_test.yaml'
     sql = SQLAlterations(get_absolute_file_path('sales_data_creds_test.yaml', 'credentials'))
-    sql.create_database('test_database') # 'Sales_Data_Test', "Sales_Data_Admin"
+    sql.create_database('sales_data_test') # 'Sales_Data_Test', "Sales_Data_Admin"
     sql.connect_to_database(get_absolute_file_path('sales_data_creds_test.yaml', 'credentials'), 'test_database')
     # sql.alter_and_update(get_absolute_file_path("alter_table_schema.sql", f"sales_data\DDL"))
     # sql.alter_and_update(get_absolute_file_path("add_weight_class_column_script.sql", r"sales_data\DML"))

@@ -67,7 +67,7 @@ class DataCleaning:
             print("Error connecting to database")
             raise Exception    
 
-    def clean_user_data(self, source_table_name : str, source_database_config_file_name : str, datastore_table_name : str, dimension_table_name : str):
+    def clean_user_data(self, source_table_name : str, source_database_config_file_name : str, name_of_source_database : str, datastore_table_name : str, dimension_table_name : str):
         '''
         Method to clean the user data table 
 
@@ -93,7 +93,7 @@ class DataCleaning:
         data_cleaning_logger.info(f"Attempting to clean {source_table_name}")
         data_cleaning_logger.info("Reading in table from source database")
         # Reading in the table from the AWS database 
-        legacy_users_dataframe = self.extractor.read_rds_table(source_table_name, source_database_config_file_name)
+        legacy_users_dataframe = self.extractor.read_rds_table(source_table_name, source_database_config_file_name, name_of_source_database)
         
         data_cleaning_logger.debug(f"Number of rows : {len(legacy_users_dataframe)}")
 
@@ -1377,22 +1377,22 @@ if __name__=="__main__":
    
 
     cleaner = DataCleaning(file_pathway_to_datastore)
-    cleaner.clean_user_data("legacy_users", file_pathway_to_source_database, "land_user_data", "dim_users")
-    cleaner.clean_store_data("legacy_store_details", file_pathway_to_source_database, "land_store_details", "dim_store_details")
-    cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details", "dim_product_details")
-    cleaner.clean_time_event_table("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json", "land_date_times", "dim_date_times")
-    cleaner.clean_card_details("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf", "land_card_details", "dim_card_details")
-    cleaner.clean_currency_table(file_pathway_to_json_source_file, ["US", "GB", "DE"], "land_currency", "dim_currency")
-    cleaner.clean_currency_exchange_rates(
-        "https://www.x-rates.com/table/?from=GBP&amount=1",
-        '//table[@class="tablesorter ratesTable"]/tbody',
-        '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
-        ["currency_name", "conversion_rate", "percentage_change"],
-        file_pathway_to_exported_csv_file,
-        file_pathway_to_source_text_file,
-        ["USD", "GBP", "EUR"],
-        "land_currency_conversion",
-        "dim_currency_conversion"
-    )
-    cleaner.clean_orders_table("orders_table", file_pathway_to_source_database, "orders_table") 
+    cleaner.clean_user_data("legacy_users", file_pathway_to_source_database, "postgres", "land_user_data", "dim_users")
+    # cleaner.clean_store_data("legacy_store_details", file_pathway_to_source_database, "land_store_details", "dim_store_details")
+    # cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details", "dim_product_details")
+    # cleaner.clean_time_event_table("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json", "land_date_times", "dim_date_times")
+    # cleaner.clean_card_details("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf", "land_card_details", "dim_card_details")
+    # cleaner.clean_currency_table(file_pathway_to_json_source_file, ["US", "GB", "DE"], "land_currency", "dim_currency")
+    # cleaner.clean_currency_exchange_rates(
+    #     "https://www.x-rates.com/table/?from=GBP&amount=1",
+    #     '//table[@class="tablesorter ratesTable"]/tbody',
+    #     '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
+    #     ["currency_name", "conversion_rate", "percentage_change"],
+    #     file_pathway_to_exported_csv_file,
+    #     file_pathway_to_source_text_file,
+    #     ["USD", "GBP", "EUR"],
+    #     "land_currency_conversion",
+    #     "dim_currency_conversion"
+    # )
+    # cleaner.clean_orders_table("orders_table", file_pathway_to_source_database, "orders_table") 
 
