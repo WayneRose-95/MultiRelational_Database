@@ -224,7 +224,7 @@ class DataCleaning:
         return legacy_users_database_table
         
     
-    def clean_store_data(self, source_table_name : str , source_database_config_file_name : str, datastore_table_name : str, dimension_table_name : str):
+    def clean_store_data(self, source_table_name : str , source_database_config_file_name : str, name_of_source_database : str, datastore_table_name : str, dimension_table_name : str):
         '''
         Method to reads in store_data from an RDS, 
         cleans it then uploads it to the datastore
@@ -251,7 +251,7 @@ class DataCleaning:
         data_cleaning_logger.info("Starting Job clean_store_data")
         data_cleaning_logger.info("Reading in table from the source database")
         # Reading in the table from the AWS database 
-        legacy_store_dataframe = self.extractor.read_rds_table(source_table_name, source_database_config_file_name)
+        legacy_store_dataframe = self.extractor.read_rds_table(source_table_name, source_database_config_file_name, name_of_source_database)
         data_cleaning_logger.info("Database table successfully read.")
         data_cleaning_logger.info(f"Number of rows : {len(legacy_store_dataframe)}")
 
@@ -514,13 +514,13 @@ class DataCleaning:
         return card_details_database_table
 
 
-    def clean_orders_table(self, source_table_name : str, source_database_config_file_name : str, datastore_table_name : str):
+    def clean_orders_table(self, source_table_name : str, source_database_config_file_name : str, name_of_source_database : str, datastore_table_name : str):
         
         data_cleaning_logger.info("Starting job clean_orders_table")
         data_cleaning_logger.info("Reading in the table from the source database")
 
         # Read in the table from the RDS database 
-        orders_dataframe = self.extractor.read_rds_table(source_table_name, source_database_config_file_name)
+        orders_dataframe = self.extractor.read_rds_table(source_table_name, source_database_config_file_name, name_of_source_database)
         data_cleaning_logger.info(f"Successfully read the table {source_table_name} from the source database")
         data_cleaning_logger.info(f"Number of rows : {len(orders_dataframe)}")
 
@@ -1378,21 +1378,21 @@ if __name__=="__main__":
 
     cleaner = DataCleaning(file_pathway_to_datastore)
     cleaner.clean_user_data("legacy_users", file_pathway_to_source_database, "postgres", "land_user_data", "dim_users")
-    # cleaner.clean_store_data("legacy_store_details", file_pathway_to_source_database, "land_store_details", "dim_store_details")
-    # cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details", "dim_product_details")
-    # cleaner.clean_time_event_table("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json", "land_date_times", "dim_date_times")
-    # cleaner.clean_card_details("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf", "land_card_details", "dim_card_details")
-    # cleaner.clean_currency_table(file_pathway_to_json_source_file, ["US", "GB", "DE"], "land_currency", "dim_currency")
-    # cleaner.clean_currency_exchange_rates(
-    #     "https://www.x-rates.com/table/?from=GBP&amount=1",
-    #     '//table[@class="tablesorter ratesTable"]/tbody',
-    #     '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
-    #     ["currency_name", "conversion_rate", "percentage_change"],
-    #     file_pathway_to_exported_csv_file,
-    #     file_pathway_to_source_text_file,
-    #     ["USD", "GBP", "EUR"],
-    #     "land_currency_conversion",
-    #     "dim_currency_conversion"
-    # )
-    # cleaner.clean_orders_table("orders_table", file_pathway_to_source_database, "orders_table") 
+    cleaner.clean_store_data("legacy_store_details", file_pathway_to_source_database, "postgres", "land_store_details", "dim_store_details")
+    cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details", "dim_product_details")
+    cleaner.clean_time_event_table("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json", "land_date_times", "dim_date_times")
+    cleaner.clean_card_details("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf", "land_card_details", "dim_card_details")
+    cleaner.clean_currency_table(file_pathway_to_json_source_file, ["US", "GB", "DE"], "land_currency", "dim_currency")
+    cleaner.clean_currency_exchange_rates(
+        "https://www.x-rates.com/table/?from=GBP&amount=1",
+        '//table[@class="tablesorter ratesTable"]/tbody',
+        '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
+        ["currency_name", "conversion_rate", "percentage_change"],
+        file_pathway_to_exported_csv_file,
+        file_pathway_to_source_text_file,
+        ["USD", "GBP", "EUR"],
+        "land_currency_conversion",
+        "dim_currency_conversion"
+    )
+    cleaner.clean_orders_table("orders_table", file_pathway_to_source_database, "postgres", "orders_table") 
 
