@@ -79,13 +79,19 @@ class DatabaseConnector:
             database_utils_logger.critical("Invalid .yaml file. Please check the formatting of your .yaml / .yml file")
             raise yaml.YAMLError("Invalid YAML format.")
 
-    def create_connection_string(self, config_file_name):
+    def create_connection_string(self, config_file_name, connect_to_database=False, new_db_name=None):
         '''
         Method to create the connection_string needed to connect to a postgresql database 
 
         Parameters: 
         config_file_name: 
         The pathway to the config_file used to create the string 
+
+        connect_to_database: bool
+        Flag indicating whether to connect to a specific database within the server (default: False)
+
+        new_db_name: str
+        The name of the new database to connect to if connect_to_database is True (default: None)
 
         Returns: 
         Connection string : str 
@@ -99,17 +105,29 @@ class DatabaseConnector:
         if not database_credentials:
             raise Exception("Invalid database credentials.")
         
-        connection_string = f"postgresql+psycopg2://{database_credentials['RDS_USER']}:{database_credentials['RDS_PASSWORD']}@{database_credentials['RDS_HOST']}:{database_credentials['RDS_PORT']}/{database_credentials['RDS_DATABASE']}"
-        database_utils_logger.debug(f"Connection string created {connection_string}")
+        connection_string = f"postgresql+psycopg2://{database_credentials['RDS_USER']}:{database_credentials['RDS_PASSWORD']}@{database_credentials['RDS_HOST']}:{database_credentials['RDS_PORT']}"
+
+        if connect_to_database:
+            if not new_db_name:
+                raise ValueError("New database name not provided")
+            connection_string += f"/{new_db_name}"
+
+        database_utils_logger.debug(f"Connection string created: {connection_string}")
         return connection_string
 
-    def initialise_database_connection(self, config_file_name, isolation_level="AUTOCOMMIT"):
+    def initialise_database_connection(self, config_file_name, connect_to_database=False, new_db_name=None, isolation_level="AUTOCOMMIT"):
         '''
         Method to establish a connection to the database 
 
         Parameters: 
         config_file_name: str 
         The file pathway to the yaml file
+
+        connect_to_database: bool
+        Flag indicating whether to connect to a specific database within the server (default: False)
+
+        new_db_name: str
+        The name of the new database to connect to if connect_to_database is True (default: None)
 
         Returns: 
         database_engine: engine 
@@ -123,12 +141,12 @@ class DatabaseConnector:
 
         '''
         
-        connection_string = self.create_connection_string(config_file_name)
+        connection_string = self.create_connection_string(config_file_name, connect_to_database, new_db_name)
 
         # Lastly try to connect to the database using your connection string variable
         try:
             database_utils_logger.info("Creating database engine using sqlaclhemy's create_engine")
-            database_engine = create_engine(connection_string, isolation_level="AUTOCOMMIT")
+            database_engine = create_engine(connection_string, isolation_level=isolation_level)
             database_utils_logger.info(f"Database Engine : {database_engine} created attempting to connect")
             database_engine.connect()
             database_utils_logger.info("connection successful")

@@ -37,35 +37,37 @@ class SQLAlterations:
     def __init__(self, datastore_config_file : str):
         # Create an instance of the DatabaseConnetor class
         self.connector = DatabaseConnector()
-        # Intialise the connection
-        self.engine = self.connector.initialise_database_connection(datastore_config_file)
+        self.connection_string = self.connector.create_connection_string(datastore_config_file, connect_to_database=True, new_db_name='postgres')
+        print(self.connection_string)
+        
 
-    def connect_to_database(self):
-        sql_transformations_logger.debug(f"Connecting to datastore using {self.engine}")
+    def connect_to_database(self, datastore_config_file : str, database_name : str):
         # Connect to the database using the Engine returned from the method 
-        self.engine.connect() 
+        self.engine = self.connector.initialise_database_connection(datastore_config_file, connect_to_database=True, new_db_name=database_name)
+        sql_transformations_logger.debug(f"Connecting to datastore using {self.engine}")
+        
+         
     
-    def create_database(self, database_name: str, database_username: str):
-        # Check if the database already exists
-        database_check = self.engine.connect().scalar(
-            text(f"SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_database WHERE datname = '{database_name}')")
-        )
+    def create_database(self, database_name: str):
+        # Create the database with the provided database_name and database_username
+            
+            connection = create_engine(self.connection_string)
+            database_engine = connection.connect()
+            if database_engine: 
+                print("Connection Successful")
 
-        if not database_check:
-            # Create the database with the provided database_name and database_username
-            try:
-                self.engine.connect().execute(
-                    text(f"""CREATE DATABASE  {database_name} 
-                        WITH OWNER = '{database_username}'
-                        ENCODING = 'UTF8' 
-                        LC_COLLATE = 'English_United Kingdom.1252' 
-                        LC_CTYPE = 'English_United Kingdom.1252' 
-                        TABLESPACE = pg_default 
-                        CONNECTION LIMIT = -1""")
-                )
-            except ProgrammingError:
-                print(f"Database {database_name} already exists. Skipping database creation.")
-                sql_transformations_logger.warning(f"Database {database_name} already exists. Skipping database creation.")
+                # Disable transactional behavior
+                database_engine.execution_options(isolation_level="AUTOCOMMIT")
+
+                # Create a new database
+                create_db_stmt = text(f'CREATE DATABASE {database_name}')
+                database_engine.execute(create_db_stmt)
+
+                # Close the connection
+                database_engine.close()
+            
+                # print(f"Database {database_name} already exists. Skipping database creation.")
+                # sql_transformations_logger.warning(f"Database {database_name} already exists. Skipping database creation.")
 
 
 
@@ -125,14 +127,27 @@ def perform_database_operations(target_datastore_config_file_name):
 if __name__ == "__main__":
     # perform_database_operations(get_absolute_file_path('sales_data_creds_test.yaml', 'credentials')) # 'sales_data_creds_test.yaml'
     sql = SQLAlterations(get_absolute_file_path('sales_data_creds_test.yaml', 'credentials'))
-    # sql.create_database('Sales_Data_Test', "Sales_Data_Admin") # 'Sales_Data_Test', "Sales_Data_Admin"
-    sql.alter_and_update(get_absolute_file_path("alter_table_schema.sql", f"sales_data\DDL"))
-    sql.alter_and_update(get_absolute_file_path("add_weight_class_column_script.sql", r"sales_data\DML"))
-    sql.alter_and_update(get_absolute_file_path("add_primary_keys.sql", r"sales_data\DDL")) # r'sales_data\DDL\add_primary_keys.sql')
-    sql.alter_and_update(get_absolute_file_path("orders_table_FK_constraints.sql", r"sales_data\DDL"))
-    sql.alter_and_update(get_absolute_file_path("update_orders_table_foreign_keys.sql", r"sales_data\DML")) # r'sales_data\DML\update_orders_table_foreign_keys.sql')
-    sql.alter_and_update(get_absolute_file_path("dim_currency_FK_constraint.sql", r"sales_data\DDL"))
-    sql.alter_and_update(get_absolute_file_path("update_dim_currency_table_foreign_keys.sql", r"sales_data\DML")) # r'sales_data\DML\update_dim_currency_table_foreign_keys.sql')
+    sql.create_database('test_database') # 'Sales_Data_Test', "Sales_Data_Admin"
+    sql.connect_to_database(get_absolute_file_path('sales_data_creds_test.yaml', 'credentials'), 'test_database')
+    # sql.alter_and_update(get_absolute_file_path("alter_table_schema.sql", f"sales_data\DDL"))
+    # sql.alter_and_update(get_absolute_file_path("add_weight_class_column_script.sql", r"sales_data\DML"))
+    # sql.alter_and_update(get_absolute_file_path("add_primary_keys.sql", r"sales_data\DDL")) # r'sales_data\DDL\add_primary_keys.sql')
+    # sql.alter_and_update(get_absolute_file_path("orders_table_FK_constraints.sql", r"sales_data\DDL"))
+    # sql.alter_and_update(get_absolute_file_path("update_orders_table_foreign_keys.sql", r"sales_data\DML")) # r'sales_data\DML\update_orders_table_foreign_keys.sql')
+    # sql.alter_and_update(get_absolute_file_path("dim_currency_FK_constraint.sql", r"sales_data\DDL"))
+    # sql.alter_and_update(get_absolute_file_path("update_dim_currency_table_foreign_keys.sql", r"sales_data\DML")) # r'sales_data\DML\update_dim_currency_table_foreign_keys.sql')
+
+
+    '''
+    (f"""CREATE DATABASE  {database_name} 
+                        WITH OWNER = '{database_username}'
+                        ENCODING = 'UTF8' 
+                        LC_COLLATE = 'English_United Kingdom.1252' 
+                        LC_CTYPE = 'English_United Kingdom.1252' 
+                        TABLESPACE = pg_default 
+                        CONNECTION LIMIT = -1""")
+                )
+    '''
 
 
 
