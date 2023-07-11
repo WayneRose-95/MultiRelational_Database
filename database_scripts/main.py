@@ -4,8 +4,8 @@ from data_extraction import data_extraction_logger as data_extraction_logger
 from database_utils import database_utils_logger as database_utils_logger
 from sql_transformations import sql_transformations_logger as sql_transformations_logger
 from file_handler import get_absolute_file_path
-from data_cleaning import perform_data_cleaning
-from sql_transformations import perform_database_operations
+from data_cleaning import DataCleaning
+from sql_transformations import SQLAlterations
 import time 
 import os 
 import logging
@@ -35,31 +35,56 @@ file_handler.setFormatter(format)
 
 main_logger.addHandler(file_handler)
 
+# Setting file pathways to source files and credentials files 
 file_pathway_to_source_database = get_absolute_file_path("db_creds.yaml", "credentials")
-file_pathway_to_datastore = get_absolute_file_path("sales_data_creds_test.yaml", "credentials")
+file_pathway_to_datastore = get_absolute_file_path("sales_data_creds.yaml", "credentials")
 file_pathway_to_source_text_file = get_absolute_file_path("currency_code_mapping", "source_data_files")
 file_pathway_to_json_source_file = get_absolute_file_path("country_data.json", "source_data_files")
 file_pathway_to_exported_csv_file = get_absolute_file_path("currency_conversions_test", "source_data_files")
 
 sql_transformations_file_path = get_absolute_file_path("sales_data_creds_test.yaml", "credentials")
 
-
-
-# main_logger.info("Process started")
-
 start_time = time.time()
 
-data_cleaning_logger.info("Calling data_cleaning_script")
-perform_data_cleaning(
-      file_pathway_to_datastore,
-      file_pathway_to_source_database,
-      file_pathway_to_source_text_file,
-      file_pathway_to_json_source_file,
-      file_pathway_to_exported_csv_file 
-)
+main_logger.info("Process started")
 
-sql_transformations_logger.info("Calling SQL transformations script")
-perform_database_operations(sql_transformations_file_path)
+# Create instance of DataCleaning and SQLAlterations classes 
+cleaner = DataCleaning(file_pathway_to_datastore)
+sql = SQLAlterations(get_absolute_file_path('sales_data_creds.yaml', 'credentials'))
+
+# Create the database. If it already exists 
+sql.create_database('sales_data') # 'Sales_Data_Test', "Sales_Data_Admin"
+
+# Main ETL Process to Extract, Transform and Load Data into Postgres
+cleaner.clean_user_data("legacy_users", file_pathway_to_source_database, "postgres", "land_user_data", "dim_users")
+cleaner.clean_store_data("legacy_store_details", file_pathway_to_source_database, "postgres", "land_store_details", "dim_store_details")
+cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details", "dim_product_details")
+cleaner.clean_time_event_table("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json", "land_date_times", "dim_date_times")
+cleaner.clean_card_details("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf", "land_card_details", "dim_card_details")
+cleaner.clean_currency_table(file_pathway_to_json_source_file, ["US", "GB", "DE"], "land_currency", "dim_currency")
+cleaner.clean_currency_exchange_rates(
+    "https://www.x-rates.com/table/?from=GBP&amount=1",
+    '//table[@class="tablesorter ratesTable"]/tbody',
+    '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
+    ["currency_name", "conversion_rate", "percentage_change"],
+    file_pathway_to_exported_csv_file,
+    file_pathway_to_source_text_file,
+    ["USD", "GBP", "EUR"],
+    "land_currency_conversion",
+    "dim_currency_conversion"
+)
+cleaner.clean_orders_table("orders_table", file_pathway_to_source_database, "postgres", "orders_table") 
+
+# Altering the schema and forming the STAR Schema model using the uploaded database
+sql.connect_to_database(get_absolute_file_path('sales_data_creds.yaml', 'credentials'), 'sales_data')
+sql.alter_and_update(get_absolute_file_path("alter_table_schema.sql", f"sales_data\DDL"))
+sql.alter_and_update(get_absolute_file_path("add_weight_class_column_script.sql", r"sales_data\DML"))
+sql.alter_and_update(get_absolute_file_path("add_primary_keys.sql", r"sales_data\DDL")) # r'sales_data\DDL\add_primary_keys.sql')
+sql.alter_and_update(get_absolute_file_path("orders_table_FK_constraints.sql", r"sales_data\DDL"))
+sql.alter_and_update(get_absolute_file_path("update_orders_table_foreign_keys.sql", r"sales_data\DML")) # r'sales_data\DML\update_orders_table_foreign_keys.sql')
+sql.alter_and_update(get_absolute_file_path("dim_currency_FK_constraint.sql", r"sales_data\DDL"))
+sql.alter_and_update(get_absolute_file_path("update_dim_currency_table_foreign_keys.sql", r"sales_data\DML")) # r'sales_data\DML\update_dim_currency_table_foreign_keys.sql')
+
 
 end_time = time.time() 
 
