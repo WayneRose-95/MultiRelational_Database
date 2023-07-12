@@ -844,7 +844,7 @@ class DataCleaning:
         data_cleaning_logger.info("Job clean_product_table has completed successfully")
         return products_datastore_table
     
-    def clean_currency_table(self, source_file_name : str , country_code_subset : list , datastore_table_name : str, dimension_table_name : str):
+    def clean_currency_table(self, source_file_name : str , datastore_table_name : str):
         data_cleaning_logger.info("Starting Job clean_currency_table")
 
         data_cleaning_logger.info(f"Reading in file {source_file_name}")
@@ -905,56 +905,15 @@ class DataCleaning:
         data_cleaning_logger.info(new_rows_addition)
 
         data_cleaning_logger.info("Concatenating new rows to the start of the table")
-        filtered_currency_table = pd.concat([new_rows_addition, currency_table]).reset_index(drop=True)
+        land_currency_table = pd.concat([new_rows_addition, currency_table]).reset_index(drop=True)
 
         # Uploading land_table_to_datastore 
         currency_datastore_table = self._upload_to_database(
-            filtered_currency_table,
+            land_currency_table,
             self.engine,
             datastore_table_name
         )
         data_cleaning_logger.info(f"Successfully loaded {datastore_table_name} to database")
-        # Filtering rows from the table based on the subset given 
-        data_cleaning_logger.info(f"Filtering rows based on country codes : {country_code_subset}")
-        filtered_currency_table = currency_table[currency_table["country_code"].isin(country_code_subset)]
-        data_cleaning_logger.debug(f"Number of rows {len(filtered_currency_table)}")
-
-        filtered_currency_table["currency_key"] = filtered_currency_table.index + 1
-
-
-        filtered_currency_table = filtered_currency_table[column_order]
-        data_cleaning_logger.info("Adding new rows in case of unknowns")
-
-        new_rows_addition = self.add_new_rows(
-             [
-                {
-                    "currency_key": -1,
-                    "currency_conversion_key": -1,
-                    "currency_code": "Not Applicable"
-                }, 
-                {
-                    "currency_key": 0,
-                     "currency_conversion_key": 0, 
-                    "currency_code": "Unknown"
-                }
-            ]
-        )
-        data_cleaning_logger.info("New rows added")
-        data_cleaning_logger.info(new_rows_addition)
-
-        data_cleaning_logger.info("Concatenating new rows to the start of the table")
-        filtered_currency_table = pd.concat([new_rows_addition, filtered_currency_table]).reset_index(drop=True)
-        data_cleaning_logger.info(f"Number of rows : {len(filtered_currency_table)}")
-
-
-        currency_datastore_table = self._upload_to_database(
-            filtered_currency_table,
-            self.engine,
-            "dim_currency"
-        )
-        #TODO: Is there a way to not hard code the dim_currency here? 
-        
-        data_cleaning_logger.info(f"Successfully loaded {dimension_table_name} to database")
         data_cleaning_logger.info("Job clean_currency_table has completed successfully.")
         return currency_datastore_table
     
@@ -966,9 +925,7 @@ class DataCleaning:
             data_headers : list ,
             source_file_name : str,
             currency_mapping_document_name : str,
-            currency_code_subset : list,
-            datastore_table_name : str, 
-            dimension_table_name : str
+            datastore_table_name : str 
             ):
         
         data_cleaning_logger.info("Starting job clean_currency_exchange_rates")
@@ -1081,41 +1038,8 @@ class DataCleaning:
                                                             self.engine,
                                                             datastore_table_name
         )
-        data_cleaning_logger.info("Table Uploaded")
+        data_cleaning_logger.info(f"{datastore_table_name} table uploaded")
 
-
-        # filtering the dataframe according to the currency_codes passed
-        filtered_currency_exchange_df = updated_df[updated_df["currency_code"].isin(currency_code_subset)]
-
-        data_cleaning_logger.info(f"New filtered dataframe based on {filtered_currency_exchange_df}")
-        data_cleaning_logger.debug(filtered_currency_exchange_df)
-
-        # Adding new rows to cover for unknowns 
-        data_cleaning_logger.info("Adding new rows to cover for unknowns")
-        new_rows_addition = self.add_new_rows(
-             [
-                {
-                    "currency_conversion_key": -1,
-                    "currency_name": "Not Applicable"
-                }, 
-                {
-                    "currency_conversion_key": 0,
-                    "currency_name": "Unknown"
-                }
-            ]
-        )
-
-        filtered_currency_conversion_df = pd.concat([new_rows_addition, filtered_currency_exchange_df])
-        data_cleaning_logger.info("Successfully concatentated rows from together") 
-        data_cleaning_logger.debug(cleaned_currency_conversion_df)
-
-        cleaned_dim_currency_conversion_datastore_table = self._upload_to_database(
-                                                            filtered_currency_conversion_df,
-                                                            self.engine,
-                                                            "dim_currency_conversion"
-        )
-        #TODO: Is there a way to not hard code the "dim_currency_conversion" variable? 
-        data_cleaning_logger.info("Table Uploaded")
         data_cleaning_logger.info("Job clean_currency_exchange_rates completed successfully")
         return cleaned_currency_conversion_datastore_table
     
@@ -1150,7 +1074,107 @@ class DataCleaning:
             datastore_table_name
         )
         return product_dimension_table
+    
 
+    def load_dim_currency_table(
+            self,
+            land_currency_table : pd.DataFrame,
+            country_code_subset : list, 
+            datastore_table_name : str
+    ):
+        
+        # Filtering rows from the table based on the subset given 
+        data_cleaning_logger.info(f"Filtering rows based on country codes : {country_code_subset}")
+        filtered_currency_table = land_currency_table[land_currency_table["country_code"].isin(country_code_subset)]
+        data_cleaning_logger.debug(f"Number of rows {len(filtered_currency_table)}")
+
+        filtered_currency_table["currency_key"] = filtered_currency_table.index + 1
+
+        column_order = [
+            'currency_key',
+            'currency_conversion_key', 
+            'currency_code', 
+            'country_code', 
+            'country_name', 
+            'currency_symbol'
+            ]
+
+        filtered_currency_table = filtered_currency_table[column_order]
+        data_cleaning_logger.info("Adding new rows in case of unknowns")
+
+        new_rows_addition = self.add_new_rows(
+             [
+                {
+                    "currency_key": -1,
+                    "currency_conversion_key": -1,
+                    "currency_code": "Not Applicable"
+                }, 
+                {
+                    "currency_key": 0,
+                     "currency_conversion_key": 0, 
+                    "currency_code": "Unknown"
+                }
+            ]
+        )
+        data_cleaning_logger.info("New rows added")
+        data_cleaning_logger.info(new_rows_addition)
+
+        data_cleaning_logger.info("Concatenating new rows to the start of the table")
+        filtered_currency_table = pd.concat([new_rows_addition, filtered_currency_table]).reset_index(drop=True)
+        data_cleaning_logger.info(f"Number of rows : {len(filtered_currency_table)}")
+
+
+        currency_datastore_table = self._upload_to_database(
+            filtered_currency_table,
+            self.engine,
+            datastore_table_name
+        )
+        
+        data_cleaning_logger.info(f"Successfully loaded {datastore_table_name} to database")
+        return currency_datastore_table 
+    
+    def load_dim_currency_conversion_table(
+           self, 
+           land_currency_conversion_table : pd.DataFrame,
+           currency_code_subset : list,
+           datastore_table_name : str
+
+    ):
+        # filtering the dataframe according to the currency_codes passed
+        filtered_currency_exchange_df = land_currency_conversion_table[land_currency_conversion_table["currency_code"].isin(currency_code_subset)]
+
+        data_cleaning_logger.info(f"New filtered dataframe based on {filtered_currency_exchange_df}")
+        data_cleaning_logger.debug(filtered_currency_exchange_df)
+
+        # Adding new rows to cover for unknowns 
+        data_cleaning_logger.info("Adding new rows to cover for unknowns")
+        new_rows_addition = self.add_new_rows(
+             [
+                {
+                    "currency_conversion_key": -1,
+                    "currency_name": "Not Applicable"
+                }, 
+                {
+                    "currency_conversion_key": 0,
+                    "currency_name": "Unknown"
+                }
+            ]
+        )
+
+        cleaned_dim_currency_conversion_df = pd.concat([new_rows_addition, filtered_currency_exchange_df])
+        data_cleaning_logger.info("Successfully concatentated rows from together") 
+        data_cleaning_logger.debug(cleaned_dim_currency_conversion_df)
+
+        cleaned_dim_currency_conversion_datastore_table = self._upload_to_database(
+                                                            cleaned_dim_currency_conversion_df,
+                                                            self.engine,
+                                                            datastore_table_name
+        )
+        #TODO: Is there a way to not hard code the "dim_currency_conversion" variable? 
+        data_cleaning_logger.info("Table Uploaded")
+        
+        return cleaned_dim_currency_conversion_datastore_table
+    
     def _upload_to_database(self, dataframe : pd.DataFrame, database_engine, datastore_table_name : Optional[str], dimension_table_name : Optional[str] = None):
         '''
         Method to upload the completed dataframe to the datastore 
@@ -1394,8 +1418,6 @@ if __name__=="__main__":
 
     #                       )
 
-   
-
     cleaner = DataCleaning(file_pathway_to_datastore)
     land_user_table = cleaner.clean_user_data("legacy_users", file_pathway_to_source_database, "postgres", "land_user_data")
     dim_users_table = cleaner.load_dimension_table( land_user_table, "dim_users")
@@ -1407,17 +1429,23 @@ if __name__=="__main__":
     dim_date_times_table = cleaner.load_dimension_table(land_time_events_table, "dim_date_times")
     land_card_details_table = cleaner.clean_card_details("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf", "land_card_details")
     dim_card_details_table = cleaner.load_dimension_table(land_card_details_table, "dim_card_details")
-    # cleaner.clean_currency_table(file_pathway_to_json_source_file, ["US", "GB", "DE"], "land_currency", "dim_currency")
-    # cleaner.clean_currency_exchange_rates(
-    #     "https://www.x-rates.com/table/?from=GBP&amount=1",
-    #     '//table[@class="tablesorter ratesTable"]/tbody',
-    #     '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
-    #     ["currency_name", "conversion_rate", "percentage_change"],
-    #     file_pathway_to_exported_csv_file,
-    #     file_pathway_to_source_text_file,
-    #     ["USD", "GBP", "EUR"],
-    #     "land_currency_conversion",
-    #     "dim_currency_conversion"
-    # )
+    land_currency_table = cleaner.clean_currency_table(file_pathway_to_json_source_file,  "land_currency") # ["US", "GB", "DE"]
+    dim_currency_table = cleaner.load_dim_currency_table(land_currency_table, ["US", "GB", "DE"], "dim_currency")
+
+    land_currency_conversions_table = cleaner.clean_currency_exchange_rates(
+                                            "https://www.x-rates.com/table/?from=GBP&amount=1",
+                                            '//table[@class="tablesorter ratesTable"]/tbody',
+                                            '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
+                                            ["currency_name", "conversion_rate", "percentage_change"],
+                                            file_pathway_to_exported_csv_file,
+                                            file_pathway_to_source_text_file,
+                                            "land_currency_conversion"                                        
+                                        )
+    dim_currency_conversion_table = cleaner.load_dim_currency_conversion_table(
+        land_currency_conversions_table,
+        ["USD", "GBP", "EUR"],
+        "dim_currency_conversion"
+
+    )
     cleaner.clean_orders_table("orders_table", file_pathway_to_source_database, "postgres", "orders_table") 
 
