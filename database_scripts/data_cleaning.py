@@ -1046,9 +1046,29 @@ class DataCleaning:
     def load_dimension_table(
             self, 
             datastore_land_table : pd.DataFrame, 
-            datastore_table_name : str  
+            datastore_table_name : str,
+            mapping : dict = None, 
+            subset : list = None, 
+            additional_rows : list = None  
             ):
         
+        if mapping:
+            # Apply the mapping to the specified column
+            datastore_land_table = datastore_land_table.assign(availability=datastore_land_table["availability"].map(mapping))
+
+        if subset:
+            try:
+                # Filter rows based on the specified subset
+                datastore_land_table = datastore_land_table[datastore_land_table["country_code"].isin(subset)]
+            except KeyError:
+                datastore_land_table = datastore_land_table[datastore_land_table["currency_code"].isin(subset)]
+        
+        if additional_rows:
+            # Add additional rows to the start of the table
+            additional_rows_df = pd.DataFrame(additional_rows)
+            datastore_land_table = pd.concat([additional_rows_df, datastore_land_table]).reset_index(drop=True)
+
+
         # Logic for Slowly changing Dimension Implementation could go here? 
         dimension_table = self._upload_to_database(
             datastore_land_table,
@@ -1057,123 +1077,6 @@ class DataCleaning:
         )
         return dimension_table 
     
-    def load_product_dimension_table(
-        self,
-        datastore_land_table : pd.DataFrame,
-        datastore_table_name : str
-            
-    ):
-        # Define a mapping dictionary for the conversion
-        mapping = {"Still_avaliable": True, "Removed": False}
-        # Apply the mapping to the availability column 
-        dim_products_table = datastore_land_table.assign(availability=datastore_land_table["availability"].map(mapping))
-
-        product_dimension_table = self._upload_to_database(
-            dim_products_table,
-            self.engine,
-            datastore_table_name
-        )
-        return product_dimension_table
-    
-
-    def load_dim_currency_table(
-            self,
-            land_currency_table : pd.DataFrame,
-            country_code_subset : list, 
-            datastore_table_name : str
-    ):
-        
-        # Filtering rows from the table based on the subset given 
-        data_cleaning_logger.info(f"Filtering rows based on country codes : {country_code_subset}")
-        filtered_currency_table = land_currency_table[land_currency_table["country_code"].isin(country_code_subset)]
-        data_cleaning_logger.debug(f"Number of rows {len(filtered_currency_table)}")
-
-        filtered_currency_table["currency_key"] = filtered_currency_table.index + 1
-
-        column_order = [
-            'currency_key',
-            'currency_conversion_key', 
-            'currency_code', 
-            'country_code', 
-            'country_name', 
-            'currency_symbol'
-            ]
-
-        filtered_currency_table = filtered_currency_table[column_order]
-        data_cleaning_logger.info("Adding new rows in case of unknowns")
-
-        new_rows_addition = self.add_new_rows(
-             [
-                {
-                    "currency_key": -1,
-                    "currency_conversion_key": -1,
-                    "currency_code": "Not Applicable"
-                }, 
-                {
-                    "currency_key": 0,
-                     "currency_conversion_key": 0, 
-                    "currency_code": "Unknown"
-                }
-            ]
-        )
-        data_cleaning_logger.info("New rows added")
-        data_cleaning_logger.info(new_rows_addition)
-
-        data_cleaning_logger.info("Concatenating new rows to the start of the table")
-        filtered_currency_table = pd.concat([new_rows_addition, filtered_currency_table]).reset_index(drop=True)
-        data_cleaning_logger.info(f"Number of rows : {len(filtered_currency_table)}")
-
-
-        currency_datastore_table = self._upload_to_database(
-            filtered_currency_table,
-            self.engine,
-            datastore_table_name
-        )
-        
-        data_cleaning_logger.info(f"Successfully loaded {datastore_table_name} to database")
-        return currency_datastore_table 
-    
-    def load_dim_currency_conversion_table(
-           self, 
-           land_currency_conversion_table : pd.DataFrame,
-           currency_code_subset : list,
-           datastore_table_name : str
-
-    ):
-        # filtering the dataframe according to the currency_codes passed
-        filtered_currency_exchange_df = land_currency_conversion_table[land_currency_conversion_table["currency_code"].isin(currency_code_subset)]
-
-        data_cleaning_logger.info(f"New filtered dataframe based on {filtered_currency_exchange_df}")
-        data_cleaning_logger.debug(filtered_currency_exchange_df)
-
-        # Adding new rows to cover for unknowns 
-        data_cleaning_logger.info("Adding new rows to cover for unknowns")
-        new_rows_addition = self.add_new_rows(
-             [
-                {
-                    "currency_conversion_key": -1,
-                    "currency_name": "Not Applicable"
-                }, 
-                {
-                    "currency_conversion_key": 0,
-                    "currency_name": "Unknown"
-                }
-            ]
-        )
-
-        cleaned_dim_currency_conversion_df = pd.concat([new_rows_addition, filtered_currency_exchange_df])
-        data_cleaning_logger.info("Successfully concatentated rows from together") 
-        data_cleaning_logger.debug(cleaned_dim_currency_conversion_df)
-
-        cleaned_dim_currency_conversion_datastore_table = self._upload_to_database(
-                                                            cleaned_dim_currency_conversion_df,
-                                                            self.engine,
-                                                            datastore_table_name
-        )
-        #TODO: Is there a way to not hard code the "dim_currency_conversion" variable? 
-        data_cleaning_logger.info("Table Uploaded")
-        
-        return cleaned_dim_currency_conversion_datastore_table
     
     def _upload_to_database(self, dataframe : pd.DataFrame, database_engine, datastore_table_name : Optional[str], dimension_table_name : Optional[str] = None):
         '''
@@ -1335,71 +1238,44 @@ class DataCleaning:
                 data_cleaning_logger.warning(f"Date format unknown. Attempting to convert to datetime")
                 return pd.to_datetime(date, errors='coerce')  
 
+
 def perform_data_cleaning(
-        target_datastore_config_file_name, 
-        source_config_file_name,
-        currency_code_mapping_file_name,
-        country_data_source_file_name, 
-        currency_conversion_output_file_name
+        target_datastore_config_file_name : str, 
+        source_config_file_name : str,
+        currency_code_mapping_file_name : str,
+        country_data_source_file_name : str, 
+        currency_conversion_output_file_name : str
         ):
     cleaner = DataCleaning(target_datastore_config_file_name)
-    # Creating LAND_TABLES 
-    currency_code_list = []
-    cleaner.clean_user_data("legacy_users", source_config_file_name, "land_user_data")
-    cleaner.clean_store_data("legacy_store_details", source_config_file_name, "land_store_details")
-    cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details")
-    cleaner.clean_time_event_table("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json", "land_date_times")
-    cleaner.clean_card_details("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf", "land_card_details")
-    with open(f"{currency_code_mapping_file_name}.txt") as currency_code_file:
-        for line in currency_code_file:
-            country, code = line.strip().split(',')
-            currency_code_list.append(code)
+    land_user_table = cleaner.clean_user_data("legacy_users", source_config_file_name, "postgres", "land_user_data")
+    dim_users_table = cleaner.load_dimension_table( land_user_table, "dim_users")
+    land_store_table = cleaner.clean_store_data("legacy_store_details", source_config_file_name, "postgres", "land_store_details")
+    dim_store_table = cleaner.load_dimension_table(land_store_table, "dim_store_details")
+    land_product_table = cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details")
+    dim_product_details_table = cleaner.load_product_dimension_table(land_product_table, "dim_product_details")
+    land_time_events_table = cleaner.clean_time_event_table("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json", "land_date_times")
+    dim_date_times_table = cleaner.load_dimension_table(land_time_events_table, "dim_date_times")
+    land_card_details_table = cleaner.clean_card_details("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf", "land_card_details")
+    dim_card_details_table = cleaner.load_dimension_table(land_card_details_table, "dim_card_details")
+    land_currency_table = cleaner.clean_currency_table(country_data_source_file_name,  "land_currency") # ["US", "GB", "DE"]
+    dim_currency_table = cleaner.load_dim_currency_table(land_currency_table, ["US", "GB", "DE"], "dim_currency")
 
-    with open(country_data_source_file_name, encoding='utf-8') as country_code_file:
-      data = json.load(country_code_file)
+    land_currency_conversions_table = cleaner.clean_currency_exchange_rates(
+                                            "https://www.x-rates.com/table/?from=GBP&amount=1",
+                                            '//table[@class="tablesorter ratesTable"]/tbody',
+                                            '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
+                                            ["currency_name", "conversion_rate", "percentage_change"],
+                                            currency_conversion_output_file_name,
+                                            currency_code_mapping_file_name,
+                                            "land_currency_conversion"                                        
+                                        )
+    dim_currency_conversion_table = cleaner.load_dim_currency_conversion_table(
+        land_currency_conversions_table,
+        ["USD", "GBP", "EUR"],
+        "dim_currency_conversion"
 
-    country_codes = list(data.keys())
-    cleaner.clean_currency_table(country_data_source_file_name, country_codes, "land_currency")
-
-    cleaner.clean_currency_exchange_rates(
-        "https://www.x-rates.com/table/?from=GBP&amount=1",
-        '//table[@class="tablesorter ratesTable"]/tbody',
-        '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
-        ["currency_name", "conversion_rate", "conversion_rate_percentage"],
-        currency_conversion_output_file_name,
-        currency_code_mapping_file_name,
-        currency_code_list,
-        "land_currency_conversion"
     )
-
-    # CREATING DIMS and FACT TABLES 
-    cleaner.clean_user_data("legacy_users", source_config_file_name, "dim_users")
-    cleaner.clean_store_data("legacy_store_details", source_config_file_name, "dim_store_details")
-    cleaner.clean_card_details(
-          "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
-          "dim_card_details"
-      ) 
-    cleaner.clean_orders_table("orders_table", source_config_file_name, "orders_table") 
-    cleaner.clean_time_event_table(
-        "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
-        "dim_date_times"
-    )
-    cleaner.clean_product_table(
-        "s3://data-handling-public/products.csv",
-        "dim_product_details"
-    )
-    cleaner.clean_currency_table(f"{country_data_source_file_name}", ["US", "GB", "DE"], "dim_currency") 
-
-    cleaner.clean_currency_exchange_rates(
-    "https://www.x-rates.com/table/?from=GBP&amount=1",
-    '//table[@class="tablesorter ratesTable"]/tbody',
-    '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
-    ["currency_name", "conversion_rate", "conversion_rate_percentage"],
-    currency_conversion_output_file_name,
-    currency_code_mapping_file_name,
-    ["GBP", "USD", "EUR"],
-    "dim_currency_conversion"
-    )
+    cleaner.clean_orders_table("orders_table", file_pathway_to_source_database, "postgres", "orders_table") 
 
 if __name__=="__main__":
     # Creating absolute file pathways from get_absolute_file_path method 
@@ -1419,18 +1295,47 @@ if __name__=="__main__":
     #                       )
 
     cleaner = DataCleaning(file_pathway_to_datastore)
+
     land_user_table = cleaner.clean_user_data("legacy_users", file_pathway_to_source_database, "postgres", "land_user_data")
-    dim_users_table = cleaner.load_dimension_table( land_user_table, "dim_users")
+
+    dim_users_table = cleaner.load_dimension_table(land_user_table, "dim_users")
+
     land_store_table = cleaner.clean_store_data("legacy_store_details", file_pathway_to_source_database, "postgres", "land_store_details")
+
     dim_store_table = cleaner.load_dimension_table(land_store_table, "dim_store_details")
+
     land_product_table = cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details")
-    dim_product_details_table = cleaner.load_product_dimension_table(land_product_table, "dim_product_details")
+
+    dim_product_details_table = cleaner.load_dimension_table(land_product_table, "dim_product_details", mapping={"Still_avaliable": True, "Removed": False})
+
     land_time_events_table = cleaner.clean_time_event_table("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json", "land_date_times")
+
     dim_date_times_table = cleaner.load_dimension_table(land_time_events_table, "dim_date_times")
+
     land_card_details_table = cleaner.clean_card_details("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf", "land_card_details")
+
     dim_card_details_table = cleaner.load_dimension_table(land_card_details_table, "dim_card_details")
+
     land_currency_table = cleaner.clean_currency_table(file_pathway_to_json_source_file,  "land_currency") # ["US", "GB", "DE"]
-    dim_currency_table = cleaner.load_dim_currency_table(land_currency_table, ["US", "GB", "DE"], "dim_currency")
+
+
+    dim_currency_table = cleaner.load_dimension_table(
+        land_currency_table,  
+        "dim_currency", 
+        subset=["US", "GB", "DE"], 
+        additional_rows= [
+                {
+                    "currency_key": -1,
+                    "currency_conversion_key": -1,
+                    "currency_code": "Not Applicable"
+                }, 
+                {
+                    "currency_key": 0,
+                     "currency_conversion_key": 0, 
+                    "currency_code": "Unknown"
+                }
+            ]
+        )
 
     land_currency_conversions_table = cleaner.clean_currency_exchange_rates(
                                             "https://www.x-rates.com/table/?from=GBP&amount=1",
@@ -1441,10 +1346,21 @@ if __name__=="__main__":
                                             file_pathway_to_source_text_file,
                                             "land_currency_conversion"                                        
                                         )
-    dim_currency_conversion_table = cleaner.load_dim_currency_conversion_table(
+    dim_currency_conversion_table = cleaner.load_dimension_table(
         land_currency_conversions_table,
-        ["USD", "GBP", "EUR"],
-        "dim_currency_conversion"
+        "dim_currency_conversion",
+        subset=["USD", "GBP", "EUR"],
+        additional_rows= [
+                {
+                    "currency_conversion_key": -1,
+                    "currency_name": "Not Applicable"
+                }, 
+                {
+                    "currency_conversion_key": 0,
+                    "currency_name": "Unknown"
+                }
+            ]
+        
 
     )
     cleaner.clean_orders_table("orders_table", file_pathway_to_source_database, "postgres", "orders_table") 
