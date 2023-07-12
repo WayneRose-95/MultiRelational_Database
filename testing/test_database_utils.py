@@ -55,18 +55,17 @@ class TestDatabaseConnector(unittest.TestCase):
         mock_engine = mock.MagicMock()
         mock_engine.connect.return_value = True
         mock_create_engine.return_value = mock_engine
-        
-        # Set the config_file_name 
-        config_file_name = self.source_database_credentials
-        connector = DatabaseConnector()
-        connection_string = connector.create_connection_string(config_file_name)
+         
+
         # Call the method being tested
-        result = connector.initialise_database_connection(config_file_name)
+        result = self.test_connection.initialise_database_connection(self.source_database_credentials)
 
         # Assert that create_engine was called with the correct connection string
-        mock_create_engine.assert_called_once_with(
-            connection_string
-        )
+        expected_connection_string = self.test_connection.create_connection_string(self.source_database_credentials)
+        print(expected_connection_string)
+        expected_connection_string_without_isolation = expected_connection_string.split('?')[0]
+        print(expected_connection_string_without_isolation)
+        mock_create_engine.assert_called_once_with(expected_connection_string_without_isolation, isolation_level='AUTOCOMMIT')
 
         # Assert that engine.connect() was called
         mock_engine.connect.assert_called_once()
@@ -74,6 +73,10 @@ class TestDatabaseConnector(unittest.TestCase):
         # Assert that the method returns the database engine
         self.assertEqual(result, mock_engine)
 
+
+    @classmethod
+    def tearDownClass(cls):
+        mock.patch.stopall()
 
 if __name__ == '__main__':
     unittest.main(argv=[''], verbosity=2, exit=False)
