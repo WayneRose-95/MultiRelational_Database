@@ -56,24 +56,75 @@ sql = SQLAlterations(get_absolute_file_path('sales_data_creds.yaml', 'credential
 sql.create_database('sales_data') # 'Sales_Data_Test', "Sales_Data_Admin"
 
 # Main ETL Process to Extract, Transform and Load Data into Postgres
-cleaner.clean_user_data("legacy_users", file_pathway_to_source_database, "postgres", "land_user_data", "dim_users")
-cleaner.clean_store_data("legacy_store_details", file_pathway_to_source_database, "postgres", "land_store_details", "dim_store_details")
-cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details", "dim_product_details")
-cleaner.clean_time_event_table("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json", "land_date_times", "dim_date_times")
-cleaner.clean_card_details("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf", "land_card_details", "dim_card_details")
-cleaner.clean_currency_table(file_pathway_to_json_source_file, ["US", "GB", "DE"], "land_currency", "dim_currency")
-cleaner.clean_currency_exchange_rates(
-    "https://www.x-rates.com/table/?from=GBP&amount=1",
-    '//table[@class="tablesorter ratesTable"]/tbody',
-    '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
-    ["currency_name", "conversion_rate", "percentage_change"],
-    file_pathway_to_exported_csv_file,
-    file_pathway_to_source_text_file,
-    ["USD", "GBP", "EUR"],
-    "land_currency_conversion",
-    "dim_currency_conversion"
+land_user_table = cleaner.clean_user_data("legacy_users", file_pathway_to_source_database, "postgres", "land_user_data")
+
+dim_users_table = cleaner.load_dimension_table(land_user_table, "dim_users")
+
+land_store_table = cleaner.clean_store_data("legacy_store_details", file_pathway_to_source_database, "postgres", "land_store_details")
+
+dim_store_table = cleaner.load_dimension_table(land_store_table, "dim_store_details")
+
+land_product_table = cleaner.clean_product_table("s3://data-handling-public/products.csv", "land_product_details")
+
+dim_product_details_table = cleaner.load_dimension_table(land_product_table, "dim_product_details", mapping={"Still_avaliable": True, "Removed": False})
+
+land_time_events_table = cleaner.clean_time_event_table("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json", "land_date_times")
+
+dim_date_times_table = cleaner.load_dimension_table(land_time_events_table, "dim_date_times")
+
+land_card_details_table = cleaner.clean_card_details("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf", "land_card_details")
+
+dim_card_details_table = cleaner.load_dimension_table(land_card_details_table, "dim_card_details")
+
+land_currency_table = cleaner.clean_currency_table(file_pathway_to_json_source_file,  "land_currency") # ["US", "GB", "DE"]
+
+
+dim_currency_table = cleaner.load_dimension_table(
+    land_currency_table,  
+    "dim_currency", 
+    subset=["US", "GB", "DE"], 
+    additional_rows= [
+            {
+                "currency_key": -1,
+                "currency_conversion_key": -1,
+                "currency_code": "Not Applicable"
+            }, 
+            {
+                "currency_key": 0,
+                    "currency_conversion_key": 0, 
+                "currency_code": "Unknown"
+            }
+        ]
+    )
+
+land_currency_conversions_table = cleaner.clean_currency_exchange_rates(
+                                        "https://www.x-rates.com/table/?from=GBP&amount=1",
+                                        '//table[@class="tablesorter ratesTable"]/tbody',
+                                        '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
+                                        ["currency_name", "conversion_rate", "percentage_change"],
+                                        file_pathway_to_exported_csv_file,
+                                        file_pathway_to_source_text_file,
+                                        "land_currency_conversion"                                        
+                                    )
+dim_currency_conversion_table = cleaner.load_dimension_table(
+    land_currency_conversions_table,
+    "dim_currency_conversion",
+    subset=["USD", "GBP", "EUR"],
+    additional_rows= [
+            {
+                "currency_conversion_key": -1,
+                "currency_name": "Not Applicable"
+            }, 
+            {
+                "currency_conversion_key": 0,
+                "currency_name": "Unknown"
+            }
+        ]
+    
+
 )
 cleaner.clean_orders_table("orders_table", file_pathway_to_source_database, "postgres", "orders_table") 
+
 
 # Altering the schema and forming the STAR Schema model using the uploaded database
 sql.connect_to_database(get_absolute_file_path('sales_data_creds.yaml', 'credentials'), 'sales_data')
