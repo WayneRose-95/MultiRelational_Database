@@ -9,14 +9,15 @@ CREATE TABLE IF NOT EXISTS public.dim_users
     first_name character varying(255) COLLATE pg_catalog."default",
     last_name character varying(255) COLLATE pg_catalog."default",
     birth_date date,
-    company text COLLATE pg_catalog."default",
-    "e-mail_address" text COLLATE pg_catalog."default",
-    address text COLLATE pg_catalog."default",
-    country text COLLATE pg_catalog."default",
+    company character varying(255) COLLATE pg_catalog."default",
+    email_address character varying(255) COLLATE pg_catalog."default",
+    address character varying(500) COLLATE pg_catalog."default",
+    country character varying(100) COLLATE pg_catalog."default",
     country_index character varying(10) COLLATE pg_catalog."default",
-    phone_number text COLLATE pg_catalog."default",
+    phone_number character varying(40) COLLATE pg_catalog."default",
     join_date date,
-    unique_id uuid
+    user_uuid uuid,
+    CONSTRAINT dim_users_pkey PRIMARY KEY (user_key)
 )
 
 TABLESPACE pg_default;

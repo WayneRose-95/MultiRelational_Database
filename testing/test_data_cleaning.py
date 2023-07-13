@@ -20,6 +20,10 @@ class TestDataCleaning(unittest.TestCase):
         cls.database_credentials_test = get_absolute_file_path('sales_data_creds_test.yaml', 'credentials') # 'sales_data_creds_test.yaml'
         cls.source_database_config_file_name = get_absolute_file_path('db_creds.yaml', 'credentials') # "db_creds.yaml"
 
+        # Setting up database names 
+        cls.source_database_name = 'postgres'
+        cls.datastore_database_name = 'sales_data_dev'
+
         # Setting up table names 
         cls.source_data_table_test = "legacy_users"
         cls.source_data_table_store_details = "legacy_store_details"
@@ -66,17 +70,22 @@ class TestDataCleaning(unittest.TestCase):
         test_table_to_upload_to_database = self.test_data_cleaner_test.clean_user_data(
             self.source_data_table_test,
             self.source_database_config_file_name,
+            self.source_database_name,
             self.datastore_land_users_table_name
 
         )
         # Read the dimension table from the dev database, return it as a dataframe to compare to the uploaded land_table from the test database
-        reading_rds_dim_table_dev = self.test_data_extractor_dev.read_rds_table(self.datastore_user_details_table_name, self.database_credentials_dev)
+        reading_rds_dim_table_dev = self.test_data_extractor_dev.read_rds_table(
+            self.datastore_user_details_table_name, self.database_credentials_dev, self.datastore_database_name
+            )
         
         '''
         LAND_TABLE testing
         '''
         # Read the land table from the dev database, return it as a dataframe and compare it to the land_table uploaded from the test database 
-        reading_rds_land_table_dev = self.test_data_extractor_dev.read_rds_table(self.datastore_land_users_table_name, self.database_credentials_dev)
+        reading_rds_land_table_dev = self.test_data_extractor_dev.read_rds_table(
+            self.datastore_land_users_table_name, self.database_credentials_dev, self.datastore_database_name
+            )
         print(f"Number of rows in land_users from Dev Database : {len(reading_rds_land_table_dev)}")
         print(f"Number of rows in land_users from Test Database : {len(test_table_to_upload_to_database)}")
 
@@ -99,7 +108,7 @@ class TestDataCleaning(unittest.TestCase):
 
         # Assert the column names of the land_table uploaded from test database 
         expected_columns = [
-            'user_key', 'first_name', 'last_name', 'birth_date', 'company', 'e-mail_address',
+            'user_key', 'first_name', 'last_name', 'birth_date', 'company', 'email_address',
             'address', 'country', 'country_index', 'phone_number', 'join_date', 'user_uuid'
         ]
         # Print the test list of columns and the expected list of columns 
@@ -142,18 +151,24 @@ class TestDataCleaning(unittest.TestCase):
         test_table_to_upload_to_database = self.test_data_cleaner_test.clean_store_data(
             self.source_data_table_store_details,
             self.source_database_config_file_name,
+            self.source_database_name,
             self.datastore_land_store_data_table_name
-
         )
         '''
         LAND_STORE_DETAILS table tests 
         '''
         # Reading in land_table from dev database for comparison
-        reading_rds_land_table_dev = self.test_data_extractor_dev.read_rds_table(self.datastore_land_store_data_table_name,
-                                                                             self.database_credentials_dev)
+        reading_rds_land_table_dev = self.test_data_extractor_dev.read_rds_table(
+            self.datastore_land_store_data_table_name,
+            self.database_credentials_dev,
+            self.datastore_database_name
+        )
+           
         
-        reading_rds_dim_table_dev = self.test_data_extractor_dev.read_rds_table(self.datastore_store_details_table_name,
-                                                                             self.database_credentials_dev)
+        reading_rds_dim_table_dev = self.test_data_extractor_dev.read_rds_table(
+            self.datastore_store_details_table_name,
+            self.database_credentials_dev,
+            self.datastore_database_name)
         
         
         print(f"Number of rows in land_store_details from Dev Database : {len(reading_rds_land_table_dev)}")
@@ -228,10 +243,12 @@ class TestDataCleaning(unittest.TestCase):
         '''
         # Read the dimension table from the dev database, return it as a dataframe to compare to the uploaded land_table from the test database
         reading_rds_dim_table_dev = self.test_data_extractor_dev.read_rds_table(self.datastore_card_details_table_name,
-                                                                             self.database_credentials_dev)
+                                                                             self.database_credentials_dev,
+                                                                             self.datastore_database_name)
         
         reading_rds_land_table_dev = self.test_data_extractor_dev.read_rds_table(self.datastore_land_card_details_table_name,
-                                                                             self.database_credentials_dev)
+                                                                             self.database_credentials_dev,
+                                                                             self.datastore_database_name)
 
         # Print the number of rows in each table 
         print(f"Number of rows in land_card_details from Dev Database : {len(reading_rds_land_table_dev)}")
@@ -301,11 +318,13 @@ class TestDataCleaning(unittest.TestCase):
         test_table_to_upload_to_database = self.test_data_cleaner_test.clean_orders_table(
            self.datastore_orders_table_name,
            self.source_database_config_file_name,
+           self.source_database_name,
            self.datastore_orders_table_name
         )
 
         reading_rds_table_dev = self.test_data_extractor_dev.read_rds_table(self.datastore_orders_table_name, 
-                                                                            self.database_credentials_dev)
+                                                                            self.database_credentials_dev,
+                                                                            self.datastore_database_name)
         # Print the number of rows in each table 
         print(f"Number of rows in orders_table from Dev Database : {len(reading_rds_table_dev)}")
         print(f"Number of rows in orders_table from Test Database : {len(test_table_to_upload_to_database)}")
@@ -326,9 +345,10 @@ class TestDataCleaning(unittest.TestCase):
 
         self.assertEqual(test_table_to_upload_to_database.index.equals(expected_index), True)
 
-        expected_columns  = [
-            'order_key', 'date_uuid', 'user_uuid', 'card_number', 'store_code', 'product_code', 'product_quantity'
-        ]
+        expected_columns  = ['order_key','date_uuid','user_uuid','card_key','date_key','product_key',
+                            'store_key','user_key','currency_key','card_number','store_code','product_code',
+                            'product_quantity', 'country_code']
+        
         # print a comparison between the test_list of columns and the expected list of columns
         print(f"The test list: {test_table_to_upload_to_database.columns.tolist()}")
         print(f"The expected list : {expected_columns}")
@@ -345,11 +365,14 @@ class TestDataCleaning(unittest.TestCase):
            self.datastore_land_time_details_table_name
         )
 
-        reading_rds_land_table_dev = self.test_data_extractor_dev.read_rds_table(self.datastore_land_time_details_table_name
-                                                                            , self.database_credentials_dev)
+        reading_rds_land_table_dev = self.test_data_extractor_dev.read_rds_table(self.datastore_land_time_details_table_name,
+                                                                            self.database_credentials_dev,
+                                                                            self.datastore_database_name)
         
-        reading_rds_dim_table_dev = self.test_data_extractor_dev.read_rds_table(self.datastore_date_time_details_table_name
-                                                                            , self.database_credentials_dev)
+        reading_rds_dim_table_dev = self.test_data_extractor_dev.read_rds_table(self.datastore_date_time_details_table_name,
+                                                                             self.database_credentials_dev,
+                                                                             self.datastore_database_name
+                                                                            )
 
         # Print the number of rows in each table 
         print(f"Number of rows in land_date_times from Dev Database : {len(reading_rds_land_table_dev)}")
@@ -372,7 +395,7 @@ class TestDataCleaning(unittest.TestCase):
         self.assertEqual(test_table_to_upload_to_database.index.equals(expected_index), True)
 
         expected_columns  = [
-            'time_key','timestamp','day', 'month', 'year', 'time_period','date_uuid'
+            'date_key','event_time','day', 'month', 'year', 'time_period','date_uuid'
         ]
         # print a comparison between the test_list of columns and the expected list of columns
         print(f"The test list: {test_table_to_upload_to_database.columns.tolist()}")
@@ -426,11 +449,13 @@ class TestDataCleaning(unittest.TestCase):
         LAND_PRODUCT_DETAILS testing
         '''
         # Reading in test tables
-        reading_rds_dim_table_dev = self.test_data_extractor_dev.read_rds_table(self.datastore_product_details_table_name
-                                                                            , self.database_credentials_dev)
+        reading_rds_dim_table_dev = self.test_data_extractor_dev.read_rds_table(self.datastore_product_details_table_name,
+                                                                             self.database_credentials_dev,
+                                                                             self.datastore_database_name)
         
         reading_rds_land_table_dev = self.test_data_extractor_dev.read_rds_table(self.datastore_land_product_details_table_name,
-                                                                                 self.database_credentials_dev)
+                                                                                 self.database_credentials_dev,
+                                                                                 self.datastore_database_name)
         # Print the number of rows in each table 
         print(f"Number of rows in orders_table from Dev Database : {len(reading_rds_land_table_dev)}")
         print(f"Number of rows in orders_table from Test Database : {len(test_table_to_upload_to_database)}")
@@ -453,7 +478,7 @@ class TestDataCleaning(unittest.TestCase):
 
         expected_columns  = [
             "product_key", "EAN", "product_name", "product_price", "weight",
-            "category", "date_added", "uuid","availability","product_code"
+            "weight_class", "category", "date_added", "uuid","availability","product_code"
         ]
         # print a comparison between the test_list of columns and the expected list of columns
         print(f"The test list: {test_table_to_upload_to_database.columns.tolist()}")
@@ -486,18 +511,25 @@ class TestDataCleaning(unittest.TestCase):
     
     
     def test_clean_currency_table(self):
-        with open(self.json_file_path, encoding='utf-8') as country_code_file:
-            data = json.load(country_code_file)
+        # with open(self.json_file_path, encoding='utf-8') as country_code_file:
+        #     data = json.load(country_code_file)
 
-        country_codes = list(data.keys())
+        # country_codes = list(data.keys())
         # Compare the tables between test database and dev sales_data database 
         test_table_to_upload_to_database = self.test_data_cleaner_test.clean_currency_table(
-            self.json_file_path, 
-            country_codes, 
+            self.json_file_path,  
             self.datastore_land_currency_table_name
         )
-        reading_rds_land_table_dev = self.test_data_extractor_dev.read_rds_table(self.datastore_land_currency_table_name, self.database_credentials_dev)
-        reading_rds_dim_table_dev = self.test_data_extractor_dev.read_rds_table(self.json_local_datastore_table_name, self.database_credentials_dev)
+        reading_rds_land_table_dev = self.test_data_extractor_dev.read_rds_table(
+            self.datastore_land_currency_table_name, 
+            self.database_credentials_dev,
+            self.datastore_database_name
+            )
+        reading_rds_dim_table_dev = self.test_data_extractor_dev.read_rds_table(
+            self.json_local_datastore_table_name, 
+            self.database_credentials_dev,
+            self.datastore_database_name
+            )
 
         '''
         LAND_CURRENCY_TABLE tests
@@ -523,9 +555,7 @@ class TestDataCleaning(unittest.TestCase):
 
         self.assertEqual(test_table_to_upload_to_database.index.equals(expected_index), True)
 
-        expected_columns  = [
-            "currency_key", "country_name", "currency_code", "country_code", "currency_symbol"
-        ]
+        expected_columns  = ["currency_key", 'currency_conversion_key',"currency_code", "country_code", "country_name","currency_symbol"]
         # print a comparison between the test_list of columns and the expected list of columns
         print(f"The test list: {test_table_to_upload_to_database.columns.tolist()}")
         print(f"The expected list : {expected_columns}")
@@ -538,7 +568,9 @@ class TestDataCleaning(unittest.TestCase):
         '''
 
         # Creating connection_string from DatabaseConnector class
-        test_database_connection_string = self.test_data_connector_test.create_connection_string(self.database_credentials_test)
+        test_database_connection_string = self.test_data_connector_test.create_connection_string(
+        self.database_credentials_test, connect_to_database=True, new_db_name=self.datastore_database_name
+        )
         # Creating engine from sqlalchemy's create_engine 
         engine = create_engine(test_database_connection_string)
 
@@ -577,7 +609,7 @@ class TestDataCleaning(unittest.TestCase):
         print(f"The expected list : {dim_expected_columns}")
 
         # Assert if the two lists of columns are equal outside of the index and currency_conversion_key foreign key table
-        self.assertEqual(test_table_to_upload_to_database.columns.tolist(), dim_expected_columns[1:-1])
+        self.assertEqual(test_table_to_upload_to_database.columns.tolist(), dim_expected_columns[1:])
 
     
     def test_convert_to_kg_valid_weights(self):

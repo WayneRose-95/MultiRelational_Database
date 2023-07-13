@@ -10,7 +10,7 @@ REFERENCES dim_card_details (card_key);
 ALTER TABLE orders_table
 ADD CONSTRAINT fk_dim_date_times
 FOREIGN KEY (date_key)
-REFERENCES dim_date_times (time_key);
+REFERENCES dim_date_times (date_key);
 
 -- Adding FK constraint to Orders Table on dim_product_details table
 ALTER TABLE orders_table
