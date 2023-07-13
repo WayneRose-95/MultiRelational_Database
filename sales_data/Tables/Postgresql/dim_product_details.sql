@@ -6,16 +6,17 @@ CREATE TABLE IF NOT EXISTS public.dim_product_details
 (
     index bigint,
     product_key bigint,
-    "EAN" character varying(50) COLLATE pg_catalog."default",
-    product_name text COLLATE pg_catalog."default",
+    EAN character varying(50) COLLATE pg_catalog."default",
+    product_name character varying(500) COLLATE pg_catalog."default",
     product_price double precision,
     weight double precision,
-    category text COLLATE pg_catalog."default",
+    weight_class character varying(50) COLLATE pg_catalog."default",
+    category character varying(50) COLLATE pg_catalog."default",
     date_added date,
     uuid uuid,
     availability boolean,
     product_code character varying(50) COLLATE pg_catalog."default",
-    weight_class character varying(50) COLLATE pg_catalog."default"
+    CONSTRAINT dim_product_details_pkey PRIMARY KEY (product_key)
 )
 
 TABLESPACE pg_default;

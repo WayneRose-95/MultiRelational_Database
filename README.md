@@ -3,7 +3,7 @@ A database model for a fictional retail chain of stores
 
 # Project Status 
 In Development 
-Current Feature: README and Wiki Documentation Last Updated 01/07/2023 (DD/MM/YYYY) 
+Current Feature: ETL process changes Last Updated 12/07/2023 (DD/MM/YYYY) 
 
 <h1 align="left">Languages and Tools</h1>
 

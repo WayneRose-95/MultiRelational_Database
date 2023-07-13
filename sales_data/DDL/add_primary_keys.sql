@@ -2,7 +2,7 @@ ALTER TABLE dim_card_details
     ADD PRIMARY KEY (card_key);
 	
 ALTER TABLE dim_date_times
-    ADD PRIMARY KEY (time_key);
+    ADD PRIMARY KEY (date_key);
 	
 ALTER TABLE dim_product_details
     ADD PRIMARY KEY (product_key);

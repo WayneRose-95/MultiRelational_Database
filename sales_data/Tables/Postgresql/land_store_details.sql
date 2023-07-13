@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS public.land_store_details
 (
     index bigint,
     store_key bigint,
-    store_address text COLLATE pg_catalog."default",
+    store_address character varying (1000) COLLATE pg_catalog."default",
     longitude double precision,
     latitude double precision,
     city character varying(255) COLLATE pg_catalog."default",
