@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS public.dim_users;
 CREATE TABLE IF NOT EXISTS public.dim_users
 (
     index bigint,
-    user_key bigint,
+    user_key bigint NOT NULL,
     first_name character varying(255) COLLATE pg_catalog."default",
     last_name character varying(255) COLLATE pg_catalog."default",
     date_of_birth date,

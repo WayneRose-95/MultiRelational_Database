@@ -171,21 +171,21 @@ def perform_database_operations(target_datastore_config_file_name):
 if __name__ == "__main__":
     # perform_database_operations(get_absolute_file_path('sales_data_creds_test.yaml', 'credentials')) # 'sales_data_creds_test.yaml'
     sql = SQLAlterations(
-        get_absolute_file_path("sales_data_creds_test.yaml", "credentials")
+        get_absolute_file_path("sales_data_creds_dev.yaml", "credentials")
     )
-    sql.create_database("sales_data_test")  
+    # sql.create_database("sales_data_test")  
     sql.connect_to_database(
-        get_absolute_file_path("sales_data_creds_test.yaml", "credentials"),
-        "sales_data_test",
+        get_absolute_file_path("sales_data_creds_dev.yaml", "credentials"),
+        "sales_data_dev",
     )
 
     sql.alter_and_update(
         get_absolute_file_path("add_weight_class_column_script.sql", r"sales_data\DML")
     )
 
-    # sql.alter_and_update(
-    #     get_absolute_file_path("add_primary_keys.sql", r"sales_data\DDL")
-    # )
+    sql.alter_and_update(
+        get_absolute_file_path("add_primary_keys.sql", r"sales_data\DDL")
+    )
 
     sql.alter_and_update(
         get_absolute_file_path("foreign_key_constraints.sql", r"sales_data\DDL")
@@ -195,7 +195,13 @@ if __name__ == "__main__":
         get_absolute_file_path(
             "update_foreign_keys.sql", r"sales_data\DML"
         )
-    )  
+    )
+
+    sql.alter_and_update(
+        get_absolute_file_path(
+            "create_views.sql", r"sales_data\DDL"
+        )
+    )    
 
     '''
     (f"""CREATE DATABASE  {database_name} 

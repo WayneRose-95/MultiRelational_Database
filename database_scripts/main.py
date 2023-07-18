@@ -423,7 +423,13 @@ sql.alter_and_update(
     get_absolute_file_path(
         "update_foreign_keys.sql", r"sales_data\DML"
     )
-)  
+)
+
+sql.alter_and_update(
+    get_absolute_file_path(
+        "create_views.sql", r"sales_data\DDL"
+    )
+)   
 
 
 end_time = time.time()

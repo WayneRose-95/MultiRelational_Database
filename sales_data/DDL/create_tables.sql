@@ -1,18 +1,20 @@
+-- Table: public.dim_users
+
 DROP TABLE IF EXISTS public.dim_users;
 
 CREATE TABLE IF NOT EXISTS public.dim_users
 (
     index bigint,
-    user_key bigint,
+    user_key bigint NOT NULL,
     first_name character varying(255) COLLATE pg_catalog."default",
     last_name character varying(255) COLLATE pg_catalog."default",
-    birth_date date,
+    date_of_birth date,
     company character varying(255) COLLATE pg_catalog."default",
     email_address character varying(255) COLLATE pg_catalog."default",
     address character varying(500) COLLATE pg_catalog."default",
     country character varying(100) COLLATE pg_catalog."default",
-    country_index character varying(10) COLLATE pg_catalog."default",
-    phone_number character varying(30) COLLATE pg_catalog."default",
+    country_code character varying(20) COLLATE pg_catalog."default",
+    phone_number character varying(40) COLLATE pg_catalog."default",
     join_date date,
     user_uuid uuid,
     CONSTRAINT dim_users_pkey PRIMARY KEY (user_key)
@@ -29,14 +31,16 @@ CREATE INDEX ix_dim_users_index
     TABLESPACE pg_default;
 	
 
+-- Table: public.dim_card_details
+
 DROP TABLE IF EXISTS public.dim_card_details;
 
 CREATE TABLE IF NOT EXISTS public.dim_card_details
 (
     index bigint,
-    card_key bigint,
+    card_key bigint NOT NULL,
     card_number character varying(30) COLLATE pg_catalog."default",
-    expiry_date character varying(10) COLLATE pg_catalog."default",
+    expiry_date character varying(20) COLLATE pg_catalog."default",
     card_provider character varying(255) COLLATE pg_catalog."default",
     date_payment_confirmed date,
     CONSTRAINT dim_card_details_pkey PRIMARY KEY (card_key)
@@ -50,7 +54,8 @@ CREATE INDEX ix_dim_card_details_index
     ON public.dim_card_details USING btree
     (index ASC NULLS LAST)
     TABLESPACE pg_default;
-	
+
+
 DROP TABLE IF EXISTS public.dim_currency_conversion;
 
 CREATE TABLE IF NOT EXISTS public.dim_currency_conversion
@@ -77,6 +82,9 @@ CREATE INDEX ix_dim_currency_conversion_index
     (index ASC NULLS LAST)
     TABLESPACE pg_default;
 	
+
+
+-- Table: public.dim_currency
 DROP TABLE IF EXISTS public.dim_currency;
 
 CREATE TABLE IF NOT EXISTS public.dim_currency
@@ -85,9 +93,9 @@ CREATE TABLE IF NOT EXISTS public.dim_currency
     currency_key bigint NOT NULL,
 	currency_conversion_key bigint,
     country_name character varying(100) COLLATE pg_catalog."default",
-    currency_code character varying(10) COLLATE pg_catalog."default",
+    currency_code character varying(20) COLLATE pg_catalog."default",
     country_code character varying(5) COLLATE pg_catalog."default",
-    currency_symbol text COLLATE pg_catalog."default",
+    currency_symbol character varying(5) COLLATE pg_catalog."default",
     CONSTRAINT dim_currency_pkey PRIMARY KEY (currency_key)
     
 )
@@ -101,14 +109,17 @@ CREATE INDEX ix_dim_currency_index
     ON public.dim_currency USING btree
     (index ASC NULLS LAST)
     TABLESPACE pg_default;
-	
+
+
+-- Table: public.dim_date_times
+
 DROP TABLE IF EXISTS public.dim_date_times;
 
 CREATE TABLE IF NOT EXISTS public.dim_date_times
 (
     index bigint,
-    date_key bigint,
-    timestamp time without time zone,
+    date_key bigint NOT NULL,
+    event_time time without time zone,
     month character varying(30) COLLATE pg_catalog."default",
     year character varying(30) COLLATE pg_catalog."default",
     day character varying(30) COLLATE pg_catalog."default",
@@ -119,41 +130,24 @@ CREATE TABLE IF NOT EXISTS public.dim_date_times
 
 TABLESPACE pg_default;
 
+-- Index: ix_dim_date_times_index
+
 DROP INDEX IF EXISTS public.ix_dim_date_times_index;
 
 CREATE INDEX ix_dim_date_times_index
     ON public.dim_date_times USING btree
     (index ASC NULLS LAST)
     TABLESPACE pg_default;
+
+
 	
+-- Table: public.dim_product_details 
 DROP TABLE IF EXISTS public.dim_product_details;
 
 CREATE TABLE IF NOT EXISTS public.dim_product_details
 (
     index bigint,
-    product_key bigint,
-    EAN character varying(50) COLLATE pg_catalog."default",
-    product_name character varying(500) COLLATE pg_catalog."default",
-    product_price double precision,
-    weight double precision,
-    category character varying(50) COLLATE pg_catalog."default",
-    date_added date,
-    uuid uuid,
-    availability boolean,
-    product_code character varying(50) COLLATE pg_catalog."default",
-    weight_class character varying(50) COLLATE pg_catalog."default",
-    CONSTRAINT dim_product_details_pkey PRIMARY KEY (product_key)
-)
-
-TABLESPACE pg_default;
-
-
-DROP TABLE IF EXISTS public.dim_product_details;
-
-CREATE TABLE IF NOT EXISTS public.dim_product_details
-(
-    index bigint,
-    product_key bigint,
+    product_key bigint NOT NULL ,
     EAN character varying(50) COLLATE pg_catalog."default",
     product_name character varying(500) COLLATE pg_catalog."default",
     product_price double precision,
@@ -169,7 +163,7 @@ CREATE TABLE IF NOT EXISTS public.dim_product_details
 
 TABLESPACE pg_default;
 
-
+-- Index: ix_dim_product_details_index
 DROP INDEX IF EXISTS public.ix_dim_product_details_index;
 
 CREATE INDEX ix_dim_product_details_index
