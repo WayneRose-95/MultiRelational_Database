@@ -180,6 +180,10 @@ if __name__ == "__main__":
     )
 
     sql.alter_and_update(
+        get_absolute_file_path("create_tables.sql", r"sales_data\DML")
+    )
+
+    sql.alter_and_update(
         get_absolute_file_path("add_weight_class_column_script.sql", r"sales_data\DML")
     )
 

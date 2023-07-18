@@ -1,65 +1,65 @@
 ,currency_name,conversion_rate,percentage_change
 0,,,
-1,US Dollar,1.309376,0.763723
-2,Euro,1.163691,0.859335
-3,Indian Rupee,107.448744,0.009307
-4,Australian Dollar,1.916742,0.521719
-5,Canadian Dollar,1.726989,0.579042
-6,Singapore Dollar,1.729197,0.578303
-7,Swiss Franc,1.124969,0.888913
-8,Malaysian Ringgit,5.939568,0.168362
-9,Japanese Yen,181.654515,0.005505
-10,Chinese Yuan Renminbi,9.390664,0.106489
+1,US Dollar,1.304286,0.766703
+2,Euro,1.161821,0.860718
+3,Indian Rupee,107.011910,0.009345
+4,Australian Dollar,1.914281,0.522389
+5,Canadian Dollar,1.720018,0.581389
+6,Singapore Dollar,1.724706,0.579809
+7,Swiss Franc,1.119307,0.893410
+8,Malaysian Ringgit,5.924677,0.168786
+9,Japanese Yen,181.113927,0.005521
+10,Chinese Yuan Renminbi,9.365384,0.106776
 11,,,
-12,Argentine Peso,349.269829,0.002863
-13,Australian Dollar,1.916742,0.521719
-14,Bahraini Dinar,0.492325,2.031178
-15,Botswana Pula,17.156783,0.058286
-16,Brazilian Real,6.294439,0.158870
-17,Bruneian Dollar,1.729197,0.578303
-18,Bulgarian Lev,2.275982,0.439371
-19,Canadian Dollar,1.726989,0.579042
-20,Chilean Peso,1071.621139,0.000933
-21,Chinese Yuan Renminbi,9.390664,0.106489
-22,Colombian Peso,5256.508795,0.000190
-23,Czech Koruna,27.668520,0.036142
-24,Danish Krone,8.669772,0.115343
-25,Emirati Dirham,4.808682,0.207957
-26,Euro,1.163691,0.859335
-27,Hong Kong Dollar,10.230957,0.097743
-28,Hungarian Forint,435.080204,0.002298
-29,Icelandic Krona,170.723772,0.005857
-30,Indian Rupee,107.448744,0.009307
-31,Indonesian Rupiah,19598.905398,0.000051
-32,Iranian Rial,55465.364601,0.000018
-33,Israeli Shekel,4.755992,0.210261
-34,Japanese Yen,181.654515,0.005505
-35,Kazakhstani Tenge,582.738457,0.001716
-36,Kuwaiti Dinar,0.401444,2.491008
-37,Libyan Dinar,6.215032,0.160900
-38,Malaysian Ringgit,5.939568,0.168362
-39,Mauritian Rupee,59.212807,0.016888
-40,Mexican Peso,21.888279,0.045687
-41,Nepalese Rupee,171.998577,0.005814
-42,New Zealand Dollar,2.064941,0.484275
-43,Norwegian Krone,13.155155,0.076016
-44,Omani Rial,0.504111,1.983689
-45,Pakistani Rupee,365.296928,0.002737
-46,Philippine Peso,71.188035,0.014047
-47,Polish Zloty,5.166321,0.193561
-48,Qatari Riyal,4.766127,0.209814
-49,Romanian New Leu,5.750576,0.173896
-50,Russian Ruble,118.635533,0.008429
-51,Saudi Arabian Riyal,4.910159,0.203659
-52,Singapore Dollar,1.729197,0.578303
-53,South African Rand,23.585440,0.042399
-54,South Korean Won,1647.673372,0.000607
-55,Sri Lankan Rupee,421.811608,0.002371
-56,Swedish Krona,13.400393,0.074625
-57,Swiss Franc,1.124969,0.888913
-58,Taiwan New Dollar,40.547762,0.024662
-59,Thai Baht,45.093882,0.022176
-60,Trinidadian Dollar,8.871967,0.112715
-61,Turkish Lira,34.539195,0.028953
-62,US Dollar,1.309376,0.763723
-63,Venezuelan Bolivar,3748637.335625,0.000000
+12,Argentine Peso,349.060849,0.002865
+13,Australian Dollar,1.914281,0.522389
+14,Bahraini Dinar,0.490412,2.039103
+15,Botswana Pula,17.109463,0.058447
+16,Brazilian Real,6.257459,0.159809
+17,Bruneian Dollar,1.724706,0.579809
+18,Bulgarian Lev,2.272324,0.440078
+19,Canadian Dollar,1.720018,0.581389
+20,Chilean Peso,1062.040511,0.000942
+21,Chinese Yuan Renminbi,9.365384,0.106776
+22,Colombian Peso,5211.929751,0.000192
+23,Czech Koruna,27.715244,0.036081
+24,Danish Krone,8.656244,0.115524
+25,Emirati Dirham,4.789991,0.208769
+26,Euro,1.161821,0.860718
+27,Hong Kong Dollar,10.189583,0.098139
+28,Hungarian Forint,434.041243,0.002304
+29,Icelandic Krona,170.218015,0.005875
+30,Indian Rupee,107.011910,0.009345
+31,Indonesian Rupiah,19524.617170,0.000051
+32,Iranian Rial,55403.701512,0.000018
+33,Israeli Shekel,4.685943,0.213404
+34,Japanese Yen,181.113927,0.005521
+35,Kazakhstani Tenge,579.037258,0.001727
+36,Kuwaiti Dinar,0.399728,2.501700
+37,Libyan Dinar,6.184176,0.161703
+38,Malaysian Ringgit,5.924677,0.168786
+39,Mauritian Rupee,58.977527,0.016956
+40,Mexican Peso,21.839400,0.045789
+41,Nepalese Rupee,171.299315,0.005838
+42,New Zealand Dollar,2.075088,0.481907
+43,Norwegian Krone,13.107067,0.076295
+44,Omani Rial,0.502137,1.991489
+45,Pakistani Rupee,366.531996,0.002728
+46,Philippine Peso,70.951572,0.014094
+47,Polish Zloty,5.162003,0.193723
+48,Qatari Riyal,4.747602,0.210633
+49,Romanian New Leu,5.739353,0.174236
+50,Russian Ruble,118.265675,0.008456
+51,Saudi Arabian Riyal,4.891073,0.204454
+52,Singapore Dollar,1.724706,0.579809
+53,South African Rand,23.290808,0.042935
+54,South Korean Won,1646.679624,0.000607
+55,Sri Lankan Rupee,422.061517,0.002369
+56,Swedish Krona,13.316265,0.075096
+57,Swiss Franc,1.119307,0.893410
+58,Taiwan New Dollar,40.441836,0.024727
+59,Thai Baht,44.455268,0.022495
+60,Trinidadian Dollar,8.839230,0.113132
+61,Turkish Lira,35.126388,0.028469
+62,US Dollar,1.304286,0.766703
+63,Venezuelan Bolivar,3734577.127446,0.000000

@@ -35,7 +35,7 @@ main_logger.addHandler(file_handler)
 # Setting file pathways to source files and credentials files
 file_pathway_to_source_database = get_absolute_file_path("db_creds.yaml", "credentials")
 file_pathway_to_datastore = get_absolute_file_path(
-    "sales_data_creds_dev.yaml", "credentials"
+    "sales_data_creds.yaml", "credentials"
 )
 file_pathway_to_source_text_file = get_absolute_file_path(
     "currency_code_mapping", "source_data_files"
@@ -57,11 +57,20 @@ main_logger.info("Process started")
 
 # Create instance of DataCleaning and SQLAlterations classes
 cleaner = DataCleaning(file_pathway_to_datastore)
-sql = SQLAlterations(get_absolute_file_path("sales_data_creds_dev.yaml", "credentials"))
+sql = SQLAlterations(get_absolute_file_path("sales_data_creds.yaml", "credentials"))
 
 # Create the database. If it already exists
-sql.create_database("sales_data_dev")  # 'Sales_Data_Test', "Sales_Data_Admin"
+sql.create_database("sales_data")  # 'Sales_Data_Test', "Sales_Data_Admin"
 
+# Connecting to the database 
+sql.connect_to_database(
+    get_absolute_file_path("sales_data_creds.yaml", "credentials"), "sales_data"
+)
+
+# Creating the dimension and fact tables 
+sql.alter_and_update(
+        get_absolute_file_path("create_tables.sql", r"sales_data\DDL")
+    )
 # Main ETL Process to Extract, Transform and Load Data into Postgres
 land_user_table = cleaner.clean_user_data(
     "legacy_users", 
@@ -402,35 +411,39 @@ cleaner._upload_to_database(
 )
 
 
-# Altering the schema and forming the STAR Schema model using the uploaded database
+# Connecting to the database 
 sql.connect_to_database(
-    get_absolute_file_path("sales_data_creds_dev.yaml", "credentials"), "sales_data_dev"
+    get_absolute_file_path("sales_data_creds.yaml", "credentials"), "sales_data"
 )
 
+# Adding logic to populate the weight class column in the dim_products_table
 sql.alter_and_update(
     get_absolute_file_path("add_weight_class_column_script.sql", r"sales_data\DML")
 )
 
-sql.alter_and_update(
-    get_absolute_file_path("add_primary_keys.sql", r"sales_data\DDL")
-    )
+# Adding primary keys to tables 
+# sql.alter_and_update(
+#     get_absolute_file_path("add_primary_keys.sql", r"sales_data\DDL")
+#     )
 
+# Adding foreign key constraints to tables 
 sql.alter_and_update(
     get_absolute_file_path("foreign_key_constraints.sql", r"sales_data\DDL")
 )
 
+# Mapping foreign keys to empty key columns in fact table and dim_currency table
 sql.alter_and_update(
     get_absolute_file_path(
         "update_foreign_keys.sql", r"sales_data\DML"
     )
 )
 
+# Creating views based on database post-load
 sql.alter_and_update(
     get_absolute_file_path(
         "create_views.sql", r"sales_data\DDL"
     )
 )   
-
 
 end_time = time.time()
 
