@@ -184,7 +184,8 @@ class DatabaseConnector:
         dataframe: pd.DataFrame,
         connection,
         table_name: str,
-        table_condition="append",
+        table_condition : str = "append" or "replace" or "fail",
+        column_datatypes=None
     ):
         """
         Method to upload the table to the database
@@ -204,7 +205,7 @@ class DatabaseConnector:
                 f"Attempting to upload table {table_name} to the database"
             )
 
-            dataframe.to_sql(table_name, con=connection, if_exists=table_condition)
+            dataframe.to_sql(table_name, con=connection, if_exists=table_condition, dtype=column_datatypes)
             database_utils_logger.info("Table Uploaded")
         except:
             database_utils_logger.exception(

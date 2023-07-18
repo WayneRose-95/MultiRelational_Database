@@ -70,8 +70,7 @@ class TestDataCleaning(unittest.TestCase):
         test_table_to_upload_to_database = self.test_data_cleaner_test.clean_user_data(
             self.source_data_table_test,
             self.source_database_config_file_name,
-            self.source_database_name,
-            self.datastore_land_users_table_name
+            self.source_database_name
 
         )
         # Read the dimension table from the dev database, return it as a dataframe to compare to the uploaded land_table from the test database
@@ -108,8 +107,8 @@ class TestDataCleaning(unittest.TestCase):
 
         # Assert the column names of the land_table uploaded from test database 
         expected_columns = [
-            'user_key', 'first_name', 'last_name', 'birth_date', 'company', 'email_address',
-            'address', 'country', 'country_index', 'phone_number', 'join_date', 'user_uuid'
+            'user_key', 'first_name', 'last_name', 'date_of_birth', 'company', 'email_address',
+            'address', 'country', 'country_code', 'phone_number', 'join_date', 'user_uuid'
         ]
         # Print the test list of columns and the expected list of columns 
         print(f"The test list: {test_table_to_upload_to_database.columns.tolist()}")
@@ -151,8 +150,7 @@ class TestDataCleaning(unittest.TestCase):
         test_table_to_upload_to_database = self.test_data_cleaner_test.clean_store_data(
             self.source_data_table_store_details,
             self.source_database_config_file_name,
-            self.source_database_name,
-            self.datastore_land_store_data_table_name
+            self.source_database_name
         )
         '''
         LAND_STORE_DETAILS table tests 
@@ -234,8 +232,7 @@ class TestDataCleaning(unittest.TestCase):
     def test_clean_card_details(self):
         # Compare the tables between test database and dev sales_data database 
         test_table_to_upload_to_database = self.test_data_cleaner_test.clean_card_details(
-           self.pdf_link,
-           self.datastore_land_card_details_table_name
+           self.pdf_link
         )
         '''
         LAND_CARD_DETAILS Testing 
@@ -318,8 +315,7 @@ class TestDataCleaning(unittest.TestCase):
         test_table_to_upload_to_database = self.test_data_cleaner_test.clean_orders_table(
            self.datastore_orders_table_name,
            self.source_database_config_file_name,
-           self.source_database_name,
-           self.datastore_orders_table_name
+           self.source_database_name
         )
 
         reading_rds_table_dev = self.test_data_extractor_dev.read_rds_table(self.datastore_orders_table_name, 
@@ -361,8 +357,7 @@ class TestDataCleaning(unittest.TestCase):
     def test_clean_time_event_table(self):
         # Compare the tables between test database and dev sales_data database 
         test_table_to_upload_to_database = self.test_data_cleaner_test.clean_time_event_table(
-           self.json_s3_link,
-           self.datastore_land_time_details_table_name
+           self.json_s3_link
         )
 
         reading_rds_land_table_dev = self.test_data_extractor_dev.read_rds_table(self.datastore_land_time_details_table_name,
@@ -442,8 +437,7 @@ class TestDataCleaning(unittest.TestCase):
     def test_clean_product_table(self):
         # Compare the tables between test database and dev sales_data database 
         test_table_to_upload_to_database = self.test_data_cleaner_test.clean_product_table(
-           self.csv_s3_link,
-           self.datastore_land_product_details_table_name
+           self.csv_s3_link
         )
         '''
         LAND_PRODUCT_DETAILS testing
@@ -477,7 +471,7 @@ class TestDataCleaning(unittest.TestCase):
         self.assertEqual(test_table_to_upload_to_database.index.equals(expected_index), True)
 
         expected_columns  = [
-            "product_key", "EAN", "product_name", "product_price", "weight",
+            "product_key", "ean", "product_name", "product_price", "weight",
             "weight_class", "category", "date_added", "uuid","availability","product_code"
         ]
         # print a comparison between the test_list of columns and the expected list of columns
@@ -517,8 +511,7 @@ class TestDataCleaning(unittest.TestCase):
         # country_codes = list(data.keys())
         # Compare the tables between test database and dev sales_data database 
         test_table_to_upload_to_database = self.test_data_cleaner_test.clean_currency_table(
-            self.json_file_path,  
-            self.datastore_land_currency_table_name
+            self.json_file_path
         )
         reading_rds_land_table_dev = self.test_data_extractor_dev.read_rds_table(
             self.datastore_land_currency_table_name, 

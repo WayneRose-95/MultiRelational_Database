@@ -10,9 +10,9 @@ CREATE TABLE IF NOT EXISTS public.dim_currency
     currency_key bigint NOT NULL,
 	currency_conversion_key bigint,
     country_name character varying(100) COLLATE pg_catalog."default",
-    currency_code character varying(10) COLLATE pg_catalog."default",
+    currency_code character varying(20) COLLATE pg_catalog."default",
     country_code character varying(5) COLLATE pg_catalog."default",
-    currency_symbol text COLLATE pg_catalog."default",
+    currency_symbol character varying(5) COLLATE pg_catalog."default",
     CONSTRAINT dim_currency_pkey PRIMARY KEY (currency_key)
     
 )
