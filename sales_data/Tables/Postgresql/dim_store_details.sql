@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS public.dim_store_details
     number_of_staff smallint,
     opening_date date,
     store_type character varying(255) COLLATE pg_catalog."default",
-    country_code character varying(10) COLLATE pg_catalog."default",
+    country_code character varying(20) COLLATE pg_catalog."default",
     region character varying(255) COLLATE pg_catalog."default",
     CONSTRAINT dim_store_details_pkey PRIMARY KEY (store_key)
 )
