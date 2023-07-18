@@ -1,10 +1,10 @@
 import unittest
 import HtmlTestRunner
-from test_data_cleaning import get_absolute_file_path
-from test_data_cleaning import TestDataCleaning
-from test_data_extraction import TestDatabaseExtraction
-from test_database_utils import TestDatabaseConnector
-from test_currency_rate_extraction import TestCurrencyRateExtraction
+from testing.test_data_cleaning import get_absolute_file_path
+from testing.test_data_cleaning import TestDataCleaning
+from testing.test_data_extraction import TestDatabaseExtraction
+from testing.test_database_utils import TestDatabaseConnector
+from testing.test_currency_rate_extraction import TestCurrencyRateExtraction
 from datetime import datetime 
 import os
 # Create a Test Suite
