@@ -1732,8 +1732,18 @@ if __name__ == "__main__":
         additional_rows=[
             {"currency_conversion_key": -1, "currency_name": "Not Applicable"},
             {"currency_conversion_key": 0, "currency_name": "Unknown"}
-        ]
+        ],
+        dim_column_datatypes={
+        "index": BIGINT,
+        "currency_conversion_key": BIGINT,
+        "currency_name": VARCHAR(50),
+        "currency_code": VARCHAR(5),
+        "conversion_rate": NUMERIC(20,6),
+        "percentage_change": NUMERIC(20,6),
+        "last_updated" : TIMESTAMP(timezone=True)
+        }
     )
+
     orders_table = cleaner.clean_orders_table(
         "orders_table", 
         file_pathway_to_source_database, 
