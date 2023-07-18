@@ -46,3 +46,9 @@ SET currency_key = (
   FROM dim_currency AS c
   WHERE c.country_code = orders_table.country_code
 );
+
+-- Update the dim_currency key column in the dim_currency table with the keys from the dim_currency_conversion table 
+UPDATE dim_currency
+SET currency_conversion_key = dim_currency_conversion.currency_conversion_key
+FROM dim_currency_conversion
+WHERE dim_currency.currency_code = dim_currency_conversion.currency_code;

@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS public.orders_table
     store_code character varying(30) COLLATE pg_catalog."default",
     product_code character varying(30) COLLATE pg_catalog."default",
     product_quantity smallint,
-    country_code character varying(10) COLLATE pg_catalog."default",
+    country_code character varying(20) COLLATE pg_catalog."default",
     CONSTRAINT orders_table_pkey PRIMARY KEY (order_key)
 )
 

@@ -1459,7 +1459,7 @@ if __name__ == "__main__":
             "email_address": VARCHAR(255),
             "address": VARCHAR(600),
             "country": VARCHAR(100),
-            "country_index": VARCHAR(10),
+            "country_code": VARCHAR(20),
             "phone_number": VARCHAR(50),
             "join_date": DATE,
             "user_uuid": UUID  
@@ -1481,7 +1481,7 @@ if __name__ == "__main__":
             "email_address": VARCHAR(255),
             "address": VARCHAR(600),
             "country": VARCHAR(100),
-            "country_index": VARCHAR(10),
+            "country_code": VARCHAR(20),
             "phone_number": VARCHAR(50),
             "join_date": DATE,
             "user_uuid": UUID,
@@ -1510,7 +1510,7 @@ if __name__ == "__main__":
         "number_of_staff": SMALLINT,
         "opening_date": DATE,
         "store_type": VARCHAR(255),
-        "country_code": VARCHAR(10),
+        "country_code": VARCHAR(20),
         "region": VARCHAR(255)
     }
     )
@@ -1530,7 +1530,7 @@ if __name__ == "__main__":
         "number_of_staff": SMALLINT,
         "opening_date": DATE,
         "store_type": VARCHAR(255),
-        "country_code": VARCHAR(10),
+        "country_code": VARCHAR(20),
         "region": VARCHAR(255)
     }
         )
@@ -1551,6 +1551,7 @@ if __name__ == "__main__":
             "product_name": VARCHAR(500),
             "product_price": FLOAT,
             "weight": FLOAT,
+            "weight_class": VARCHAR(50),
             "category": VARCHAR(50),
             "date_added": DATE,
             "uuid": UUID,
@@ -1571,10 +1572,11 @@ if __name__ == "__main__":
             "product_name": VARCHAR(500),
             "product_price": FLOAT,
             "weight": FLOAT,
+            "weight_class": VARCHAR(50),
             "category": VARCHAR(50),
             "date_added": DATE,
             "uuid": UUID,
-            "availability": VARCHAR(30),
+            "availability": BOOLEAN,
             "product_code": VARCHAR(50)
        } 
     )
@@ -1630,7 +1632,7 @@ if __name__ == "__main__":
         "index": BIGINT,
         "card_key": BIGINT,
         "card_number": VARCHAR(30),
-        "expiry_date": VARCHAR(10),
+        "expiry_date": VARCHAR(20),
         "card_provider": VARCHAR(255),
         "date_payment_confirmed": DATE
     } 
@@ -1644,7 +1646,7 @@ if __name__ == "__main__":
         "index": BIGINT,
         "card_key": BIGINT,
         "card_number": VARCHAR(30),
-        "expiry_date": VARCHAR(10),
+        "expiry_date": VARCHAR(20),
         "card_provider": VARCHAR(255),
         "date_payment_confirmed": DATE
         }
@@ -1663,6 +1665,7 @@ if __name__ == "__main__":
         datastore_column_datatypes={
         "index": BIGINT,
         "currency_key": BIGINT,
+        "currency_conversion_key": BIGINT,
         "country_name": VARCHAR(100),
         "currency_code": VARCHAR(20),
         "country_code": VARCHAR(5),
@@ -1691,6 +1694,7 @@ if __name__ == "__main__":
         dim_column_datatypes={
         "index": BIGINT,
         "currency_key": BIGINT,
+        "currency_conversion_key": BIGINT,
         "country_name": VARCHAR(100),
         "currency_code": VARCHAR(20),
         "country_code": VARCHAR(5),
@@ -1770,6 +1774,6 @@ if __name__ == "__main__":
         "store_code": VARCHAR(30),
         "product_code": VARCHAR(30),
         "product_quantity": SMALLINT,
-        "country_code": VARCHAR(10),
+        "country_code": VARCHAR(20)
     }
     )

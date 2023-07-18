@@ -35,3 +35,9 @@ ALTER TABLE orders_table
 ADD CONSTRAINT fk_dim_users
 FOREIGN KEY (user_key)
 REFERENCES dim_users (user_key);
+
+-- Adding FK constraint to dim_currency table referencing dim_currency_conversion table
+ALTER TABLE dim_currency
+ADD CONSTRAINT fk_dim_currency_conversion
+FOREIGN KEY (currency_conversion_key)
+REFERENCES dim_currency_conversion (currency_conversion_key);

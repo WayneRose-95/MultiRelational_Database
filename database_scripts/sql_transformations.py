@@ -1,7 +1,7 @@
-from database_utils import DatabaseConnector
+from database_scripts.database_utils import DatabaseConnector
 from sqlalchemy import create_engine
 from sqlalchemy import text
-from data_cleaning import get_absolute_file_path
+from database_scripts.data_cleaning import get_absolute_file_path
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import ProgrammingError
 import logging
@@ -173,36 +173,29 @@ if __name__ == "__main__":
     sql = SQLAlterations(
         get_absolute_file_path("sales_data_creds_test.yaml", "credentials")
     )
-    sql.create_database("sales_data_test")  # 'Sales_Data_Test', "Sales_Data_Admin"
+    sql.create_database("sales_data_test")  
     sql.connect_to_database(
         get_absolute_file_path("sales_data_creds_test.yaml", "credentials"),
         "sales_data_test",
     )
-    sql.alter_and_update(
-        get_absolute_file_path("alter_table_schema.sql", f"sales_data\DDL")
-    )
+
     sql.alter_and_update(
         get_absolute_file_path("add_weight_class_column_script.sql", r"sales_data\DML")
     )
+
+    # sql.alter_and_update(
+    #     get_absolute_file_path("add_primary_keys.sql", r"sales_data\DDL")
+    # )
+
     sql.alter_and_update(
-        get_absolute_file_path("add_primary_keys.sql", r"sales_data\DDL")
-    )  # r'sales_data\DDL\add_primary_keys.sql')
-    sql.alter_and_update(
-        get_absolute_file_path("orders_table_FK_constraints.sql", r"sales_data\DDL")
+        get_absolute_file_path("foreign_key_constraints.sql", r"sales_data\DDL")
     )
+
     sql.alter_and_update(
         get_absolute_file_path(
-            "update_orders_table_foreign_keys.sql", r"sales_data\DML"
+            "update_foreign_keys.sql", r"sales_data\DML"
         )
-    )  # r'sales_data\DML\update_orders_table_foreign_keys.sql')
-    sql.alter_and_update(
-        get_absolute_file_path("dim_currency_FK_constraint.sql", r"sales_data\DDL")
-    )
-    sql.alter_and_update(
-        get_absolute_file_path(
-            "update_dim_currency_table_foreign_keys.sql", r"sales_data\DML"
-        )
-    )  # r'sales_data\DML\update_dim_currency_table_foreign_keys.sql')
+    )  
 
     '''
     (f"""CREATE DATABASE  {database_name} 

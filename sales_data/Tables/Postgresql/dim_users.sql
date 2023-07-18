@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS public.dim_users
     email_address character varying(255) COLLATE pg_catalog."default",
     address character varying(500) COLLATE pg_catalog."default",
     country character varying(100) COLLATE pg_catalog."default",
-    country_code character varying(10) COLLATE pg_catalog."default",
+    country_code character varying(20) COLLATE pg_catalog."default",
     phone_number character varying(40) COLLATE pg_catalog."default",
     join_date date,
     user_uuid uuid,
