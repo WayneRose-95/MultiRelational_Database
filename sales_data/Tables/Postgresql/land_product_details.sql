@@ -6,14 +6,14 @@ CREATE TABLE IF NOT EXISTS public.land_product_details
 (
     index bigint,
     product_key bigint,
-    "EAN" character varying(50) COLLATE pg_catalog."default",
+    ean character varying(50) COLLATE pg_catalog."default",
     product_name character varying(500) COLLATE pg_catalog."default",
     product_price double precision,
     weight double precision,
     category character varying(50) COLLATE pg_catalog."default",
-    date_added timestamp without time zone,
+    date_added DATE,
     uuid uuid,
-    availability text COLLATE pg_catalog."default",
+    availability character varying(30) COLLATE pg_catalog."default",
     product_code character varying(50) COLLATE pg_catalog."default"
 )
 

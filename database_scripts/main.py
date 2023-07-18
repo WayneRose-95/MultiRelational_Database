@@ -1,10 +1,6 @@
-from data_cleaning import data_cleaning_logger as data_cleaning_logger
-from data_extraction import data_extraction_logger as data_extraction_logger
-from database_utils import database_utils_logger as database_utils_logger
-from sql_transformations import sql_transformations_logger as sql_transformations_logger
-from file_handler import get_absolute_file_path
-from data_cleaning import DataCleaning
-from sql_transformations import SQLAlterations
+from database_scripts.file_handler import get_absolute_file_path
+from database_scripts.data_cleaning import DataCleaning
+from database_scripts.sql_transformations import SQLAlterations
 import time
 import os
 import logging
