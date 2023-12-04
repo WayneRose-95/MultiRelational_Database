@@ -73,6 +73,25 @@ class TestDatabaseConnector(unittest.TestCase):
         # Assert that the method returns the database engine
         self.assertEqual(result, mock_engine)
 
+    def test_list_db_tables(self):
+        # Start a test connection 
+        test_connection = self.test_connection.initialise_database_connection(self.source_database_credentials, connect_to_database=True, new_db_name='postgres')
+
+        # Call the list_db_tables method using the engine returned from the test_connection variable
+        list_of_tables = self.test_connection.list_db_tables(test_connection)
+
+        # Print the list of tables from the method 
+        print(list_of_tables)
+
+        # Set an expected output as the following list 
+        expected_output = ['legacy_store_details', 'legacy_users', 'orders_table']
+
+        # Assert if the list of tables is a list object 
+        # Then assert if the contents of the expected_output list and the input list are equal. 
+        # For this test, they should be equal
+        self.assertIsInstance(list_of_tables, list)
+        self.assertEqual(list_of_tables, expected_output)
+
 
     @classmethod
     def tearDownClass(cls):
