@@ -1,5 +1,7 @@
 import yaml
 from sqlalchemy import create_engine
+from sqlalchemy import inspect
+from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 from database_scripts.file_handler import get_absolute_file_path
 import pandas as pd
@@ -178,6 +180,47 @@ class DatabaseConnector:
             )
             print("Error Connecting to the Database")
             raise OperationalError
+
+    def list_db_tables(self, engine : Engine): # , config_file_name: str, database_name: str
+        """
+        Method to list the tables within a database
+
+        Parameters:
+        engine : Engine 
+        The database Engine object which is used to interact with the source or target database
+
+        """
+        try:
+            # Initilise the database connection using the Engine object 
+            database_utils_logger.info("Initialising database connection")
+            database_utils_logger.info(
+                f"Initialising database connection using {engine}"
+            )
+            # database_utils_logger.debug(f"Using {engine}")
+
+            # Use the inspect method of sqlalchemy to get an inspector element
+            inspector = inspect(engine)
+            database_utils_logger.info("Inspecting database engine")
+
+            # Get the table names using the get_table_names method
+            table_names = inspector.get_table_names()
+            database_utils_logger.info("Collecting table_names")
+            database_utils_logger.info(f"List of table_names : {table_names}")
+            # print the table names to the console
+            print(table_names)
+
+            # Output: ['legacy_store_details', 'legacy_users', 'orders_table']
+            # Return the list of table names as an output 
+            return table_names
+        
+        # Raise an Exception if there are any issues with listing the tables.   
+        except Exception as e:
+            database_utils_logger.exception(
+                "An error occured while listing tables. Please verify your credentials"
+            )
+            print("Error occurred while listing tables: %s", str(e))
+            raise Exception
+        
 
     def upload_to_db(
         self,
