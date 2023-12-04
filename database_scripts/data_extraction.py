@@ -3,6 +3,7 @@ from database_scripts.currency_rate_extraction import CurrencyRateExtractor
 from database_scripts.file_handler import get_absolute_file_path
 from sqlalchemy import inspect
 from sqlalchemy import select
+from sqlalchemy.engine import Engine
 from sqlalchemy import Table
 from sqlalchemy import MetaData
 from sqlalchemy.exc import OperationalError
@@ -49,7 +50,7 @@ class DatabaseExtractor:
 
 
     def read_rds_table(
-        self, table_name: str, config_file_name: str, database_name: str
+        self, table_name: str, engine : Engine 
     ):
         """
         Method to read a table from an RDS and return a Pandas Dataframe
@@ -58,20 +59,22 @@ class DatabaseExtractor:
         table_name : str
         The name of the table from the source database
 
-        config_file_name
-        The file pathway for the name of the .yaml file
+        engine : Engine
+        The Engine object which represents either the source or target database 
+        
         """
         try:
 
             # Initialise the connection
-            connection = self.database_connector.initialise_database_connection(
-                config_file_name, connect_to_database=True, new_db_name=database_name
-            )
+            # connection = self.database_connector.initialise_database_connection(
+            #     config_file_name, connect_to_database=True, new_db_name=database_name
+            # )
             data_extraction_logger.info("Initialising connection to the database")
-            data_extraction_logger.info(f"Using {connection}")
+            data_extraction_logger.info(f"Using {engine}")
 
             # Connect to the database
-            connection = connection.connect()
+            connection = engine.connect()
+
             data_extraction_logger.info(
                 f"Successfully connected to database via {connection}"
             )
