@@ -34,21 +34,6 @@ class TestDatabaseExtraction(unittest.TestCase):
 
 
       
-    # def test_list_db_tables(self):
-    #     # create a test_list of table names using the method 
-    #     test_list = self.test_extractor.list_db_tables(self.config_file_name, self.database_name)
-    #     # List the expected outputs 
-    #     expected_output = ['legacy_store_details', 'legacy_users', 'orders_table']
-    #     # Testing if the output is a list 
-    #     self.assertIsInstance(test_list, list)
-    #     # Testing if the test_list is the same as the expected output 
-    #     self.assertEqual(test_list, expected_output)
-
-    #     # Testing if an exception is raised when the wrong file_name is passed
-    #     with self.assertRaises(Exception): 
-    #         self.test_extractor.list_db_tables(self.config_file_name_wrong, self.database_name_wrong)
-
-      
     def test_read_rds_table(self):
 
         test_read = self.test_extractor.read_rds_table(self.table_name, self.test_source_database_engine)
