@@ -47,47 +47,6 @@ class DatabaseExtractor:
     def __init__(self):
         self.database_connector = DatabaseConnector()
 
-    def list_db_tables(self, config_file_name: str, database_name: str):
-        """
-        Method to list the tables within a database
-
-        Parameters:
-        config_file_name
-        The file pathway to the config file
-
-        """
-        try:
-
-            data_extraction_logger.info("Initialising database connection")
-            # Initialise the connection using an instance of the DatabaseConnector class
-            engine = self.database_connector.initialise_database_connection(
-                config_file_name, connect_to_database=True, new_db_name=database_name
-            )
-            data_extraction_logger.info(
-                f"Initialising database connection using {config_file_name}"
-            )
-            data_extraction_logger.debug(f"Using {engine}")
-
-            # Use the inspect method of sqlalchemy to get an inspector element
-            inspector = inspect(engine)
-            data_extraction_logger.info("Inspecting database engine")
-
-            # Get the table names using the get_table_names method
-            table_names = inspector.get_table_names()
-            data_extraction_logger.info("Collecting table_names")
-            data_extraction_logger.info("List of table_names : {table_names}")
-            # print the table names to the console
-            print(table_names)
-
-            # Output: ['legacy_store_details', 'legacy_users', 'orders_table']
-
-            return table_names
-        except Exception as e:
-            data_extraction_logger.exception(
-                "An error occured while listing tables. Please verify your credentials"
-            )
-            print("Error occurred while listing tables: %s", str(e))
-            raise Exception
 
     def read_rds_table(
         self, table_name: str, config_file_name: str, database_name: str
