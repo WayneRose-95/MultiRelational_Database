@@ -61,7 +61,7 @@ class DatabaseExtractor:
 
         engine : Engine
         The Engine object which represents either the source or target database 
-        
+
         """
         try:
 
@@ -469,7 +469,6 @@ if __name__ == "__main__":
         "country_data.json", "source_data_files"
     )
     extract = DatabaseExtractor()
-    extract.list_db_tables(credentials_file_path, "postgres")
     extract.extract_currency_conversion_data(
         "https://www.x-rates.com/table/?from=GBP&amount=1",
         '//table[@class="tablesorter ratesTable"]/tbody',
