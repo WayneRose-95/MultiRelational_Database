@@ -114,5 +114,33 @@ raw_currency_conversion_data = extractor.extract_currency_conversion_data(
 
 # Step 7: Address the Cleaning Methods (BIG TASK! Will need to plan this out)
 
+# == LAND TABLES == 
+
+# Step 7a. Adjust the clean_user_table method to provide the cleaned land_user_data table 
+
+# Step 7b. Adjust the clean_store_data method to produce the land_store_data table 
+
+# Step 7c. Adjust the clean_card_details method to produce the land_card_details table 
+
+# Step 7d. Adjust the clean_orders_table method to produce the orders_table 
+
+# Step 7e. Adjust the clean_time_event_table to produce the land_date_times table 
+
+# Step 7f. Adjust the clean_product_table to producce the land_product_details table 
+
+# Step 7g. Adjust the clean_currency_table to produce the land_currency table 
+
+# Step 7h. Adjust the clean_currency_exchange_rates method to produce the land_currency_exchange rates table
+# NOTE: For step 7h. You must fix the issues with extracting the currency_rates first before doing this 
+
+# == FOR LOADING DIMENSION TABLES == 
+
+# Step 7i Adjust the upload_to_db method in database_utils to encapsulate the logic presented
+#         within the upload_to_database and load_dimension_table methods 
+# Reason? Slowly Changing Dimension Logic can be done within a seperate script, which can be imported into main.py
+
+# Final Step? Once all methods are edited accordingly, create a loop which will upload the tables to the database. 
+
+
 
 
