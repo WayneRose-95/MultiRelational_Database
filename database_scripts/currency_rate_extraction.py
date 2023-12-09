@@ -14,6 +14,7 @@ from selenium.webdriver.chrome.service import Service
 import os
 import logging
 import pandas as pd
+import undetected_chromedriver as uc
 
 
 """
@@ -45,7 +46,7 @@ currency_rate_logger.addHandler(file_handler)
 
 
 class CurrencyRateExtractor:
-    def __init__(self):
+    def __init__(self, undetected_chrome=False):
 
         chrome_options = ChromeOptions()
 
@@ -58,9 +59,16 @@ class CurrencyRateExtractor:
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--window-size=1920,1080")
         chrome_options.add_argument("--remote-debugging-port=9222")
-        self.driver = Chrome(
-            service=Service(ChromeDriverManager().install()), options=chrome_options
-        )  #
+
+        if undetected_chrome:
+            self.driver = uc.Chrome(
+                use_subprocess=True,
+                options=chrome_options
+                )
+        else:
+            self.driver = Chrome(
+                service=Service(ChromeDriverManager().install()), options=chrome_options
+            )  
 
     def land_first_url(self, page_url: str):
         """
@@ -111,20 +119,25 @@ class CurrencyRateExtractor:
         data = []
         try:
             currency_rate_logger.debug("Extracting data table from website")
+            # Find the table_container_xpath
             table_container = self.driver.find_element(By.XPATH, table_body_xpath)
             currency_rate_logger.debug(table_container)
             print(table_container)
 
+            # Extract the table rows from the table element found in a loop
             for tr_tag in table_container.find_elements(By.XPATH, "//tr"):
+                # Add these to the data list using a list comprehension
                 row = [item.text for item in tr_tag.find_elements(By.XPATH, ".//td")]
                 data.append(row)
 
+            # Print the data to the console and the number of elements in the list. 
             print(data)
             print(len(data))
             currency_rate_logger.info("Data table extracted")
             currency_rate_logger.debug(f"Number of rows : {len(data)}")
             return data
 
+        # If this does not work, return an empty list. 
         except:
             currency_rate_logger.warning("No data found. Returning empty list")
             return []
@@ -144,11 +157,13 @@ class CurrencyRateExtractor:
         file_name : str
         The name of the file to be exported to .csv
         """
-        currency_rate_logger.info
+        currency_rate_logger.info("Reading the data into a dataframe")
+        # Make a dataframe from the raw_data then convert it to a .csv file. 
         raw_data = pd.DataFrame(data, columns=headers)
         raw_data.to_csv(f"{file_name}.csv", columns=headers)
         currency_rate_logger.info(f"{file_name}.csv successfully exported")
         print(f"{file_name}.csv successfully exported")
+        # Return the raw_data to a .csv file 
         return raw_data
 
     def scrape_information(
@@ -207,7 +222,7 @@ if __name__ == "__main__":
     currency_conversions_file = get_absolute_file_path(
         "currency_conversions", "source_data_files"
     )
-    sample_extractor = CurrencyRateExtractor()
+    sample_extractor = CurrencyRateExtractor(undetected_chrome=True)
     dataframe, timestamp = sample_extractor.scrape_information(
         "https://www.x-rates.com/table/?from=GBP&amount=1",
         '//table[@class="tablesorter ratesTable"]/tbody',
