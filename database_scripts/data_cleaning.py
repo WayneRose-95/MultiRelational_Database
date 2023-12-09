@@ -190,9 +190,11 @@ class DataCleaning:
 
     def clean_store_data(
         self,
+        source_database_engine : Engine,
+        legacy_store_dataframe : pd.DataFrame,
         source_table_name: str,
-        source_database_config_file_name: str,
-        name_of_source_database: str
+        # source_database_config_file_name: str,
+        # name_of_source_database: str
 
     ):
         """
@@ -209,9 +211,6 @@ class DataCleaning:
         datastore_table_name : str
         The name of the table which will be uploaded to the datastore
 
-        dimension_table_name : str
-        The name of the dimension table to be uploaded to the datastore
-
         Returns:
 
         legacy_store_database_table : DataFrame
@@ -219,11 +218,13 @@ class DataCleaning:
 
         """
         data_cleaning_logger.info("Starting Job clean_store_data")
+        data_cleaning_logger.info(f"Attempting to clean {source_table_name}")
+        data_cleaning_logger.debug(f"Connecting to {source_database_engine}")
         data_cleaning_logger.info("Reading in table from the source database")
         # Reading in the table from the AWS database
-        legacy_store_dataframe = self.extractor.read_rds_table(
-            source_table_name, source_database_config_file_name, name_of_source_database
-        )
+        # legacy_store_dataframe = self.extractor.read_rds_table(
+        #     source_table_name, source_database_config_file_name, name_of_source_database
+        # )
         data_cleaning_logger.info("Database table successfully read.")
         data_cleaning_logger.info(f"Number of rows : {len(legacy_store_dataframe)}")
 
@@ -327,6 +328,7 @@ class DataCleaning:
         data_cleaning_logger.info(
             "Replacing values in the longitude column to the correct values"
         )
+        #TODO: This needs a refactor. Do it either SQL or Python? 
         legacy_store_dataframe["number_of_staff"] = legacy_store_dataframe[
             "number_of_staff"
         ].replace({"3n9": "39", "A97": "97", "80R": "80", "J78": "78", "30e": "30"})
@@ -354,6 +356,7 @@ class DataCleaning:
         data_cleaning_logger.debug(f"Number of Rows : {len(legacy_store_dataframe)}")
 
         data_cleaning_logger.info("Job clean_store_data has completed succesfully")
+        print("Job clean_store_data has completed succesfully")
         return legacy_store_dataframe
 
     def clean_card_details(self, link_to_pdf: str):

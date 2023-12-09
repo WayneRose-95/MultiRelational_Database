@@ -120,7 +120,7 @@ raw_currency_conversion_data, timestamp = currency_extractor.scrape_information(
 
 # Step 7a. Adjust the clean_user_table method to provide the cleaned land_user_data table 
 
-cleaner.clean_user_data(
+cleaned_user_data_table = cleaner.clean_user_data(
     source_database_engine,
     raw_user_data_table,
     'legacy_users'
@@ -128,7 +128,15 @@ cleaner.clean_user_data(
 
 # Step 7b. Adjust the clean_store_data method to produce the land_store_data table 
 
+cleaned_store_data_table = cleaner.clean_store_data(
+    source_database_engine, 
+    raw_store_details_table,
+    'legacy_store_details'
+)
+
 # Step 7c. Adjust the clean_card_details method to produce the land_card_details table 
+
+
 
 # Step 7d. Adjust the clean_orders_table method to produce the orders_table 
 
