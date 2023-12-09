@@ -162,8 +162,18 @@ cleaned_product_table = cleaner.clean_product_table(
 
 # Step 7g. Adjust the clean_currency_table to produce the land_currency table 
 
+cleaned_currency_table = cleaner.clean_currency_table(
+    raw_currency_data
+)
+
 # Step 7h. Adjust the clean_currency_exchange_rates method to produce the land_currency_exchange rates table
-# NOTE: For step 7h. You must fix the issues with extracting the currency_rates first before doing this 
+
+cleaned_currency_conversion_table = cleaner.clean_currency_exchange_rates(
+    raw_currency_conversion_data,
+    timestamp, 
+    file_pathway_to_source_text_file
+
+)
 
 # == FOR LOADING DIMENSION TABLES == 
 

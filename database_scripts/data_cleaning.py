@@ -834,7 +834,7 @@ class DataCleaning:
         print("Job clean_product_table has completed successfully")
         return products_table
 
-    def clean_currency_table(self, source_file_name: str):
+    def clean_currency_table(self, currency_table : pd.DataFrame):
         '''
         Method to read in currency data from a .json file, clean the data using Pandas 
         and upload the table to the datastore 
@@ -852,12 +852,12 @@ class DataCleaning:
         '''
         data_cleaning_logger.info("Starting Job clean_currency_table")
 
-        data_cleaning_logger.info(f"Reading in file {source_file_name}")
-        # Reading in the file
-        currency_table = self.extractor.read_json_local(
-            source_file_name
-        )  # "codes-all_csv.csv"
-        data_cleaning_logger.info("Successfully read file")
+        # data_cleaning_logger.info(f"Reading in file {source_file_name}")
+        # # Reading in the file
+        # currency_table = self.extractor.read_json_local(
+        #     source_file_name
+        # )  # "codes-all_csv.csv"
+        # data_cleaning_logger.info("Successfully read file")
         data_cleaning_logger.debug(f"Number of rows : {len(currency_table)}")
 
         # Reset the index of the dataframe
@@ -926,15 +926,13 @@ class DataCleaning:
         data_cleaning_logger.info(
             "Job clean_currency_table has completed successfully."
         )
+        print("job clean_currency_table has been completed successfully")
         return land_currency_table
 
     def clean_currency_exchange_rates(
         self,
-        page_url: str,
-        table_body_xpath: str,
-        timestamp_xpath: str,
-        data_headers: list,
-        source_file_name: str,
+        raw_currency_data : pd.DataFrame,
+        timestamp : str,
         currency_mapping_document_name: str
     ):
         '''
@@ -942,39 +940,26 @@ class DataCleaning:
         clean it, and upload it to the target datastore. 
 
         Parameters
-        page_url : str 
-        The url to the website 
-        
-        tablebody_xpath : str
-        The xpath representing the table of data on the website  
+        raw_currency_data : pd.DataFrame 
+        The data from the raw_currency_data table 
 
-        timestamp_xpath : str 
-        The xpath representing the timestamp on the webpage 
+        timestamp : str 
+        The timestamp element extracted from the website. 
 
-        data_headers: list 
-        The list of column names for the pandas dataframe 
-
-        source_file_name: str 
-        The name of the source file which will be exported after the extraction process. 
-        In .csv format
-
-        currency_mapping_document_name : str
-        The file pathway to the currency_mapping.txt file which contains the currency codes 
-
-        datastore_table_name : str 
-        The name of the table to be uploaded to the datastore 
+        currency_mapping_document_name : str 
+        The name of the currency_mapping document 
 
         Returns: 
-        cleaned_currency_conversion_datastore_table : pd.DataFrame 
+        cleaned_currency_conversion_df : pd.DataFrame 
         A DataFrame containing the cleaned currency conversion data
         '''
 
         data_cleaning_logger.info("Starting job clean_currency_exchange_rates")
-        data_cleaning_logger.info(f"Extracting data from {page_url}")
-        raw_currency_data, timestamp = self.extractor.extract_currency_conversion_data(
-            page_url, table_body_xpath, timestamp_xpath, data_headers, source_file_name
-        )
-        data_cleaning_logger.info(f"Successfully read in DataFrame and {timestamp}")
+        # data_cleaning_logger.info(f"Extracting data from {page_url}")
+        # raw_currency_data, timestamp = self.extractor.extract_currency_conversion_data(
+        #     page_url, table_body_xpath, timestamp_xpath, data_headers, source_file_name
+        # )
+        # data_cleaning_logger.info(f"Successfully read in DataFrame and {timestamp}")
         data_cleaning_logger.debug(f"Number of rows : {len(raw_currency_data)}")
 
         # Dropping duplicates
@@ -1020,10 +1005,12 @@ class DataCleaning:
         # Adding new row to dataframe
         new_row = {
             "currency_name": "British Pound",
+            "currency_code": "GBP",
             "conversion_rate": "1.000000",
             "conversion_rate_percentage": "1.000000",
-            "last_updated": f"{datetime_object}",
-            "currency_code": "GBP",
+            "percentage_change": np.nan,
+            "last_updated": f"{datetime_object}"
+            
         }
 
         data_cleaning_logger.info(f"Adding new row {new_row}")
@@ -1082,6 +1069,7 @@ class DataCleaning:
         data_cleaning_logger.info(
             "Job clean_currency_exchange_rates completed successfully"
         )
+        print("Job clean_currency_exchange rates has been completed successfully")
         return cleaned_currency_conversion_df
 
     def load_dimension_table(
