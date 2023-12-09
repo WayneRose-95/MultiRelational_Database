@@ -324,53 +324,6 @@ class DatabaseExtractor:
             )
             raise Exception
 
-    def extract_currency_conversion_data(
-        self,
-        page_url: str,
-        table_body_xpath: str,
-        timestamp_xpath: str,
-        data_headers: list,
-        file_name: str,
-    ):
-        """
-        Method to extract table data from a website to be saved into a .csv format.
-        Method calls the scrape_information method from currency_rate_extraction.py script
-
-        Parameters:
-        page_url : str
-        The url of the website
-
-        table_body_xpath : str
-        The xpath which represents the body of the table to scrape
-
-        timestamp_xpath : str
-        The xpath which represents the timestamp of the data
-
-        data_headers : list
-        The headers of the .csv file
-
-        file_name : str
-        The name of the file exported
-
-        Returns:
-
-        raw_data : pd.DataFrame , timestamp : str
-        A tuple contaning the dataframe of the extracted data
-        A timestamp of when the data was extracted
-
-        Raises Exception upon error
-        """
-
-        try:
-            currency_extractor = CurrencyRateExtractor(undetected_chrome=True)
-            raw_data, timestamp = currency_extractor.scrape_information(
-                page_url, table_body_xpath, timestamp_xpath, data_headers, file_name
-            )
-            return raw_data, timestamp
-
-        except:
-            data_extraction_logger.exception("Unable to extract information.")
-            raise Exception
 
     def read_json_from_s3(self, bucket_url: str):
         """

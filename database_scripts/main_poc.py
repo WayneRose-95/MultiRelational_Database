@@ -3,6 +3,7 @@ from database_scripts.database_utils import DatabaseConnector
 from database_scripts.data_extraction import DatabaseExtractor
 from database_scripts.data_cleaning import DataCleaning 
 from database_scripts.sql_transformations import SQLAlterations
+from database_scripts.currency_rate_extraction import CurrencyRateExtractor
 from database_scripts.file_handler import get_absolute_file_path
 # Built-in python module imports 
 import logging 
@@ -58,6 +59,7 @@ connector = DatabaseConnector()
 extractor = DatabaseExtractor() 
 # cleaner = DataCleaning()
 # sql_transformations = SQLAlterations(file_pathway_to_datastore)
+currency_extractor = CurrencyRateExtractor(undetected_chrome=True)
 
 # Step 3: Initialise the source and target engine objects from database_utils.py 
 
@@ -103,7 +105,7 @@ raw_currency_data = extractor.read_json_local(file_pathway_to_json_source_file)
 # Investigate this error by looking at the currency_rate_extractor.py script 
 # For now, comment this out 
 
-raw_currency_conversion_data, timestamp = extractor.extract_currency_conversion_data(
+raw_currency_conversion_data, timestamp = currency_extractor.scrape_information(
         "https://www.x-rates.com/table/?from=GBP&amount=1",
         '//table[@class="tablesorter ratesTable"]/tbody',
         '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
