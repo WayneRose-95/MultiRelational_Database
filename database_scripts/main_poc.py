@@ -57,7 +57,7 @@ file_pathway_to_exported_csv_file = get_absolute_file_path(
 
 connector = DatabaseConnector() 
 extractor = DatabaseExtractor() 
-# cleaner = DataCleaning()
+cleaner = DataCleaning()
 # sql_transformations = SQLAlterations(file_pathway_to_datastore)
 currency_extractor = CurrencyRateExtractor(undetected_chrome=True)
 
@@ -119,6 +119,12 @@ raw_currency_conversion_data, timestamp = currency_extractor.scrape_information(
 # == LAND TABLES == 
 
 # Step 7a. Adjust the clean_user_table method to provide the cleaned land_user_data table 
+
+cleaner.clean_user_data(
+    source_database_engine,
+    raw_user_data_table,
+    'legacy_users'
+    )
 
 # Step 7b. Adjust the clean_store_data method to produce the land_store_data table 
 

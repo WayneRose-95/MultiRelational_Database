@@ -3,6 +3,7 @@ from database_scripts.database_utils import DatabaseConnector
 from database_scripts.file_handler import get_absolute_file_path
 from sqlalchemy import create_engine, Column, VARCHAR, DATE, FLOAT, SMALLINT, BOOLEAN, TIME, NUMERIC, TIMESTAMP
 from sqlalchemy.exc import OperationalError
+from sqlalchemy.engine import Engine
 from sqlalchemy.dialects.postgresql import BIGINT, UUID
 from datetime import datetime
 from typing import Optional
@@ -40,58 +41,57 @@ data_cleaning_logger.addHandler(file_handler)
 
 
 class DataCleaning:
-    def __init__(self, datastore_config_file_name):
+    def __init__(self): # , datastore_config_file_name
         # Instantitating an instance of the DatabaseExtractor Class
         self.extractor = DatabaseExtractor()
         # Instantitating an instance of the DatabaseConnector Class
         self.uploader = DatabaseConnector()
-        data_cleaning_logger.info(
-            f"Parsing datastore_config_file : {datastore_config_file_name}"
-        )
-        with open(datastore_config_file_name) as file:
-            creds = yaml.safe_load(file)
-            DATABASE_TYPE = creds["DATABASE_TYPE"]
-            DBAPI = creds["DBAPI"]
-            RDS_USER = creds["RDS_USER"]
-            RDS_PASSWORD = creds["RDS_PASSWORD"]
-            RDS_HOST = creds["RDS_HOST"]
-            RDS_PORT = creds["RDS_PORT"]
-            DATABASE = creds["RDS_DATABASE"]
+        # data_cleaning_logger.info(
+        #     f"Parsing datastore_config_file : {datastore_config_file_name}"
+        # )
+        # with open(datastore_config_file_name) as file:
+        #     creds = yaml.safe_load(file)
+        #     DATABASE_TYPE = creds["DATABASE_TYPE"]
+        #     DBAPI = creds["DBAPI"]
+        #     RDS_USER = creds["RDS_USER"]
+        #     RDS_PASSWORD = creds["RDS_PASSWORD"]
+        #     RDS_HOST = creds["RDS_HOST"]
+        #     RDS_PORT = creds["RDS_PORT"]
+        #     DATABASE = creds["RDS_DATABASE"]
 
-        try:
-            data_cleaning_logger.info("Attempting to connect to datastore")
-            self.engine = create_engine(
-                f"{DATABASE_TYPE}+{DBAPI}://{RDS_USER}:{RDS_PASSWORD}@{RDS_HOST}:{RDS_PORT}/{DATABASE}"
-            )
-            data_cleaning_logger.info("Connection successful")
-            print("connection successful")
-        except OperationalError:
-            data_cleaning_logger.exception("Error connecting to the database")
-            print("Error connecting to database")
-            raise Exception
+        # try:
+        #     data_cleaning_logger.info("Attempting to connect to datastore")
+        #     self.engine = create_engine(
+        #         f"{DATABASE_TYPE}+{DBAPI}://{RDS_USER}:{RDS_PASSWORD}@{RDS_HOST}:{RDS_PORT}/{DATABASE}"
+        #     )
+        #     data_cleaning_logger.info("Connection successful")
+        #     print("connection successful")
+        # except OperationalError:
+        #     data_cleaning_logger.exception("Error connecting to the database")
+        #     print("Error connecting to database")
+        #     raise Exception
 
     def clean_user_data(
         self,
+        source_database_engine : Engine,
+        legacy_users_dataframe : pd.DataFrame,
         source_table_name: str,
-        source_database_config_file_name: str,
-        name_of_source_database: str
+        # source_database_config_file_name: str,
+        # name_of_source_database: str
         
     ):
         """
         Method to clean the user data table
 
         Parameters:
-        source_table_name : str
-        The table name in the source database
+        source_database_engine : Engine
+        The Engine object for the source database
 
-        source_database_config_file_name : str
-        The name of the config file used to connect to the source database
+        legacy_users_dataframe : pd.DataFrame 
+        A dataframe which contains information from the legacy_users table 
 
-        datastore_table_name : str
-        The name of the table which will be uploaded to the datastore
-
-        dimension_table_name : str
-        The name of the dimension table to be uploaded to the datastore
+        source_table_name : str 
+        The name of the source table from the source database 
 
         Returns:
         legacy_users_dataframe: Dataframe
@@ -100,11 +100,13 @@ class DataCleaning:
         """
         data_cleaning_logger.info("Starting job clean_user_data")
         data_cleaning_logger.info(f"Attempting to clean {source_table_name}")
+        data_cleaning_logger.debug(f"Connecting to {source_database_engine}")
         data_cleaning_logger.info("Reading in table from source database")
+
         # Reading in the table from the AWS database
-        legacy_users_dataframe = self.extractor.read_rds_table(
-            source_table_name, source_database_config_file_name, name_of_source_database
-        )
+        # legacy_users_dataframe = self.extractor.read_rds_table(
+        #     source_table_name, source_database_config_file_name, name_of_source_database
+        # )
 
         data_cleaning_logger.debug(f"Number of rows : {len(legacy_users_dataframe)}")
 
@@ -183,7 +185,7 @@ class DataCleaning:
         data_cleaning_logger.info("Appended new rows to the beginning of the dataframe")
         data_cleaning_logger.debug(f"Number of rows : {len(legacy_users_dataframe)}")
         data_cleaning_logger.debug(f"Job clean_user_data has completely successfully")
-
+        print('Job clean_user_data has been completed')
         return legacy_users_dataframe
 
     def clean_store_data(
