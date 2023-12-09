@@ -136,13 +136,29 @@ cleaned_store_data_table = cleaner.clean_store_data(
 
 # Step 7c. Adjust the clean_card_details method to produce the land_card_details table 
 
-
+cleaned_card_details_table = cleaner.clean_card_details(
+     raw_card_details_table
+)
 
 # Step 7d. Adjust the clean_orders_table method to produce the orders_table 
 
+cleaned_orders_table = cleaner.clean_orders_table(
+    source_database_engine,
+    raw_orders_table,
+    'orders_table'
+)
+
 # Step 7e. Adjust the clean_time_event_table to produce the land_date_times table 
 
+cleaned_time_event_table = cleaner.clean_time_event_table(
+    raw_time_event_table
+)
+
 # Step 7f. Adjust the clean_product_table to producce the land_product_details table 
+
+cleaned_product_table = cleaner.clean_product_table(
+    raw_product_details_table
+)
 
 # Step 7g. Adjust the clean_currency_table to produce the land_currency table 
 

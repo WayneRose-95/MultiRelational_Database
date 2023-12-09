@@ -359,7 +359,7 @@ class DataCleaning:
         print("Job clean_store_data has completed succesfully")
         return legacy_store_dataframe
 
-    def clean_card_details(self, link_to_pdf: str):
+    def clean_card_details(self, card_details_table : pd.DataFrame):
         """
         Method to clean a pdf file with card details and upload it to a datastore
 
@@ -368,12 +368,6 @@ class DataCleaning:
         link_to_pdf : str
         The link to the pdf file
 
-        datastore_table_name : str
-        The name of the table to be uploaded to the datastore
-
-        dimension_table_name : str
-        The name of the table to be uploaded to the datastore
-
         Returns
 
         card_details_database_table
@@ -381,11 +375,6 @@ class DataCleaning:
 
         """
         data_cleaning_logger.info("Starting Job clean_card_details")
-        data_cleaning_logger.info(f"Attempting to read PDF table from {link_to_pdf}")
-        # Read in the pdf data for the card details
-        card_details_table = self.extractor.retrieve_pdf_data(link_to_pdf)
-
-        data_cleaning_logger.info(f"Succesfully read table from {link_to_pdf}")
         data_cleaning_logger.info(f"Number of rows : {len(card_details_table)}")
         data_cleaning_logger.info(
             "Removing non-numeric characters from the card_number column"
@@ -503,14 +492,14 @@ class DataCleaning:
             [new_rows_additions, card_details_table]
         ).reset_index(drop=True)
         data_cleaning_logger.info(f"Number of rows : {len(card_details_table)}")
-
+        print("Job clean_card_details has been completed successfully")
         return card_details_table
 
     def clean_orders_table(
         self,
-        source_table_name: str,
-        source_database_config_file_name: str,
-        name_of_source_database: str
+        source_database_engine: Engine,
+        orders_dataframe: pd.DataFrame,
+        orders_table_name : str
     ):
         '''
         Method to clean the orders fact table from the AWS RDS 
@@ -529,14 +518,15 @@ class DataCleaning:
 
         data_cleaning_logger.info("Starting job clean_orders_table")
         data_cleaning_logger.info("Reading in the table from the source database")
-
+        data_cleaning_logger.info(f"Attempting to clean {orders_table_name}")
+        data_cleaning_logger.debug(f"Connecting to {source_database_engine}")
         # Read in the table from the RDS database
-        orders_dataframe = self.extractor.read_rds_table(
-            source_table_name, source_database_config_file_name, name_of_source_database
-        )
-        data_cleaning_logger.info(
-            f"Successfully read the table {source_table_name} from the source database"
-        )
+        # orders_dataframe = self.extractor.read_rds_table(
+        #     source_table_name, source_database_config_file_name, name_of_source_database
+        # )
+        # data_cleaning_logger.info(
+        #     f"Successfully read the table {source_table_name} from the source database"
+        # )
         data_cleaning_logger.info(f"Number of rows : {len(orders_dataframe)}")
 
         data_cleaning_logger.info("Stating the name of the columns")
@@ -606,9 +596,10 @@ class DataCleaning:
         orders_dataframe = orders_dataframe[column_order]
 
         data_cleaning_logger.info("Job clean_orders_table has completed successfully.")
+        print("Job clean_orders_table has completed successfully.")
         return orders_dataframe 
 
-    def clean_time_event_table(self, s3_bucket_url: str):
+    def clean_time_event_table(self, time_df : pd.DataFrame):
         """
         Method to read in a time_dimension table from an AWS S3 Bucket,
         clean it, and upload it to the datastore.
@@ -626,9 +617,6 @@ class DataCleaning:
         data_cleaning_logger.info("Starting job clean_time_event_table")
         data_cleaning_logger.info("Reading file from s3_bucket into dataframe")
         # Read in the json data from the s3 bucket
-        time_df = self.extractor.read_json_from_s3(s3_bucket_url)
-
-        data_cleaning_logger.info(f"Successfully read file from {s3_bucket_url}")
         data_cleaning_logger.info(f"Number of rows : {len(time_df)}")
 
         data_cleaning_logger.info(
@@ -704,9 +692,10 @@ class DataCleaning:
         data_cleaning_logger.info(
             "Job clean_time_event_table has completed successfully"
         )
+        print("Job clean time_event_table has been completed sucessfully")
         return time_df
 
-    def clean_product_table(self, s3_bucket_url: str):
+    def clean_product_table(self, products_table : pd.DataFrame):
         """
         Method to read in a .csv file from an S3 Bucket on AWS,
         CLean the data, and then upload it to the datastore
@@ -728,11 +717,11 @@ class DataCleaning:
 
         """
         data_cleaning_logger.info("Starting job clean_product_table")
-        data_cleaning_logger.info(f"Reading data from {s3_bucket_url}")
-        # Set the dataframe to the output of the method
-        products_table = self.extractor.read_s3_bucket_to_dataframe(s3_bucket_url)
+        # data_cleaning_logger.info(f"Reading data from {s3_bucket_url}")
+        # # Set the dataframe to the output of the method
+        # products_table = self.extractor.read_s3_bucket_to_dataframe(s3_bucket_url)
 
-        data_cleaning_logger.info(f"Successfully read data from {s3_bucket_url}")
+        # data_cleaning_logger.info(f"Successfully read data from {s3_bucket_url}")
         data_cleaning_logger.info(f"Number of rows : {len(products_table)}")
 
         data_cleaning_logger.info(
@@ -842,6 +831,7 @@ class DataCleaning:
         )
 
         data_cleaning_logger.info("Job clean_product_table has completed successfully")
+        print("Job clean_product_table has completed successfully")
         return products_table
 
     def clean_currency_table(self, source_file_name: str):
