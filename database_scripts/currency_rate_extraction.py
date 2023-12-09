@@ -201,18 +201,22 @@ class CurrencyRateExtractor:
         """
 
         currency_rate_logger.info(f"Attempting to land {page_url}")
+        # call the land_first_url method 
         self.land_first_url(page_url)
 
         currency_rate_logger.info(f"Attempting to extract table from {page_url}")
+        # Extract the table from the website 
         data = self.extract_table(table_body_xpath)
 
         currency_rate_logger.info("Extracting timestamp")
+        # Extract the timestamp element from the website 
         timestamp = self.extract_timestamp(timestamp_xpath)
 
         currency_rate_logger.info("Converting data extracted to DataFrame")
+        # Next, convert the data to a dataframe, and save it. 
         dataframe = self.data_to_dataframe(data, data_headers, file_name)
         currency_rate_logger.info(f"Table scraped. Please check {file_name}.csv file")
-
+        # Once completed, close the window. 
         print(f"Table scraped. Please check {file_name}.csv file")
         self.driver.quit()
         return dataframe, timestamp
