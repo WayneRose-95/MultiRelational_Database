@@ -102,15 +102,15 @@ raw_currency_data = extractor.read_json_local(file_pathway_to_json_source_file)
 # ValueError: There is no such driver by url https://chromedriver.storage.googleapis.com/LATEST_RELEASE_119.0.6045
 # Investigate this error by looking at the currency_rate_extractor.py script 
 # For now, comment this out 
-'''
-raw_currency_conversion_data = extractor.extract_currency_conversion_data(
+
+raw_currency_conversion_data, timestamp = extractor.extract_currency_conversion_data(
         "https://www.x-rates.com/table/?from=GBP&amount=1",
         '//table[@class="tablesorter ratesTable"]/tbody',
         '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
         ["currency_name", "conversion_rate", "conversion_rate_percentage"],
         file_pathway_to_exported_csv_file
 )
-'''
+
 
 # Step 7: Address the Cleaning Methods (BIG TASK! Will need to plan this out)
 

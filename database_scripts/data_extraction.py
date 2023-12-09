@@ -362,7 +362,7 @@ class DatabaseExtractor:
         """
 
         try:
-            currency_extractor = CurrencyRateExtractor()
+            currency_extractor = CurrencyRateExtractor(undetected_chrome=True)
             raw_data, timestamp = currency_extractor.scrape_information(
                 page_url, table_body_xpath, timestamp_xpath, data_headers, file_name
             )
