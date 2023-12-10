@@ -7,6 +7,7 @@ from database_scripts.currency_rate_extraction import CurrencyRateExtractor
 from database_scripts.file_handler import get_absolute_file_path
 from sqlalchemy import Column, VARCHAR, DATE, FLOAT, SMALLINT, BOOLEAN, TIME, NUMERIC, TIMESTAMP
 from sqlalchemy.dialects.postgresql import BIGINT, UUID
+from sqlalchemy.engine import Engine
 # Built-in python module imports 
 import logging 
 import os 
@@ -195,14 +196,58 @@ cleaned_currency_conversion_table = cleaner.clean_currency_exchange_rates(
 
 # Final Step? Once all methods are edited accordingly, create a loop which will upload the tables to the database. 
 
-# LOADING LAND TABLES 
+def upload_tables_and_log(
+    connector : DatabaseConnector,
+    tables_to_upload : list ,
+    target_database_engine : Engine
+):
+    """
+    Helper function to upload multiple tables to the database and log the results.
 
-land_user_data = connector.upload_to_db(
+    Parameters:
+    connector (DatabaseConnector): An instance of the DatabaseConnector class.
+    tables_to_upload (list): A list of tuples where each tuple contains details for table upload.
+        Each tuple should contain (cleaned_table, table_name, action_type, column_datatypes, subset, additional_rows).
+    target_database_engine (sqlalchemy.engine.base.Engine): The engine for the target database.
+
+    Returns:
+    dict: A dictionary containing the uploaded tables where keys are table names.
+    """
+    uploaded_tables = {}
+
+    for table_details in tables_to_upload:
+        cleaned_table, target_database_engine, table_name, table_condition, mapping, subset, additional_rows, column_datatypes = table_details
+        uploaded_table = connector.upload_to_db(
+            cleaned_table,
+            target_database_engine,
+            table_name,
+            table_condition,
+            mapping=mapping,
+            subset=subset,
+            additional_rows=additional_rows,
+            column_datatypes=column_datatypes
+        )
+
+        # Log the result
+        log_message = f"{table_condition.capitalize()} {table_name} table uploaded successfully."
+        main_logger.info(log_message)
+        print(log_message)
+
+        uploaded_tables[table_name] = uploaded_table
+
+    return uploaded_tables
+
+tables_to_upload = []
+
+tables_to_upload.append((
     cleaned_user_data_table,
     target_database_engine,
     'land_user_data',
     'replace',
-    column_datatypes={
+    None,
+    None, 
+    None, 
+    {
             "user_key": BIGINT,
             "first_name": VARCHAR(255),
             "last_name": VARCHAR(255),
@@ -216,14 +261,17 @@ land_user_data = connector.upload_to_db(
             "join_date": DATE,
             "user_uuid": UUID  
        }
-)
+))
 
-land_store_data = connector.upload_to_db(
+tables_to_upload.append((
     cleaned_store_data_table,
     target_database_engine,
     'land_store_details',
     'replace',
-    column_datatypes={
+    None, 
+    None, 
+    None,
+    {
         "index": BIGINT,
         "store_key": BIGINT,
         "store_address": VARCHAR(1000),
@@ -238,35 +286,41 @@ land_store_data = connector.upload_to_db(
         "region": VARCHAR(255)
     }   
 
-)
+))
 
-land_product_data = connector.upload_to_db(
+tables_to_upload.append((
     cleaned_product_table,
     target_database_engine,
     'land_product_details',
     "replace",
-    column_datatypes={
-           "index": BIGINT,
-            "product_key": BIGINT,
-            "ean": VARCHAR(50),
-            "product_name": VARCHAR(500),
-            "product_price": FLOAT,
-            "weight": FLOAT,
-            "weight_class": VARCHAR(50),
-            "category": VARCHAR(50),
-            "date_added": DATE,
-            "uuid": UUID,
-            "availability": VARCHAR(30),
-            "product_code": VARCHAR(50)
+    None, 
+    None, 
+    None,
+    {
+        "index": BIGINT,
+        "product_key": BIGINT,
+        "ean": VARCHAR(50),
+        "product_name": VARCHAR(500),
+        "product_price": FLOAT,
+        "weight": FLOAT,
+        "weight_class": VARCHAR(50),
+        "category": VARCHAR(50),
+        "date_added": DATE,
+        "uuid": UUID,
+        "availability": VARCHAR(30),
+        "product_code": VARCHAR(50)
        } 
-)
+))
 
-land_date_times_table = connector.upload_to_db(
+tables_to_upload.append((
     cleaned_time_event_table,
     target_database_engine,
     'land_date_times',
     "replace",
-    column_datatypes={
+    None,
+    None,
+    None,
+    {
         "index": BIGINT,
         "date_key": BIGINT,
         "event_time": TIME,
@@ -276,14 +330,17 @@ land_date_times_table = connector.upload_to_db(
         "time_period": VARCHAR(40),
         "date_uuid": UUID
     } 
-)
+))
 
-land_card_details_table = connector.upload_to_db(
+tables_to_upload.append((
     cleaned_card_details_table,
     target_database_engine,
     "land_card_details",
     "replace",
-    column_datatypes={
+    None,
+    None,
+    None,
+    {
         "index": BIGINT,
         "card_key": BIGINT,
         "card_number": VARCHAR(30),
@@ -291,14 +348,17 @@ land_card_details_table = connector.upload_to_db(
         "card_provider": VARCHAR(255),
         "date_payment_confirmed": DATE
     } 
-)
+))
 
-land_currency_table = connector.upload_to_db(
+tables_to_upload.append((
         cleaned_currency_table,
         target_database_engine,
         "land_currency",
         "replace",
-        column_datatypes={
+        None,
+        None,
+        None,
+        {
         "index": BIGINT,
         "currency_key": BIGINT,
         "currency_conversion_key": BIGINT,
@@ -307,14 +367,17 @@ land_currency_table = connector.upload_to_db(
         "country_code": VARCHAR(5),
         "currency_symbol": VARCHAR(5)
     } 
-)
+))
 
-land_currency_conversions_table = connector.upload_to_db(
+tables_to_upload.append((
         cleaned_currency_conversion_table,
         target_database_engine,
         "land_currency_conversion",
         "replace",
-        column_datatypes={
+        None,
+        None, 
+        None,
+        {
         "index": BIGINT,
         "currency_conversion_key": BIGINT,
         "currency_name": VARCHAR(50),
@@ -324,16 +387,17 @@ land_currency_conversions_table = connector.upload_to_db(
         "last_updated" : TIMESTAMP(timezone=True)
 
     } 
-)
+))
 
-# ====== Orders Table Upload ===========
-
-orders_table = connector.upload_to_db(
+tables_to_upload.append((
         cleaned_orders_table,
         target_database_engine,
         "orders_table",
         "replace",
-        column_datatypes={
+        None,
+        None,
+        None,
+        {
         "index": BIGINT,
         "order_key": BIGINT,
         "date_uuid": UUID,
@@ -350,7 +414,170 @@ orders_table = connector.upload_to_db(
         "product_quantity": SMALLINT,
         "country_code": VARCHAR(20)
     }
-)
+))
+
+# Currently only uploads the land_tables 
+upload_tables_and_log(
+    connector=connector, 
+    tables_to_upload=tables_to_upload,
+    target_database_engine=target_database_engine
+                      )
+# LOADING LAND TABLES 
+
+# land_user_data = connector.upload_to_db(
+#     cleaned_user_data_table,
+#     target_database_engine,
+#     'land_user_data',
+#     'replace',
+#     column_datatypes={
+#             "user_key": BIGINT,
+#             "first_name": VARCHAR(255),
+#             "last_name": VARCHAR(255),
+#             "date_of_birth": DATE,
+#             "company": VARCHAR(255),
+#             "email_address": VARCHAR(255),
+#             "address": VARCHAR(600),
+#             "country": VARCHAR(100),
+#             "country_code": VARCHAR(20),
+#             "phone_number": VARCHAR(50),
+#             "join_date": DATE,
+#             "user_uuid": UUID  
+#        }
+# )
+
+# land_store_data = connector.upload_to_db(
+#     cleaned_store_data_table,
+#     target_database_engine,
+#     'land_store_details',
+#     'replace',
+#     column_datatypes={
+#         "index": BIGINT,
+#         "store_key": BIGINT,
+#         "store_address": VARCHAR(1000),
+#         "longitude": FLOAT,
+#         "latitude": FLOAT,
+#         "city": VARCHAR(255),
+#         "store_code": VARCHAR(20),
+#         "number_of_staff": SMALLINT,
+#         "opening_date": DATE,
+#         "store_type": VARCHAR(255),
+#         "country_code": VARCHAR(20),
+#         "region": VARCHAR(255)
+#     }   
+
+# )
+
+# land_product_data = connector.upload_to_db(
+#     cleaned_product_table,
+#     target_database_engine,
+#     'land_product_details',
+#     "replace",
+#     column_datatypes={
+#            "index": BIGINT,
+#             "product_key": BIGINT,
+#             "ean": VARCHAR(50),
+#             "product_name": VARCHAR(500),
+#             "product_price": FLOAT,
+#             "weight": FLOAT,
+#             "weight_class": VARCHAR(50),
+#             "category": VARCHAR(50),
+#             "date_added": DATE,
+#             "uuid": UUID,
+#             "availability": VARCHAR(30),
+#             "product_code": VARCHAR(50)
+#        } 
+# )
+
+# land_date_times_table = connector.upload_to_db(
+#     cleaned_time_event_table,
+#     target_database_engine,
+#     'land_date_times',
+#     "replace",
+#     column_datatypes={
+#         "index": BIGINT,
+#         "date_key": BIGINT,
+#         "event_time": TIME,
+#         "day": VARCHAR(30),
+#         "month": VARCHAR(30),
+#         "year": VARCHAR(30),
+#         "time_period": VARCHAR(40),
+#         "date_uuid": UUID
+#     } 
+# )
+
+# land_card_details_table = connector.upload_to_db(
+#     cleaned_card_details_table,
+#     target_database_engine,
+#     "land_card_details",
+#     "replace",
+#     column_datatypes={
+#         "index": BIGINT,
+#         "card_key": BIGINT,
+#         "card_number": VARCHAR(30),
+#         "expiry_date": VARCHAR(20),
+#         "card_provider": VARCHAR(255),
+#         "date_payment_confirmed": DATE
+#     } 
+# )
+
+# land_currency_table = connector.upload_to_db(
+#         cleaned_currency_table,
+#         target_database_engine,
+#         "land_currency",
+#         "replace",
+#         column_datatypes={
+#         "index": BIGINT,
+#         "currency_key": BIGINT,
+#         "currency_conversion_key": BIGINT,
+#         "country_name": VARCHAR(100),
+#         "currency_code": VARCHAR(20),
+#         "country_code": VARCHAR(5),
+#         "currency_symbol": VARCHAR(5)
+#     } 
+# )
+
+# land_currency_conversions_table = connector.upload_to_db(
+#         cleaned_currency_conversion_table,
+#         target_database_engine,
+#         "land_currency_conversion",
+#         "replace",
+#         column_datatypes={
+#         "index": BIGINT,
+#         "currency_conversion_key": BIGINT,
+#         "currency_name": VARCHAR(50),
+#         "currency_code": VARCHAR(5),
+#         "conversion_rate": NUMERIC(20,6),
+#         "conversion_rate_percentage": NUMERIC(20,6),
+#         "last_updated" : TIMESTAMP(timezone=True)
+
+#     } 
+# )
+
+# # ====== Orders Table Upload ===========
+
+# orders_table = connector.upload_to_db(
+#         cleaned_orders_table,
+#         target_database_engine,
+#         "orders_table",
+#         "replace",
+#         column_datatypes={
+#         "index": BIGINT,
+#         "order_key": BIGINT,
+#         "date_uuid": UUID,
+#         "user_uuid": UUID,
+#         "card_key": BIGINT,
+#         "date_key": BIGINT,
+#         "product_key": BIGINT,
+#         "store_key": BIGINT,
+#         "user_key": BIGINT,
+#         "currency_key": BIGINT,
+#         "card_number": VARCHAR(30),
+#         "store_code": VARCHAR(30),
+#         "product_code": VARCHAR(30),
+#         "product_quantity": SMALLINT,
+#         "country_code": VARCHAR(20)
+#     }
+# )
 
 # ===== LOADING DIMENSION TABLES 
 
