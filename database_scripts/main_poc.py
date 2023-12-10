@@ -320,7 +320,7 @@ land_currency_conversions_table = connector.upload_to_db(
         "currency_name": VARCHAR(50),
         "currency_code": VARCHAR(5),
         "conversion_rate": NUMERIC(20,6),
-        "percentage_change": NUMERIC(20,6),
+        "conversion_rate_percentage": NUMERIC(20,6),
         "last_updated" : TIMESTAMP(timezone=True)
 
     } 
@@ -495,7 +495,7 @@ dim_currency_conversion_table = connector.upload_to_db(
         "currency_name": VARCHAR(50),
         "currency_code": VARCHAR(5),
         "conversion_rate": NUMERIC(20,6),
-        "percentage_change": NUMERIC(20,6),
+        "conversion_rate_percentage": NUMERIC(20,6),
         "last_updated" : TIMESTAMP(timezone=True)
         }
     )

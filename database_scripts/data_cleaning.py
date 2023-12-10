@@ -880,6 +880,7 @@ class DataCleaning:
         print("job clean_currency_table has been completed successfully")
         return land_currency_table
 
+    #TODO: There is something wrong with this method as the percentage_change column goes to null when it's uploaded. 
     def clean_currency_exchange_rates(
         self,
         raw_currency_data : pd.DataFrame,
@@ -985,7 +986,7 @@ class DataCleaning:
             "currency_name",
             "currency_code",
             "conversion_rate",
-            "percentage_change",
+            "conversion_rate_percentage",
             "last_updated",
         ]
         data_cleaning_logger.info("Updating column_order of dataframe")
@@ -1008,10 +1009,6 @@ class DataCleaning:
         cleaned_currency_conversion_df = pd.concat([new_rows_addition, updated_df])
         data_cleaning_logger.info("Successfully concatentated rows from together")
 
-        # cleaned_currency_conversion_datastore_table = self._upload_to_database(
-        #     cleaned_currency_conversion_df, self.engine, datastore_table_name
-        # )
-        # data_cleaning_logger.info(f"{datastore_table_name} table uploaded")
 
         data_cleaning_logger.info(
             "Job clean_currency_exchange_rates completed successfully"
