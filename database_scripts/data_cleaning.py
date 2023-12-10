@@ -41,35 +41,8 @@ data_cleaning_logger.addHandler(file_handler)
 
 
 class DataCleaning:
-    def __init__(self): # , datastore_config_file_name
-        # Instantitating an instance of the DatabaseExtractor Class
-        self.extractor = DatabaseExtractor()
-        # Instantitating an instance of the DatabaseConnector Class
-        self.uploader = DatabaseConnector()
-        # data_cleaning_logger.info(
-        #     f"Parsing datastore_config_file : {datastore_config_file_name}"
-        # )
-        # with open(datastore_config_file_name) as file:
-        #     creds = yaml.safe_load(file)
-        #     DATABASE_TYPE = creds["DATABASE_TYPE"]
-        #     DBAPI = creds["DBAPI"]
-        #     RDS_USER = creds["RDS_USER"]
-        #     RDS_PASSWORD = creds["RDS_PASSWORD"]
-        #     RDS_HOST = creds["RDS_HOST"]
-        #     RDS_PORT = creds["RDS_PORT"]
-        #     DATABASE = creds["RDS_DATABASE"]
-
-        # try:
-        #     data_cleaning_logger.info("Attempting to connect to datastore")
-        #     self.engine = create_engine(
-        #         f"{DATABASE_TYPE}+{DBAPI}://{RDS_USER}:{RDS_PASSWORD}@{RDS_HOST}:{RDS_PORT}/{DATABASE}"
-        #     )
-        #     data_cleaning_logger.info("Connection successful")
-        #     print("connection successful")
-        # except OperationalError:
-        #     data_cleaning_logger.exception("Error connecting to the database")
-        #     print("Error connecting to database")
-        #     raise Exception
+    def __init__(self): 
+        pass 
 
     def clean_user_data(
         self,
@@ -103,10 +76,6 @@ class DataCleaning:
         data_cleaning_logger.debug(f"Connecting to {source_database_engine}")
         data_cleaning_logger.info("Reading in table from source database")
 
-        # Reading in the table from the AWS database
-        # legacy_users_dataframe = self.extractor.read_rds_table(
-        #     source_table_name, source_database_config_file_name, name_of_source_database
-        # )
 
         data_cleaning_logger.debug(f"Number of rows : {len(legacy_users_dataframe)}")
 
@@ -221,10 +190,7 @@ class DataCleaning:
         data_cleaning_logger.info(f"Attempting to clean {source_table_name}")
         data_cleaning_logger.debug(f"Connecting to {source_database_engine}")
         data_cleaning_logger.info("Reading in table from the source database")
-        # Reading in the table from the AWS database
-        # legacy_store_dataframe = self.extractor.read_rds_table(
-        #     source_table_name, source_database_config_file_name, name_of_source_database
-        # )
+
         data_cleaning_logger.info("Database table successfully read.")
         data_cleaning_logger.info(f"Number of rows : {len(legacy_store_dataframe)}")
 
@@ -520,13 +486,7 @@ class DataCleaning:
         data_cleaning_logger.info("Reading in the table from the source database")
         data_cleaning_logger.info(f"Attempting to clean {orders_table_name}")
         data_cleaning_logger.debug(f"Connecting to {source_database_engine}")
-        # Read in the table from the RDS database
-        # orders_dataframe = self.extractor.read_rds_table(
-        #     source_table_name, source_database_config_file_name, name_of_source_database
-        # )
-        # data_cleaning_logger.info(
-        #     f"Successfully read the table {source_table_name} from the source database"
-        # )
+
         data_cleaning_logger.info(f"Number of rows : {len(orders_dataframe)}")
 
         data_cleaning_logger.info("Stating the name of the columns")
@@ -717,11 +677,7 @@ class DataCleaning:
 
         """
         data_cleaning_logger.info("Starting job clean_product_table")
-        # data_cleaning_logger.info(f"Reading data from {s3_bucket_url}")
-        # # Set the dataframe to the output of the method
-        # products_table = self.extractor.read_s3_bucket_to_dataframe(s3_bucket_url)
 
-        # data_cleaning_logger.info(f"Successfully read data from {s3_bucket_url}")
         data_cleaning_logger.info(f"Number of rows : {len(products_table)}")
 
         data_cleaning_logger.info(
@@ -852,12 +808,7 @@ class DataCleaning:
         '''
         data_cleaning_logger.info("Starting Job clean_currency_table")
 
-        # data_cleaning_logger.info(f"Reading in file {source_file_name}")
-        # # Reading in the file
-        # currency_table = self.extractor.read_json_local(
-        #     source_file_name
-        # )  # "codes-all_csv.csv"
-        # data_cleaning_logger.info("Successfully read file")
+
         data_cleaning_logger.debug(f"Number of rows : {len(currency_table)}")
 
         # Reset the index of the dataframe
@@ -955,11 +906,7 @@ class DataCleaning:
         '''
 
         data_cleaning_logger.info("Starting job clean_currency_exchange_rates")
-        # data_cleaning_logger.info(f"Extracting data from {page_url}")
-        # raw_currency_data, timestamp = self.extractor.extract_currency_conversion_data(
-        #     page_url, table_body_xpath, timestamp_xpath, data_headers, source_file_name
-        # )
-        # data_cleaning_logger.info(f"Successfully read in DataFrame and {timestamp}")
+
         data_cleaning_logger.debug(f"Number of rows : {len(raw_currency_data)}")
 
         # Dropping duplicates
