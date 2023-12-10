@@ -10,6 +10,7 @@ from sqlalchemy.dialects.postgresql import BIGINT, UUID
 # Built-in python module imports 
 import logging 
 import os 
+import time 
 
 """
 LOG DEFINITION
@@ -54,21 +55,30 @@ file_pathway_to_exported_csv_file = get_absolute_file_path(
     "currency_conversions_test", "source_data_files"
 )
 
+start_time = time.time()
+
+main_logger.info("Process started")
 
 # Step 2: Instantiate instances of the classes 
 
 connector = DatabaseConnector() 
 extractor = DatabaseExtractor() 
 cleaner = DataCleaning()
-# sql_transformations = SQLAlterations(file_pathway_to_datastore)
+sql_transformations = SQLAlterations(file_pathway_to_datastore)
 currency_extractor = CurrencyRateExtractor(undetected_chrome=True)
 
-# Step 3: Initialise the source and target engine objects from database_utils.py 
+# Step 3: Create the database.
+
+create_sales_data_database = sql_transformations.create_database("sales_data_poc")
+# Connecting to the database 
+sales_data_database = sql_transformations.connect_to_database(file_pathway_to_datastore, "sales_data_poc")
+
+# Step 4: Initialise the source and target engine objects from database_utils.py 
 
 source_database_engine = connector.initialise_database_connection(file_pathway_to_source_database, True, 'postgres')
 target_database_engine = connector.initialise_database_connection(file_pathway_to_datastore, True, 'sales_data_poc')
 
-# Step 4 : List the database tables using the source_database_engine object 
+# Step 5 : List the database tables using the source_database_engine object 
 
 # Reliant on the successful connection to the source and target database engine in order to work successfully. 
 # As shown in step 3
@@ -76,30 +86,30 @@ source_database_table_names = connector.list_db_tables(source_database_engine)
 target_database_table_names = connector.list_db_tables(target_database_engine)
 
 
-# Step 5: Read in an RDS Table from the source database 
+# Step 6: Read in an RDS Table from the source database 
 
 raw_user_data_table = extractor.read_rds_table('legacy_users', source_database_engine)
 raw_orders_table = extractor.read_rds_table('orders_table', source_database_engine)
 raw_store_details_table = extractor.read_rds_table('legacy_store_details', source_database_engine)
 
-# Step 6: Retrieve details from other sources such as: 
+# Step 7: Retrieve details from other sources such as: 
 
-# 6a. The pdf file which has the card details 
+# 7a. The pdf file which has the card details 
 raw_card_details_table = extractor.retrieve_pdf_data("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf")
 
-# 6b. The s3 bucket which contains the .csv file on products 
+# 7b. The s3 bucket which contains the .csv file on products 
 
 raw_product_details_table = extractor.read_s3_bucket_to_dataframe("s3://data-handling-public/products.csv")
 
-# 6c. The time even table which is hosted inside the s3 bucket 
+# 7c. The time even table which is hosted inside the s3 bucket 
 raw_time_event_table = extractor.read_json_from_s3("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json")
 
-# 6d. The currency tables
+# 7d. The currency tables
 
-# 6d (i) The currency table which contains currencies and their associated symbols 
+# 7d (i) The currency table which contains currencies and their associated symbols 
 raw_currency_data = extractor.read_json_local(file_pathway_to_json_source_file)
 
-# 6d (ii) The currency conversion table which contains currencies and their exchange rates relative to GBP
+# 7d (ii) The currency conversion table which contains currencies and their exchange rates relative to GBP
 
 #TODO: This method causes a traceback error with the Webdriver Manager package. 
 # The traceback 
@@ -116,11 +126,11 @@ raw_currency_conversion_data, timestamp = currency_extractor.scrape_information(
 )
 
 
-# Step 7: Address the Cleaning Methods (BIG TASK! Will need to plan this out)
+# Step 8: Address the Cleaning Methods (BIG TASK! Will need to plan this out)
 
 # == LAND TABLES == 
 
-# Step 7a. Adjust the clean_user_table method to provide the cleaned land_user_data table 
+# Step 8a. Adjust the clean_user_table method to provide the cleaned land_user_data table 
 
 cleaned_user_data_table = cleaner.clean_user_data(
     source_database_engine,
@@ -128,7 +138,7 @@ cleaned_user_data_table = cleaner.clean_user_data(
     'legacy_users'
     )
 
-# Step 7b. Adjust the clean_store_data method to produce the land_store_data table 
+# Step 8b. Adjust the clean_store_data method to produce the land_store_data table 
 
 cleaned_store_data_table = cleaner.clean_store_data(
     source_database_engine, 
@@ -136,13 +146,13 @@ cleaned_store_data_table = cleaner.clean_store_data(
     'legacy_store_details'
 )
 
-# Step 7c. Adjust the clean_card_details method to produce the land_card_details table 
+# Step 8c. Adjust the clean_card_details method to produce the land_card_details table 
 
 cleaned_card_details_table = cleaner.clean_card_details(
      raw_card_details_table
 )
 
-# Step 7d. Adjust the clean_orders_table method to produce the orders_table 
+# Step 8d. Adjust the clean_orders_table method to produce the orders_table 
 
 cleaned_orders_table = cleaner.clean_orders_table(
     source_database_engine,
@@ -150,25 +160,25 @@ cleaned_orders_table = cleaner.clean_orders_table(
     'orders_table'
 )
 
-# Step 7e. Adjust the clean_time_event_table to produce the land_date_times table 
+# Step 8e. Adjust the clean_time_event_table to produce the land_date_times table 
 
 cleaned_time_event_table = cleaner.clean_time_event_table(
     raw_time_event_table
 )
 
-# Step 7f. Adjust the clean_product_table to producce the land_product_details table 
+# Step 8f. Adjust the clean_product_table to producce the land_product_details table 
 
 cleaned_product_table = cleaner.clean_product_table(
     raw_product_details_table
 )
 
-# Step 7g. Adjust the clean_currency_table to produce the land_currency table 
+# Step 8g. Adjust the clean_currency_table to produce the land_currency table 
 
 cleaned_currency_table = cleaner.clean_currency_table(
     raw_currency_data
 )
 
-# Step 7h. Adjust the clean_currency_exchange_rates method to produce the land_currency_exchange rates table
+# Step 8h. Adjust the clean_currency_exchange_rates method to produce the land_currency_exchange rates table
 
 cleaned_currency_conversion_table = cleaner.clean_currency_exchange_rates(
     raw_currency_conversion_data,
@@ -179,7 +189,7 @@ cleaned_currency_conversion_table = cleaner.clean_currency_exchange_rates(
 
 # == FOR LOADING DIMENSION TABLES == 
 
-# Step 7i Adjust the upload_to_db method in database_utils to encapsulate the logic presented
+# Step 8i Adjust the upload_to_db method in database_utils to encapsulate the logic presented
 #         within the upload_to_database and load_dimension_table methods 
 # Reason? Slowly Changing Dimension Logic can be done within a seperate script, which can be imported into main.py
 
@@ -490,6 +500,46 @@ dim_currency_conversion_table = connector.upload_to_db(
         }
     )
 
+# Connecting to the database 
+sql_transformations.connect_to_database(
+    file_pathway_to_datastore, "sales_data_poc"
+)
+
+# Adding logic to populate the weight class column in the dim_products_table
+sql_transformations.alter_and_update(
+    get_absolute_file_path("add_weight_class_column_script.sql", r"sales_data\DML")
+)
+
+# Adding primary keys to tables 
+sql_transformations.alter_and_update(
+    get_absolute_file_path("add_primary_keys.sql", r"sales_data\DDL")
+    )
+
+# Adding foreign key constraints to tables 
+sql_transformations.alter_and_update(
+    get_absolute_file_path("foreign_key_constraints.sql", r"sales_data\DDL")
+)
+
+# Mapping foreign keys to empty key columns in fact table and dim_currency table
+sql_transformations.alter_and_update(
+    get_absolute_file_path(
+        "update_foreign_keys.sql", r"sales_data\DML"
+    )
+)
+
+# Creating views based on database post-load
+sql_transformations.alter_and_update(
+    get_absolute_file_path(
+        "create_views.sql", r"sales_data\DDL"
+    )
+)   
+
+end_time = time.time()
+
+execution_time = end_time - start_time
+
+print(f"Execution time: {execution_time} seconds")
+main_logger.info(f"Time elapsed : {execution_time} seconds")
 
 
 
