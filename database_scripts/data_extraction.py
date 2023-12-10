@@ -422,13 +422,6 @@ if __name__ == "__main__":
         "country_data.json", "source_data_files"
     )
     extract = DatabaseExtractor()
-    extract.extract_currency_conversion_data(
-        "https://www.x-rates.com/table/?from=GBP&amount=1",
-        '//table[@class="tablesorter ratesTable"]/tbody',
-        '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
-        ["currency_name", "conversion_rate", "conversion_rate_percentage"],
-        source_data_file_path,
-    )
     extract.read_json_local(source_json_file_path)
     extract.read_rds_table("legacy_users", credentials_file_path, "postgres")
     extract.retrieve_pdf_data(
