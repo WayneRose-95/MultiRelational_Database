@@ -318,7 +318,7 @@ land_currency_conversions_table = connector.upload_to_db(
 
 # ====== Orders Table Upload ===========
 
-land_orders_table = connector.upload_to_db(
+orders_table = connector.upload_to_db(
         cleaned_orders_table,
         target_database_engine,
         "orders_table",
@@ -344,26 +344,151 @@ land_orders_table = connector.upload_to_db(
 
 # ===== LOADING DIMENSION TABLES 
 
-# dim_users_table = connector.upload_to_db(
-#         cleaned_user_data_table, 
-#         "dim_users",
-#         "append",
-#         dim_column_datatypes={
-#             "index": BIGINT,
-#             "user_key": BIGINT,
-#             "first_name": VARCHAR(255),
-#             "last_name": VARCHAR(255),
-#             "date_of_birth": DATE,
-#             "company": VARCHAR(255),
-#             "email_address": VARCHAR(255),
-#             "address": VARCHAR(600),
-#             "country": VARCHAR(100),
-#             "country_code": VARCHAR(20),
-#             "phone_number": VARCHAR(50),
-#             "join_date": DATE,
-#             "user_uuid": UUID,
-#         }
-#     )
+dim_users_table = connector.upload_to_db(
+        cleaned_user_data_table, 
+        target_database_engine,
+        "dim_users",
+        "append",
+        column_datatypes={
+            "index": BIGINT,
+            "user_key": BIGINT,
+            "first_name": VARCHAR(255),
+            "last_name": VARCHAR(255),
+            "date_of_birth": DATE,
+            "company": VARCHAR(255),
+            "email_address": VARCHAR(255),
+            "address": VARCHAR(600),
+            "country": VARCHAR(100),
+            "country_code": VARCHAR(20),
+            "phone_number": VARCHAR(50),
+            "join_date": DATE,
+            "user_uuid": UUID,
+        }
+    )
+
+dim_store_details_table = connector.upload_to_db(
+        cleaned_store_data_table,
+        target_database_engine,
+        "dim_store_details",
+        "append",
+        column_datatypes={
+        "index": BIGINT,
+        "store_key": BIGINT,
+        "store_address": VARCHAR(1000),
+        "longitude": FLOAT,
+        "latitude": FLOAT,
+        "city": VARCHAR(255),
+        "store_code": VARCHAR(20),
+        "number_of_staff": SMALLINT,
+        "opening_date": DATE,
+        "store_type": VARCHAR(255),
+        "country_code": VARCHAR(20),
+        "region": VARCHAR(255)
+    } 
+)
+
+dim_product_details_table = connector.upload_to_db(
+        cleaned_product_table,
+        target_database_engine,
+        "dim_product_details",
+        "append",
+       mapping={"Still_avaliable": True, "Removed": False},
+       column_datatypes={
+           "index": BIGINT,
+            "product_key": BIGINT,
+            "ean": VARCHAR(50),
+            "product_name": VARCHAR(500),
+            "product_price": FLOAT,
+            "weight": FLOAT,
+            "weight_class": VARCHAR(50),
+            "category": VARCHAR(50),
+            "date_added": DATE,
+            "uuid": UUID,
+            "availability": VARCHAR(30),
+            "product_code": VARCHAR(50)
+       } 
+)
+
+dim_date_times_table = connector.upload_to_db(
+        cleaned_time_event_table,
+        target_database_engine,
+        "dim_date_times",
+        "append",
+        column_datatypes={
+        "index": BIGINT,
+        "date_key": BIGINT,
+        "event_time": TIME,
+        "day": VARCHAR(30),
+        "month": VARCHAR(30),
+        "year": VARCHAR(30),
+        "time_period": VARCHAR(40),
+        "date_uuid": UUID
+    } 
+)
+
+dim_card_details_table = connector.upload_to_db(
+        cleaned_card_details_table, 
+        target_database_engine,
+        "dim_card_details",
+        "append",
+        column_datatypes={
+        "index": BIGINT,
+        "card_key": BIGINT,
+        "card_number": VARCHAR(30),
+        "expiry_date": VARCHAR(20),
+        "card_provider": VARCHAR(255),
+        "date_payment_confirmed": DATE
+        }
+
+)
+
+dim_currency_table = connector.upload_to_db(
+        cleaned_currency_table,
+        target_database_engine,
+        "dim_currency",
+        subset=["US", "GB", "DE"],
+        additional_rows=[
+            {
+                "currency_key": -1,
+                "currency_conversion_key": -1,
+                "currency_code": "Not Applicable",
+            },
+            {
+                "currency_key": 0,
+                "currency_conversion_key": 0,
+                "currency_code": "Unknown",
+            },
+        ],
+        column_datatypes={
+        "index": BIGINT,
+        "currency_key": BIGINT,
+        "currency_conversion_key": BIGINT,
+        "country_name": VARCHAR(100),
+        "currency_code": VARCHAR(20),
+        "country_code": VARCHAR(5),
+        "currency_symbol": VARCHAR(5)
+    } 
+)
+
+dim_currency_conversion_table = connector.upload_to_db(
+        cleaned_currency_conversion_table,
+        target_database_engine,
+        "dim_currency_conversion",
+        subset=["USD", "GBP", "EUR"],
+        additional_rows=[
+            {"currency_conversion_key": -1, "currency_name": "Not Applicable"},
+            {"currency_conversion_key": 0, "currency_name": "Unknown"}
+        ],
+        column_datatypes={
+        "index": BIGINT,
+        "currency_conversion_key": BIGINT,
+        "currency_name": VARCHAR(50),
+        "currency_code": VARCHAR(5),
+        "conversion_rate": NUMERIC(20,6),
+        "percentage_change": NUMERIC(20,6),
+        "last_updated" : TIMESTAMP(timezone=True)
+        }
+    )
 
 
 
