@@ -225,9 +225,12 @@ class DatabaseConnector:
     def upload_to_db(
         self,
         dataframe: pd.DataFrame,
-        connection,
+        connection : Engine,
         table_name: str,
         table_condition : str = "append" or "replace" or "fail",
+        mapping: dict = None,
+        subset: list = None,
+        additional_rows: list = None,
         column_datatypes=None
     ):
         """
@@ -242,7 +245,45 @@ class DatabaseConnector:
 
         table_name : str
         The name of the table to be uploaded to the database
+
+        table_condition : str = "append" or "replace" or "fail" 
+        The table condition specified either append, replace or fail
+
+        mapping : dict = None 
+        An optional parameter to apply mapping to the dataframe. 
+        By default, it is None 
+
+        subset : list = None 
+        An optional parameter to filter the dataframe by a list of values. 
+        By defult, it is None 
+
+        additional_rows : list = None 
+        An optional parameter to add additional rows to the start of the dataframe. 
+        By default, it is None 
         """
+        if mapping:
+            # Apply the mapping to the specified column
+            dataframe = dataframe.assign(
+                availability=dataframe["availability"].map(mapping)
+            )
+
+        if subset:
+            try:
+                # Filter rows based on the specified subset
+                dataframe = dataframe[
+                    dataframe["country_code"].isin(subset)
+                ]
+            except KeyError:
+                dataframe = dataframe[
+                    dataframe["currency_code"].isin(subset)
+                ]
+
+        if additional_rows:
+            # Add additional rows to the start of the table
+            additional_rows_df = pd.DataFrame(additional_rows)
+            dataframe = pd.concat(
+                [additional_rows_df, dataframe]
+            ).reset_index(drop=True)
         try:
             database_utils_logger.info(
                 f"Attempting to upload table {table_name} to the database"
@@ -256,7 +297,7 @@ class DatabaseConnector:
             )
             print("Error uploading table to the database")
             raise Exception
-        pass
+       
 
 
 if __name__ == "__main__":
