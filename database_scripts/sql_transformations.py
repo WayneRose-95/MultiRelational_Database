@@ -4,6 +4,7 @@ from sqlalchemy import text
 from database_scripts.data_cleaning import get_absolute_file_path
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import ProgrammingError
+from sqlalchemy.engine import Engine
 import logging
 import os
 
@@ -43,12 +44,14 @@ class SQLAlterations:
         )
         print(self.connection_string)
 
-    def connect_to_database(self, datastore_config_file: str, database_name: str):
-        # Connect to the database using the Engine returned from the method
-        self.engine = self.connector.initialise_database_connection(
-            datastore_config_file, connect_to_database=True, new_db_name=database_name
-        )
-        sql_transformations_logger.debug(f"Connecting to datastore using {self.engine}")
+    # def connect_to_database(self, datastore_config_file: str, database_name: str):
+    #     # Connect to the database using the Engine returned from the method
+    #     engine = self.connector.initialise_database_connection(
+    #         datastore_config_file, connect_to_database=True, new_db_name=database_name
+    #     )
+    #     sql_transformations_logger.debug(f"Connecting to datastore using {engine}")
+
+    #     return engine 
 
     def create_database(self, database_name: str):
         # Create the database with the provided database_name and database_username
@@ -88,9 +91,9 @@ class SQLAlterations:
             print("Connection to the database failed.")
             sql_transformations_logger.error("Connection to the database failed.")
 
-    def alter_and_update(self, sql_file_path: str):
+    def alter_and_update(self, sql_file_path: str, database_engine : Engine):
         # Create a session object using sessionmaker
-        sql_session = sessionmaker(bind=self.engine)
+        sql_session = sessionmaker(bind=database_engine)
         session = sql_session()
 
         try:
