@@ -543,31 +543,36 @@ class ETLProcess:
 
         # # Adding logic to populate the weight class column in the dim_products_table
         self.configuration.sql_transformations.alter_and_update(
-            get_absolute_file_path("add_weight_class_column_script.sql", r"sales_data\DML")
+            get_absolute_file_path("add_weight_class_column_script.sql", r"sales_data\DML"),
+            self.configuration.target_database_engine
         )
 
         # Adding primary keys to tables 
         self.configuration.sql_transformations.alter_and_update(
-            get_absolute_file_path("add_primary_keys.sql", r"sales_data\DDL")
+            get_absolute_file_path("add_primary_keys.sql", r"sales_data\DDL"),
+            self.configuration.target_database_engine
             )
 
         # Adding foreign key constraints to tables 
         self.configuration.sql_transformations.alter_and_update(
-            get_absolute_file_path("foreign_key_constraints.sql", r"sales_data\DDL")
+            get_absolute_file_path("foreign_key_constraints.sql", r"sales_data\DDL"),
+            self.configuration.target_database_engine
         )
 
         # Mapping foreign keys to empty key columns in fact table and dim_currency table
         self.configuration.sql_transformations.alter_and_update(
             get_absolute_file_path(
                 "update_foreign_keys.sql", r"sales_data\DML"
-            )
+            ),
+            self.configuration.target_database_engine
         )
 
         # Creating views based on database post-load
         self.configuration.sql_transformations.alter_and_update(
             get_absolute_file_path(
                 "create_views.sql", r"sales_data\DDL"
-            )
+            ),
+            self.configuration.target_database_engine
         )
 
 
