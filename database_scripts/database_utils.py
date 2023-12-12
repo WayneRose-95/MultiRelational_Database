@@ -1,6 +1,8 @@
 import yaml
 from sqlalchemy import create_engine
 from sqlalchemy import inspect
+from sqlalchemy import text
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 from database_scripts.file_handler import get_absolute_file_path
@@ -297,8 +299,74 @@ class DatabaseConnector:
             )
             print("Error uploading table to the database")
             raise Exception
-       
+        
+    def create_database(self, database_name: str, connection_string : str):
+        # Create the database with the provided database_name and database_username
+        
+        connection = create_engine(connection_string)
+        database_engine = connection.connect()
+        if database_engine:
+            # Disable transactional behavior
+            database_engine.execution_options(isolation_level="AUTOCOMMIT")
 
+            # Check if the database exists
+            check_db_stmt = text(
+                f"SELECT 1 FROM pg_database WHERE datname = '{database_name}'"
+            )
+            result = database_engine.execute(check_db_stmt)
+
+            if result.scalar():
+                # Database already exists, so skip database creation
+                print(
+                    f"Database '{database_name}' already exists. Skipping database creation."
+                )
+                database_utils_logger.warning(
+                    f"Database '{database_name}' already exists. Skipping database creation."
+                )
+            else:
+                # Create a new database
+                create_db_stmt = text(f"CREATE DATABASE {database_name}")
+                database_engine.execute(create_db_stmt)
+                print(f"Database '{database_name}' created successfully.")
+                database_utils_logger.info(
+                    f"Database '{database_name}' created successfully."
+                )
+
+            # Close the connection
+            database_engine.close()
+        else:
+            print("Connection to the database failed.")
+            database_utils_logger.error("Connection to the database failed.")
+   
+    def alter_and_update(self, sql_file_path: str, database_engine : Engine):
+        # Create a session object using sessionmaker
+        sql_session = sessionmaker(bind=database_engine)
+        session = sql_session()
+
+        try:
+            with open(sql_file_path, "r") as file:
+                sql_statement = file.read()
+                print(sql_statement)
+            database_utils_logger.info(sql_statement)
+            database_utils_logger.info("Executing and committing sql_statement")
+            session.execute(text(sql_statement))
+            session.commit()
+            database_utils_logger.info(
+                "SQL statement submitted to database. Please verify."
+            )
+            print("SQL statement submitted to database. Please verify.")
+        except:
+            database_utils_logger.exception(
+                f"Error when running sql_statement. The sql statement submitted was {sql_statement}"
+            )
+            print(
+                f"Error when running sql_statement. The sql statement submitted was {sql_statement}"
+            )
+            raise Exception
+
+        finally:
+            database_utils_logger.info("Closing Session")
+            session.close()
 
 if __name__ == "__main__":
     yaml_file_path = get_absolute_file_path("db_creds.yaml", "credentials")

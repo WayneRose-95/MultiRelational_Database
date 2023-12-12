@@ -34,7 +34,7 @@ file_handler.setFormatter(format)
 
 sql_transformations_logger.addHandler(file_handler)
 
-
+#TODO: Could this functionality be put inside database_utils.py instead of here? 
 class SQLAlterations:
     def __init__(self, datastore_config_file: str):
         # Create an instance of the DatabaseConnetor class
