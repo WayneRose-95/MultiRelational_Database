@@ -578,29 +578,30 @@ class ETLProcess:
         )
 
 
+if __name__ == "__main__":
 
-etl_configuration = Configuration(
-    credentials_directory_name='credentials',
-    source_data_directory_name='source_data_files',
-    source_database_creds_file=get_absolute_file_path("db_creds.yaml", "credentials"),
-    target_database_creds_file=get_absolute_file_path("sales_data_creds_poc.yaml", "credentials"),
-    source_text_file=get_absolute_file_path("currency_code_mapping", "source_data_files"),
-    json_source_file=get_absolute_file_path("country_data.json", "source_data_files"),
-    exported_csv_file=get_absolute_file_path("currency_conversions_test", "source_data_files")
+    etl_configuration = Configuration(
+        credentials_directory_name='credentials',
+        source_data_directory_name='source_data_files',
+        source_database_creds_file=get_absolute_file_path("db_creds.yaml", "credentials"),
+        target_database_creds_file=get_absolute_file_path("sales_data_creds_poc.yaml", "credentials"),
+        source_text_file=get_absolute_file_path("currency_code_mapping", "source_data_files"),
+        json_source_file=get_absolute_file_path("country_data.json", "source_data_files"),
+        exported_csv_file=get_absolute_file_path("currency_conversions_test", "source_data_files")
 
-)
+    )
 
-etl_process = ETLProcess(configuration=etl_configuration)
+    etl_process = ETLProcess(configuration=etl_configuration)
 
-etl_process.user_data_pipeline()
-etl_process.store_data_pipeline()
-etl_process.product_table_pipeline()
-etl_process.card_details_pipeline()
-etl_process.orders_table_pipeline()
-etl_process.time_event_pipeline()
-etl_process.currency_data_pipeline()
-etl_process.currency_conversion_data_pipeline()
+    etl_process.user_data_pipeline()
+    etl_process.store_data_pipeline()
+    etl_process.product_table_pipeline()
+    etl_process.card_details_pipeline()
+    etl_process.orders_table_pipeline()
+    etl_process.time_event_pipeline()
+    etl_process.currency_data_pipeline()
+    etl_process.currency_conversion_data_pipeline()
 
-list_of_uploaded_tables  = etl_process.upload_tables_and_log(etl_configuration.connector, etl_configuration.target_database_engine)
+    list_of_uploaded_tables  = etl_process.upload_tables_and_log(etl_configuration.connector, etl_configuration.target_database_engine)
 
-etl_process.alter_and_update_database()
+    etl_process.alter_and_update_database()
