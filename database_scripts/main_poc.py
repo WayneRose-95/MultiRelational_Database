@@ -583,11 +583,11 @@ if __name__ == "__main__":
     etl_configuration = Configuration(
         credentials_directory_name='credentials',
         source_data_directory_name='source_data_files',
-        source_database_creds_file=get_absolute_file_path("db_creds.yaml", "credentials"),
-        target_database_creds_file=get_absolute_file_path("sales_data_creds_poc.yaml", "credentials"),
-        source_text_file=get_absolute_file_path("currency_code_mapping", "source_data_files"),
-        json_source_file=get_absolute_file_path("country_data.json", "source_data_files"),
-        exported_csv_file=get_absolute_file_path("currency_conversions_test", "source_data_files")
+        source_database_creds_file="db_creds.yaml",
+        target_database_creds_file="sales_data_creds_poc.yaml",
+        source_text_file="currency_code_mapping",
+        json_source_file="country_data.json",
+        exported_csv_file="currency_conversions_test"
 
     )
 
