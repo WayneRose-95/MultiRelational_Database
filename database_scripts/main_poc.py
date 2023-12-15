@@ -439,7 +439,65 @@ class ETLProcess:
     ))
 
         pass
+    
+    def currency_conversion_data_pipeline(self):
 
+        raw_currency_conversion_data, timestamp = self.currency_extractor.scrape_information(
+            "https://www.x-rates.com/table/?from=GBP&amount=1",
+        '//table[@class="tablesorter ratesTable"]/tbody',
+        '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
+        ["currency_name", "conversion_rate", "conversion_rate_percentage"],
+        self.configuration.file_pathway_to_exported_csv_file
+        )
+
+        cleaned_currency_conversion_table = self.cleaner.clean_currency_exchange_rates(
+            raw_currency_conversion_data, 
+            timestamp, 
+            self.configuration.file_pathway_to_source_text_file
+            )
+
+        self.tables_to_upload_list.append((
+        cleaned_currency_conversion_table,
+        self.configuration.target_database_engine,
+        "land_currency_conversion",
+        "replace",
+        None,
+        None, 
+        None,
+        {
+        "index": BIGINT,
+        "currency_conversion_key": BIGINT,
+        "currency_name": VARCHAR(50),
+        "currency_code": VARCHAR(5),
+        "conversion_rate": NUMERIC(20,6),
+        "conversion_rate_percentage": NUMERIC(20,6),
+        "last_updated" : TIMESTAMP(timezone=True)
+
+    } 
+))
+
+        self.tables_to_upload_list.append((
+        cleaned_currency_conversion_table,
+        self.configuration.target_database_engine,
+        "dim_currency_conversion",
+        "append",
+        None,
+        ["USD", "GBP", "EUR"],
+        [
+            {"currency_conversion_key": -1, "currency_name": "Not Applicable"},
+            {"currency_conversion_key": 0, "currency_name": "Unknown"}
+        ],
+        {
+        "index": BIGINT,
+        "currency_conversion_key": BIGINT,
+        "currency_name": VARCHAR(50),
+        "currency_code": VARCHAR(5),
+        "conversion_rate": NUMERIC(20,6),
+        "conversion_rate_percentage": NUMERIC(20,6),
+        "last_updated" : TIMESTAMP(timezone=True)
+        }
+))
+        pass    
     
 
     def upload_tables_and_log(
