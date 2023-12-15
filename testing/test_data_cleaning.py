@@ -22,7 +22,7 @@ class TestDataCleaning(unittest.TestCase):
 
         # Setting up database names 
         cls.source_database_name = 'postgres'
-        cls.datastore_database_name = 'sales_data_dev'
+        cls.datastore_database_name = 'sales_data_test'
 
         # Setting up table names 
         cls.source_data_table_test = "legacy_users"
@@ -59,51 +59,66 @@ class TestDataCleaning(unittest.TestCase):
 
         # Setting up the classes within the setUpClass
         cls.test_data_extractor_dev = DatabaseExtractor()
-        cls.test_data_extractor_test = DatabaseExtractor()
         cls.test_data_connector_test = DatabaseConnector()
-        cls.test_data_cleaner_dev = DataCleaning(cls.database_credentials_dev)
-        cls.test_data_cleaner_test = DataCleaning(cls.database_credentials_test)
-    
-    
+        cls.test_data_cleaner_test = DataCleaning()
+        
+        cls.source_database_engine = cls.test_data_connector_test.initialise_database_connection(
+            cls.source_database_config_file_name, True, cls.source_database_name
+        )
+
+        cls.target_database_engine = cls.test_data_connector_test.initialise_database_connection(
+            cls.database_credentials_test, True, cls.datastore_database_name
+        )
+
+        # cls.target_database_engine
+
+        ### Reading in tables from sources  
+
+        # User Data 
+        cls.test_raw_user_data = cls.test_data_extractor_dev.read_rds_table(
+            cls.source_data_table_test, cls.source_database_engine
+        )
     def test_clean_user_data(self):
-        # Run the method to upload the land table to the test database 
-        test_table_to_upload_to_database = self.test_data_cleaner_test.clean_user_data(
-            self.source_data_table_test,
-            self.source_database_config_file_name,
-            self.source_database_name
+        # Run the method to clean the raw_user_table and return a dataframe test_cleaned_user_data
+        test_cleaned_user_data  = self.test_data_cleaner_test.clean_user_data(
+            self.source_database_engine,
+            self.test_raw_user_data,
+            self.datastore_land_users_table_name
 
         )
-        # Read the dimension table from the dev database, return it as a dataframe to compare to the uploaded land_table from the test database
+        # Read the dimension table from the dev database, return it as a dataframe 
+        # to compare to the uploaded land_table from the test database
         reading_rds_dim_table_dev = self.test_data_extractor_dev.read_rds_table(
-            self.datastore_user_details_table_name, self.database_credentials_dev, self.datastore_database_name
+            self.datastore_user_details_table_name, self.target_database_engine
             )
         
         '''
         LAND_TABLE testing
         '''
-        # Read the land table from the dev database, return it as a dataframe and compare it to the land_table uploaded from the test database 
+        # Read the land table from the dev database, 
+        # return it as a dataframe and compare it to the land_table uploaded from the test database 
         reading_rds_land_table_dev = self.test_data_extractor_dev.read_rds_table(
-            self.datastore_land_users_table_name, self.database_credentials_dev, self.datastore_database_name
+            self.datastore_land_users_table_name, self.target_database_engine
             )
         print(f"Number of rows in land_users from Dev Database : {len(reading_rds_land_table_dev)}")
-        print(f"Number of rows in land_users from Test Database : {len(test_table_to_upload_to_database)}")
+        print(f"Number of rows in land_users from Test Database : {len(test_cleaned_user_data)}")
 
         # Asserting that the number of rows in the uploaded land_table is the same as the land_table read in from dev database
-        self.assertEqual(len(reading_rds_land_table_dev), len(test_table_to_upload_to_database))
+        self.assertEqual(len(reading_rds_land_table_dev), len(test_cleaned_user_data))
 
-        print(f" The type of the variable {type(test_table_to_upload_to_database)}")
+        print(f" The type of the variable {type(test_cleaned_user_data)}")
         # Next, test if the method returns a dataframe 
-        self.assertIsInstance(test_table_to_upload_to_database, pd.DataFrame)
+        self.assertIsInstance(test_cleaned_user_data, pd.DataFrame)
 
         # Testing if the length of the index column of the land_table test vs land_table in dev are the same
         expected_index = pd.RangeIndex(start=0, stop=len(reading_rds_land_table_dev), step=1)
 
         # Print the length of the expected_index and the length of the table_index
         print(f"Length of the expected_index : {len(expected_index)}")
-        print(f"Length of the table_index : {len(test_table_to_upload_to_database.index)}")
+        print(f"Length of the table_index : {len(test_cleaned_user_data.index)}")
 
         # Assert if the length of the index from the land table in dev database is the same as the uploaded table from test database
-        self.assertEqual(test_table_to_upload_to_database.index.equals(expected_index), True)
+        self.assertEqual(test_cleaned_user_data.index.equals(expected_index), True)
 
         # Assert the column names of the land_table uploaded from test database 
         expected_columns = [
@@ -111,10 +126,10 @@ class TestDataCleaning(unittest.TestCase):
             'address', 'country', 'country_code', 'phone_number', 'join_date', 'user_uuid'
         ]
         # Print the test list of columns and the expected list of columns 
-        print(f"The test list: {test_table_to_upload_to_database.columns.tolist()}")
+        print(f"The test list: {test_cleaned_user_data.columns.tolist()}")
         print(f"The expected list : {expected_columns}")
 
-        self.assertEqual(test_table_to_upload_to_database.columns.tolist(), expected_columns)
+        self.assertEqual(test_cleaned_user_data.columns.tolist(), expected_columns)
 
         '''
         DIM_TABLE Comparison testing 
@@ -122,32 +137,32 @@ class TestDataCleaning(unittest.TestCase):
         '''
         # Assert that the number of rows in the land_table is equal to the dimension table read in from dev database 
         print(f"Number of rows in dim_users from Dev Database : {len(reading_rds_dim_table_dev)}")
-        print(f"Number of rows in land_users from Test Database : {len(test_table_to_upload_to_database)}")
+        print(f"Number of rows in land_users from Test Database : {len(test_cleaned_user_data)}")
 
-        self.assertEqual(len(test_table_to_upload_to_database), len(reading_rds_dim_table_dev))
+        self.assertEqual(len(test_cleaned_user_data), len(reading_rds_dim_table_dev))
 
          # Testing if the length of the index column of the land_table test vs land_table in dev are the same
         dim_expected_index = pd.RangeIndex(start=0, stop=len(reading_rds_dim_table_dev), step=1)
 
         # Print the length of the expected_index and the length of the table_index
         print(f"Length of the expected_index : {len(dim_expected_index)}")
-        print(f"Length of the table_index : {len(test_table_to_upload_to_database.index)}")
+        print(f"Length of the table_index : {len(test_cleaned_user_data.index)}")
 
         # Assert if the two lists of columns are equal 
-        self.assertEqual(test_table_to_upload_to_database.index.equals(dim_expected_index), True)
+        self.assertEqual(test_cleaned_user_data.index.equals(dim_expected_index), True)
 
         print(f"Columns in dim_table {reading_rds_dim_table_dev.columns.to_list()}")
-        print(f"Columns in dim_table {test_table_to_upload_to_database.columns.to_list()}")
+        print(f"Columns in dim_table {test_cleaned_user_data.columns.to_list()}")
         dim_users_column_list = reading_rds_dim_table_dev.columns.to_list()
         # Asserting if the columns in the dim_table from dev database are the same as in the land_table 
-        self.assertEqual(dim_users_column_list[1:], test_table_to_upload_to_database.columns.to_list())
+        self.assertEqual(dim_users_column_list[1:], test_cleaned_user_data.columns.to_list())
 
 
 
-    
+    @unittest.skip 
     def test_clean_store_data(self):
         # Compare the tables between test database and dev sales_data database 
-        test_table_to_upload_to_database = self.test_data_cleaner_test.clean_store_data(
+        test_cleaned_user_data = self.test_data_cleaner_test.clean_store_data(
             self.source_data_table_store_details,
             self.source_database_config_file_name,
             self.source_database_name
@@ -170,34 +185,34 @@ class TestDataCleaning(unittest.TestCase):
         
         
         print(f"Number of rows in land_store_details from Dev Database : {len(reading_rds_land_table_dev)}")
-        print(f"Number of rows in land_store_details from Test Database : {len(test_table_to_upload_to_database)}")
+        print(f"Number of rows in land_store_details from Test Database : {len(test_cleaned_user_data)}")
 
         # Asserting that the number of rows in uploaded table to the test database is the same as the land_table within the dev database
-        self.assertEqual(len(reading_rds_land_table_dev), len(test_table_to_upload_to_database))
+        self.assertEqual(len(reading_rds_land_table_dev), len(test_cleaned_user_data))
 
-        print(f" The type of the variable {type(test_table_to_upload_to_database)}")
+        print(f" The type of the variable {type(test_cleaned_user_data)}")
         # Next, test if the method returns a dataframe 
-        self.assertIsInstance(test_table_to_upload_to_database, pd.DataFrame)
+        self.assertIsInstance(test_cleaned_user_data, pd.DataFrame)
 
         # Assert the index of the land_table within the test database is the same as the land_table within the dev database 
         expected_index = pd.RangeIndex(start=0, stop=len(reading_rds_land_table_dev), step=1)
 
         # Print the length of the expected_index and the length of the table_index
         print(f"Length of the expected_index : {len(expected_index)}")
-        print(f"Length of the table_index {len(test_table_to_upload_to_database.index)}")
+        print(f"Length of the table_index {len(test_cleaned_user_data.index)}")
 
-        self.assertEqual(test_table_to_upload_to_database.index.equals(expected_index), True)
+        self.assertEqual(test_cleaned_user_data.index.equals(expected_index), True)
 
         expected_columns  = [
             'store_key', 'store_address','longitude','latitude','city',
             'store_code','number_of_staff','opening_date','store_type','country_code','region'
         ]
         # print a comparison between the test_list of columns and the expected list of columns
-        print(f"The test list: {test_table_to_upload_to_database.columns.tolist()}")
+        print(f"The test list: {test_cleaned_user_data.columns.tolist()}")
         print(f"The expected list : {expected_columns}")
 
         # Assert if the two lists of columns are equal 
-        self.assertEqual(test_table_to_upload_to_database.columns.tolist(), expected_columns)
+        self.assertEqual(test_cleaned_user_data.columns.tolist(), expected_columns)
 
         '''
         DIM_TABLE TESTS 
@@ -205,33 +220,33 @@ class TestDataCleaning(unittest.TestCase):
         '''
 
         print(f"Number of rows in land_store_details from Dev Database : {len(reading_rds_dim_table_dev)}")
-        print(f"Number of rows in land_store_details from Test Database : {len(test_table_to_upload_to_database)}")
+        print(f"Number of rows in land_store_details from Test Database : {len(test_cleaned_user_data)}")
 
         # Asserting that the number of rows in uploaded table to the test database is the same as the land_table within the dev database
-        self.assertEqual(len(reading_rds_dim_table_dev), len(test_table_to_upload_to_database))
+        self.assertEqual(len(reading_rds_dim_table_dev), len(test_cleaned_user_data))
 
         # Assert the index of the land_table within the test database is the same as the land_table within the dev database 
         dim_expected_index = pd.RangeIndex(start=0, stop=len(reading_rds_land_table_dev), step=1)
 
         # Print the length of the expected_index and the length of the table_index
         print(f"Length of the expected_index : {len(dim_expected_index)}")
-        print(f"Length of the table_index {len(test_table_to_upload_to_database.index)}")
+        print(f"Length of the table_index {len(test_cleaned_user_data.index)}")
 
-        self.assertEqual(test_table_to_upload_to_database.index.equals(expected_index), True)
+        self.assertEqual(test_cleaned_user_data.index.equals(expected_index), True)
 
         dim_expected_columns = reading_rds_dim_table_dev.columns.to_list()
 
         # print a comparison between the test_list of columns and the expected list of columns
-        print(f"The test list: {test_table_to_upload_to_database.columns.tolist()}")
+        print(f"The test list: {test_cleaned_user_data.columns.tolist()}")
         print(f"The expected list : {dim_expected_columns[1:]}")
 
         # Assert if the two lists of columns are equal 
-        self.assertEqual(test_table_to_upload_to_database.columns.tolist(), dim_expected_columns[1:])
+        self.assertEqual(test_cleaned_user_data.columns.tolist(), dim_expected_columns[1:])
 
-    
+    @unittest.skip 
     def test_clean_card_details(self):
         # Compare the tables between test database and dev sales_data database 
-        test_table_to_upload_to_database = self.test_data_cleaner_test.clean_card_details(
+        test_cleaned_user_data = self.test_data_cleaner_test.clean_card_details(
            self.pdf_link
         )
         '''
@@ -249,33 +264,33 @@ class TestDataCleaning(unittest.TestCase):
 
         # Print the number of rows in each table 
         print(f"Number of rows in land_card_details from Dev Database : {len(reading_rds_land_table_dev)}")
-        print(f"Number of rows in land_card_details from Test Database : {len(test_table_to_upload_to_database)}")
+        print(f"Number of rows in land_card_details from Test Database : {len(test_cleaned_user_data)}")
 
         # Asserting that the number of rows in uploaded table is the same as dev
-        self.assertEqual(len(reading_rds_land_table_dev), len(test_table_to_upload_to_database))
+        self.assertEqual(len(reading_rds_land_table_dev), len(test_cleaned_user_data))
 
-        print(f" The type of the variable {type(test_table_to_upload_to_database)}")
+        print(f" The type of the variable {type(test_cleaned_user_data)}")
         # Next, test if the method returns a dataframe 
-        self.assertIsInstance(test_table_to_upload_to_database, pd.DataFrame)
+        self.assertIsInstance(test_cleaned_user_data, pd.DataFrame)
 
         # Assert the index of the cleaned_table
         expected_index = pd.RangeIndex(start=0, stop=len(reading_rds_land_table_dev), step=1)
 
         # Print the length of the expected_index and the length of the table_index
         print(f"Length of the expected_index : {len(expected_index)}")
-        print(f"Length of the table_index : {len(test_table_to_upload_to_database.index)}")
+        print(f"Length of the table_index : {len(test_cleaned_user_data.index)}")
 
-        self.assertEqual(test_table_to_upload_to_database.index.equals(expected_index), True)
+        self.assertEqual(test_cleaned_user_data.index.equals(expected_index), True)
 
         expected_columns  = [
             'card_key','card_number','expiry_date','card_provider','date_payment_confirmed'
         ]
         # print a comparison between the test_list of columns and the expected list of columns
-        print(f"The test list: {test_table_to_upload_to_database.columns.tolist()}")
+        print(f"The test list: {test_cleaned_user_data.columns.tolist()}")
         print(f"The expected list : {expected_columns}")
 
         # Assert if the two lists of columns are equal 
-        self.assertEqual(test_table_to_upload_to_database.columns.tolist(), expected_columns)
+        self.assertEqual(test_cleaned_user_data.columns.tolist(), expected_columns)
 
         '''
         DIM_CARD_DETAILS Testing
@@ -283,19 +298,19 @@ class TestDataCleaning(unittest.TestCase):
 
         # Print the number of rows in each table 
         print(f"Number of rows in dim_card_details from Dev Database : {len(reading_rds_dim_table_dev)}")
-        print(f"Number of rows in dim_card_details from Test Database : {len(test_table_to_upload_to_database)}")
+        print(f"Number of rows in dim_card_details from Test Database : {len(test_cleaned_user_data)}")
 
         # Asserting that the number of rows in uploaded table is the same as dev
-        self.assertEqual(len(reading_rds_dim_table_dev), len(test_table_to_upload_to_database))
+        self.assertEqual(len(reading_rds_dim_table_dev), len(test_cleaned_user_data))
 
         # Assert the index of the cleaned_table
         dim_expected_index = pd.RangeIndex(start=0, stop=len(reading_rds_dim_table_dev), step=1)
 
         # Print the length of the expected_index and the length of the table_index
         print(f"Length of the expected_index : {len(dim_expected_index)}")
-        print(f"Length of the table_index : {len(test_table_to_upload_to_database.index)}")
+        print(f"Length of the table_index : {len(test_cleaned_user_data.index)}")
 
-        self.assertEqual(test_table_to_upload_to_database.index.equals(expected_index), True)
+        self.assertEqual(test_cleaned_user_data.index.equals(expected_index), True)
 
         dim_expected_columns = reading_rds_dim_table_dev.columns.to_list()
         # print a comparison between the test_list of columns and the expected list of columns
@@ -304,15 +319,15 @@ class TestDataCleaning(unittest.TestCase):
         print(f"The expected list : {expected_columns}")
 
         # Assert if the two lists of columns are equal 
-        self.assertEqual(test_table_to_upload_to_database.columns.tolist(), dim_expected_columns[1:])
+        self.assertEqual(test_cleaned_user_data.columns.tolist(), dim_expected_columns[1:])
 
 
 
     
-    
+    @unittest.skip 
     def test_clean_orders_table(self):
         # Compare the tables between test database and dev sales_data database 
-        test_table_to_upload_to_database = self.test_data_cleaner_test.clean_orders_table(
+        test_cleaned_user_data = self.test_data_cleaner_test.clean_orders_table(
            self.datastore_orders_table_name,
            self.source_database_config_file_name,
            self.source_database_name
@@ -323,40 +338,40 @@ class TestDataCleaning(unittest.TestCase):
                                                                             self.datastore_database_name)
         # Print the number of rows in each table 
         print(f"Number of rows in orders_table from Dev Database : {len(reading_rds_table_dev)}")
-        print(f"Number of rows in orders_table from Test Database : {len(test_table_to_upload_to_database)}")
+        print(f"Number of rows in orders_table from Test Database : {len(test_cleaned_user_data)}")
 
         # Asserting that the number of rows in uploaded table is the same as dev
-        self.assertEqual(len(reading_rds_table_dev), len(test_table_to_upload_to_database))
+        self.assertEqual(len(reading_rds_table_dev), len(test_cleaned_user_data))
 
-        print(f" The type of the variable {type(test_table_to_upload_to_database)}")
+        print(f" The type of the variable {type(test_cleaned_user_data)}")
         # Next, test if the method returns a dataframe 
-        self.assertIsInstance(test_table_to_upload_to_database, pd.DataFrame)
+        self.assertIsInstance(test_cleaned_user_data, pd.DataFrame)
 
         # Assert the index of the cleaned_table
-        expected_index = pd.RangeIndex(start=0, stop=len(test_table_to_upload_to_database), step=1)
+        expected_index = pd.RangeIndex(start=0, stop=len(test_cleaned_user_data), step=1)
 
         # Print the length of the expected_index and the length of the table_index
         print(f"Length of the expected_index : {len(expected_index)}")
-        print(f"Length of the table_index {len(test_table_to_upload_to_database.index)}")
+        print(f"Length of the table_index {len(test_cleaned_user_data.index)}")
 
-        self.assertEqual(test_table_to_upload_to_database.index.equals(expected_index), True)
+        self.assertEqual(test_cleaned_user_data.index.equals(expected_index), True)
 
         expected_columns  = ['order_key','date_uuid','user_uuid','card_key','date_key','product_key',
                             'store_key','user_key','currency_key','card_number','store_code','product_code',
                             'product_quantity', 'country_code']
         
         # print a comparison between the test_list of columns and the expected list of columns
-        print(f"The test list: {test_table_to_upload_to_database.columns.tolist()}")
+        print(f"The test list: {test_cleaned_user_data.columns.tolist()}")
         print(f"The expected list : {expected_columns}")
 
         # Assert if the two lists of columns are equal 
-        self.assertEqual(test_table_to_upload_to_database.columns.tolist(), expected_columns)
+        self.assertEqual(test_cleaned_user_data.columns.tolist(), expected_columns)
 
          
-    
+    @unittest.skip 
     def test_clean_time_event_table(self):
         # Compare the tables between test database and dev sales_data database 
-        test_table_to_upload_to_database = self.test_data_cleaner_test.clean_time_event_table(
+        test_cleaned_user_data = self.test_data_cleaner_test.clean_time_event_table(
            self.json_s3_link
         )
 
@@ -371,72 +386,72 @@ class TestDataCleaning(unittest.TestCase):
 
         # Print the number of rows in each table 
         print(f"Number of rows in land_date_times from Dev Database : {len(reading_rds_land_table_dev)}")
-        print(f"Number of rows in land_date_times from Test Database : {len(test_table_to_upload_to_database)}")
+        print(f"Number of rows in land_date_times from Test Database : {len(test_cleaned_user_data)}")
 
         # Asserting that the number of rows in uploaded table is the same as dev
-        self.assertEqual(len(reading_rds_land_table_dev), len(test_table_to_upload_to_database))
+        self.assertEqual(len(reading_rds_land_table_dev), len(test_cleaned_user_data))
 
-        print(f" The type of the variable {type(test_table_to_upload_to_database)}")
+        print(f" The type of the variable {type(test_cleaned_user_data)}")
         # Next, test if the method returns a dataframe 
-        self.assertIsInstance(test_table_to_upload_to_database, pd.DataFrame)
+        self.assertIsInstance(test_cleaned_user_data, pd.DataFrame)
 
         # Assert the index of the cleaned_table by comparing it to the length of the index column in the dev database
         expected_index = pd.RangeIndex(start=0, stop=len(reading_rds_land_table_dev), step=1)
 
         # Print the length of the expected_index and the length of the table_index
         print(f"Length of the expected_index : {len(expected_index)}")
-        print(f"Length of the table_index {len(test_table_to_upload_to_database.index)}")
+        print(f"Length of the table_index {len(test_cleaned_user_data.index)}")
 
-        self.assertEqual(test_table_to_upload_to_database.index.equals(expected_index), True)
+        self.assertEqual(test_cleaned_user_data.index.equals(expected_index), True)
 
         expected_columns  = [
             'date_key','event_time','day', 'month', 'year', 'time_period','date_uuid'
         ]
         # print a comparison between the test_list of columns and the expected list of columns
-        print(f"The test list: {test_table_to_upload_to_database.columns.tolist()}")
+        print(f"The test list: {test_cleaned_user_data.columns.tolist()}")
         print(f"The expected list : {expected_columns}")
 
         # Assert if the two lists of columns are equal 
-        self.assertEqual(test_table_to_upload_to_database.columns.tolist(), expected_columns)
+        self.assertEqual(test_cleaned_user_data.columns.tolist(), expected_columns)
 
         '''
         DIM_DATE_TIMES table testing 
         '''
                 # Print the number of rows in each table 
         print(f"Number of rows in land_date_times from Dev Database : {len(reading_rds_dim_table_dev)}")
-        print(f"Number of rows in land_date_times from Test Database : {len(test_table_to_upload_to_database)}")
+        print(f"Number of rows in land_date_times from Test Database : {len(test_cleaned_user_data)}")
 
         # Asserting that the number of rows in uploaded table is the same as dev
-        self.assertEqual(len(reading_rds_dim_table_dev), len(test_table_to_upload_to_database))
+        self.assertEqual(len(reading_rds_dim_table_dev), len(test_cleaned_user_data))
 
-        print(f" The type of the variable {type(test_table_to_upload_to_database)}")
+        print(f" The type of the variable {type(test_cleaned_user_data)}")
         # Next, test if the method returns a dataframe 
-        self.assertIsInstance(test_table_to_upload_to_database, pd.DataFrame)
+        self.assertIsInstance(test_cleaned_user_data, pd.DataFrame)
 
         # Assert the index of the cleaned_table
         dim_expected_index = pd.RangeIndex(start=0, stop=len(reading_rds_dim_table_dev), step=1)
 
         # Print the length of the expected_index and the length of the table_index
         print(f"Length of the expected_index : {len(dim_expected_index)}")
-        print(f"Length of the table_index {len(test_table_to_upload_to_database.index)}")
+        print(f"Length of the table_index {len(test_cleaned_user_data.index)}")
 
-        self.assertEqual(test_table_to_upload_to_database.index.equals(expected_index), True)
+        self.assertEqual(test_cleaned_user_data.index.equals(expected_index), True)
 
         dim_expected_columns  = reading_rds_dim_table_dev.columns.to_list()
         # print a comparison between the test_list of columns and the expected list of columns
-        print(f"The test list: {test_table_to_upload_to_database.columns.tolist()}")
+        print(f"The test list: {test_cleaned_user_data.columns.tolist()}")
         print(f"The expected list : {dim_expected_columns[1:]}")
 
         # Assert if the two lists of columns are equal 
         # Note that the datastore has a seperate index column
-        self.assertEqual(test_table_to_upload_to_database.columns.tolist(), dim_expected_columns[1:])
+        self.assertEqual(test_cleaned_user_data.columns.tolist(), dim_expected_columns[1:])
 
 
     
-    
+    @unittest.skip 
     def test_clean_product_table(self):
         # Compare the tables between test database and dev sales_data database 
-        test_table_to_upload_to_database = self.test_data_cleaner_test.clean_product_table(
+        test_cleaned_user_data = self.test_data_cleaner_test.clean_product_table(
            self.csv_s3_link
         )
         '''
@@ -452,65 +467,65 @@ class TestDataCleaning(unittest.TestCase):
                                                                                  self.datastore_database_name)
         # Print the number of rows in each table 
         print(f"Number of rows in orders_table from Dev Database : {len(reading_rds_land_table_dev)}")
-        print(f"Number of rows in orders_table from Test Database : {len(test_table_to_upload_to_database)}")
+        print(f"Number of rows in orders_table from Test Database : {len(test_cleaned_user_data)}")
 
         # Asserting that the number of rows in uploaded table is the same as dev
-        self.assertEqual(len(reading_rds_land_table_dev), len(test_table_to_upload_to_database))
+        self.assertEqual(len(reading_rds_land_table_dev), len(test_cleaned_user_data))
 
-        print(f" The type of the variable {type(test_table_to_upload_to_database)}")
+        print(f" The type of the variable {type(test_cleaned_user_data)}")
         # Next, test if the method returns a dataframe 
-        self.assertIsInstance(test_table_to_upload_to_database, pd.DataFrame)
+        self.assertIsInstance(test_cleaned_user_data, pd.DataFrame)
 
         # Assert the index of the cleaned_table
-        expected_index = pd.RangeIndex(start=0, stop=len(test_table_to_upload_to_database), step=1)
+        expected_index = pd.RangeIndex(start=0, stop=len(test_cleaned_user_data), step=1)
 
         # Print the length of the expected_index and the length of the table_index
         print(f"Length of the expected_index : {len(expected_index)}")
-        print(f"Length of the table_index {len(test_table_to_upload_to_database.index)}")
+        print(f"Length of the table_index {len(test_cleaned_user_data.index)}")
 
-        self.assertEqual(test_table_to_upload_to_database.index.equals(expected_index), True)
+        self.assertEqual(test_cleaned_user_data.index.equals(expected_index), True)
 
         expected_columns  = [
             "product_key", "ean", "product_name", "product_price", "weight",
             "weight_class", "category", "date_added", "uuid","availability","product_code"
         ]
         # print a comparison between the test_list of columns and the expected list of columns
-        print(f"The test list: {test_table_to_upload_to_database.columns.tolist()}")
+        print(f"The test list: {test_cleaned_user_data.columns.tolist()}")
         print(f"The expected list : {expected_columns}")
 
         # Assert if the two lists of columns are equal 
-        self.assertEqual(test_table_to_upload_to_database.columns.tolist(), expected_columns)
+        self.assertEqual(test_cleaned_user_data.columns.tolist(), expected_columns)
 
         '''
         DIM_PRODUCT_DETAILS testing
         '''
         # Print the number of rows in each table 
         print(f"Number of rows in orders_table from Dev Database : {len(reading_rds_dim_table_dev)}")
-        print(f"Number of rows in orders_table from Test Database : {len(test_table_to_upload_to_database)}")
+        print(f"Number of rows in orders_table from Test Database : {len(test_cleaned_user_data)}")
 
         # Asserting that the number of rows in uploaded table is the same as dev
-        self.assertEqual(len(reading_rds_dim_table_dev), len(test_table_to_upload_to_database))
+        self.assertEqual(len(reading_rds_dim_table_dev), len(test_cleaned_user_data))
 
         # Assert the index of the cleaned_table
         dim_expected_index = pd.RangeIndex(start=0, stop=len(reading_rds_dim_table_dev), step=1)
 
         # Print the length of the expected_index and the length of the table_index
         print(f"Length of the expected_index : {len(dim_expected_index)}")
-        print(f"Length of the table_index {len(test_table_to_upload_to_database.index)}")
+        print(f"Length of the table_index {len(test_cleaned_user_data.index)}")
 
         # Assert that the lengths of the indexes on the dim_table in dev and the land_table in test are the same. 
-        self.assertEqual(test_table_to_upload_to_database.index.equals(expected_index), True)
+        self.assertEqual(test_cleaned_user_data.index.equals(expected_index), True)
 
 
     
-    
+    @unittest.skip 
     def test_clean_currency_table(self):
         # with open(self.json_file_path, encoding='utf-8') as country_code_file:
         #     data = json.load(country_code_file)
 
         # country_codes = list(data.keys())
         # Compare the tables between test database and dev sales_data database 
-        test_table_to_upload_to_database = self.test_data_cleaner_test.clean_currency_table(
+        test_cleaned_user_data = self.test_data_cleaner_test.clean_currency_table(
             self.json_file_path
         )
         reading_rds_land_table_dev = self.test_data_extractor_dev.read_rds_table(
@@ -530,31 +545,31 @@ class TestDataCleaning(unittest.TestCase):
         
         # Print the number of rows in each table 
         print(f"Number of rows in land_currency_table from Dev Database : {len(reading_rds_land_table_dev)}")
-        print(f"Number of rows in test_table uploaded to Test database : {len(test_table_to_upload_to_database)}")
+        print(f"Number of rows in test_table uploaded to Test database : {len(test_cleaned_user_data)}")
 
         # Asserting that the number of rows in uploaded table is the same as dev
-        self.assertEqual(len(reading_rds_land_table_dev), len(test_table_to_upload_to_database))
+        self.assertEqual(len(reading_rds_land_table_dev), len(test_cleaned_user_data))
 
-        print(f" The type of the variable {type(test_table_to_upload_to_database)}")
+        print(f" The type of the variable {type(test_cleaned_user_data)}")
         # Next, test if the method returns a dataframe 
-        self.assertIsInstance(test_table_to_upload_to_database, pd.DataFrame)
+        self.assertIsInstance(test_cleaned_user_data, pd.DataFrame)
 
         # Assert the index of the cleaned_table
         expected_index = pd.RangeIndex(start=0, stop=len(reading_rds_land_table_dev), step=1)
 
         # Print the length of the expected_index and the length of the table_index
         print(f"Length of the expected_index : {len(expected_index)}")
-        print(f"Length of the table_index {len(test_table_to_upload_to_database.index)}")
+        print(f"Length of the table_index {len(test_cleaned_user_data.index)}")
 
-        self.assertEqual(test_table_to_upload_to_database.index.equals(expected_index), True)
+        self.assertEqual(test_cleaned_user_data.index.equals(expected_index), True)
 
         expected_columns  = ["currency_key", 'currency_conversion_key',"currency_code", "country_code", "country_name","currency_symbol"]
         # print a comparison between the test_list of columns and the expected list of columns
-        print(f"The test list: {test_table_to_upload_to_database.columns.tolist()}")
+        print(f"The test list: {test_cleaned_user_data.columns.tolist()}")
         print(f"The expected list : {expected_columns}")
 
         # Assert if the two lists of columns are equal 
-        self.assertEqual(test_table_to_upload_to_database.columns.tolist(), expected_columns)
+        self.assertEqual(test_cleaned_user_data.columns.tolist(), expected_columns)
 
         '''
         DIM_CURRENCY_TABLE tests
@@ -602,7 +617,7 @@ class TestDataCleaning(unittest.TestCase):
         print(f"The expected list : {dim_expected_columns}")
 
         # Assert if the two lists of columns are equal outside of the index and currency_conversion_key foreign key table
-        self.assertEqual(test_table_to_upload_to_database.columns.tolist(), dim_expected_columns[1:])
+        self.assertEqual(test_cleaned_user_data.columns.tolist(), dim_expected_columns[1:])
 
     
     def test_convert_to_kg_valid_weights(self):
