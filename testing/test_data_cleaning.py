@@ -78,6 +78,10 @@ class TestDataCleaning(unittest.TestCase):
         cls.test_raw_user_data = cls.test_data_extractor_dev.read_rds_table(
             cls.source_data_table_test, cls.source_database_engine
         )
+
+        cls.test_raw_store_data = cls.test_data_extractor_dev.read_rds_table(
+            cls.source_data_table_store_details, cls.source_database_engine
+        )
     def test_clean_user_data(self):
         # Run the method to clean the raw_user_table and return a dataframe test_cleaned_user_data
         test_cleaned_user_data  = self.test_data_cleaner_test.clean_user_data(
@@ -159,13 +163,14 @@ class TestDataCleaning(unittest.TestCase):
 
 
 
-    @unittest.skip 
+    
     def test_clean_store_data(self):
         # Compare the tables between test database and dev sales_data database 
         test_cleaned_user_data = self.test_data_cleaner_test.clean_store_data(
-            self.source_data_table_store_details,
-            self.source_database_config_file_name,
-            self.source_database_name
+            self.source_database_engine,
+            self.test_raw_store_data,
+            self.datastore_land_store_data_table_name
+            
         )
         '''
         LAND_STORE_DETAILS table tests 
@@ -173,15 +178,14 @@ class TestDataCleaning(unittest.TestCase):
         # Reading in land_table from dev database for comparison
         reading_rds_land_table_dev = self.test_data_extractor_dev.read_rds_table(
             self.datastore_land_store_data_table_name,
-            self.database_credentials_dev,
-            self.datastore_database_name
+            self.target_database_engine
         )
            
         
         reading_rds_dim_table_dev = self.test_data_extractor_dev.read_rds_table(
             self.datastore_store_details_table_name,
-            self.database_credentials_dev,
-            self.datastore_database_name)
+            self.target_database_engine
+            )
         
         
         print(f"Number of rows in land_store_details from Dev Database : {len(reading_rds_land_table_dev)}")
