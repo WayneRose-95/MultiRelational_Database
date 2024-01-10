@@ -3,7 +3,7 @@ from database_scripts.database_utils import DatabaseConnector
 from database_scripts.data_extraction import DatabaseExtractor
 from database_scripts.data_cleaning import DataCleaning 
 from database_scripts.sql_transformations import SQLAlterations
-from database_scripts.currency_rate_extraction import CurrencyRateExtractor
+from database_scripts.currency_rate_extraction_poc import CurrencyExtractor
 from database_scripts.file_handler import get_absolute_file_path
 from sqlalchemy import Column, VARCHAR, DATE, FLOAT, SMALLINT, BOOLEAN, TIME, NUMERIC, TIMESTAMP
 from sqlalchemy.dialects.postgresql import BIGINT, UUID
@@ -47,6 +47,7 @@ class Configuration:
             source_data_directory_name,
             source_database_creds_file,
             target_database_creds_file,
+            currency_url, 
             source_text_file,
             json_source_file,
             exported_csv_file,
@@ -61,6 +62,7 @@ class Configuration:
         self.file_pathway_to_source_text_file = get_absolute_file_path(source_text_file, source_data_directory_name) # "source_data_files"
         self.file_pathway_to_json_source_file = get_absolute_file_path(json_source_file, source_data_directory_name) # "source_data_files"
         self.file_pathway_to_exported_csv_file = get_absolute_file_path(exported_csv_file, source_data_directory_name) # "source_data_files"
+        self.currency_url = currency_url
         self.source_database_name = source_database_name
         self.target_database_name = target_database_name
         # Create the database first then connect to it. 
@@ -82,7 +84,7 @@ class ETLProcess:
         self.configuration = configuration
         self.extractor = DatabaseExtractor()
         self.cleaner = DataCleaning()
-        self.currency_extractor = CurrencyRateExtractor(undetected_chrome=True)
+        self.currency_extractor = CurrencyExtractor(configuration.currency_url)
         
         self.tables_to_upload_list = []
 
@@ -442,17 +444,14 @@ class ETLProcess:
     
     def currency_conversion_data_pipeline(self):
 
-        raw_currency_conversion_data, timestamp = self.currency_extractor.scrape_information(
-            "https://www.x-rates.com/table/?from=GBP&amount=1",
-        '//table[@class="tablesorter ratesTable"]/tbody',
-        '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
-        ["currency_name", "conversion_rate", "conversion_rate_percentage"],
-        self.configuration.file_pathway_to_exported_csv_file
-        )
+        html_data = self.currency_extractor.read_html_data()
+        first_table = self.currency_extractor.html_to_dataframe(html_data, 0)
+        second_table = self.currency_extractor.html_to_dataframe(html_data, 1)
+
+        combined_table = self.currency_extractor.merge_dataframes("right", first_table, second_table)
 
         cleaned_currency_conversion_table = self.cleaner.clean_currency_exchange_rates(
-            raw_currency_conversion_data, 
-            timestamp, 
+            combined_table, 
             self.configuration.file_pathway_to_source_text_file
             )
 
@@ -586,9 +585,10 @@ if __name__ == "__main__":
         source_data_directory_name='source_data_files',
         source_database_creds_file="db_creds.yaml",
         target_database_creds_file="sales_data_creds_test.yaml",
+        currency_url="https://www.x-rates.com/table/?from=GBP&amount=1",
         source_text_file="currency_code_mapping",
         json_source_file="country_data.json",
-        exported_csv_file="currency_conversions_test",
+        exported_csv_file="currency_conversions_poc.csv",
         source_database_name='postgres',
         target_database_name='sales_data_test'
 
@@ -598,6 +598,7 @@ if __name__ == "__main__":
 
     etl_process.user_data_pipeline()
     etl_process.store_data_pipeline()
+    #TODO: Authenticate yourself via AWS IAM to read in S3 bucket data
     etl_process.product_table_pipeline()
     etl_process.card_details_pipeline()
     etl_process.orders_table_pipeline()
