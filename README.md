@@ -3,7 +3,7 @@ A database model for a fictional retail chain of stores
 
 # Project Status 
 In Development 
-Current Feature: ETL process changes Last Updated 12/07/2023 (DD/MM/YYYY) 
+Current Feature: Implementation of API (15/01/2024)
 
 <h1 align="left">Languages and Tools</h1>
 
@@ -78,7 +78,7 @@ After creating the STAR schema model Quick Pivot's Operations department wants t
 - Which German store type is selling the most? 
 - How quickly is the company making sales?
 
-These questions are answered in the **sql_scripts.sql** script within this repository
+These questions are answered in the [**sql_scripts.sql**](https://github.com/WayneRose-95/MultiRelational_Database/blob/main/sql_queries.sql) script within this repository
 
 # Future Implementations and Improvements 
 
@@ -91,6 +91,8 @@ These questions are answered in the **sql_scripts.sql** script within this repos
 - Create a currency conversion table
 - Adjust the order of the ETL process
 - Create LAND tables for dimension table
+- Implementation of API for Store Data Extraction
+- Unify S3 Collection Methods 
 - Add CTRL tables for ETL process
 - Addition of slowly changing dimensions (SCDs)
 
