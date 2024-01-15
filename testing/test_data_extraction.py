@@ -29,33 +29,17 @@ class TestDatabaseExtraction(unittest.TestCase):
         cls.test_json_filepath_wrong = "data.json"
         cls.test_extractor = DatabaseExtractor() 
         cls.test_connector = DatabaseConnector()
+        cls.test_source_database_engine = cls.test_connector.initialise_database_connection(cls.config_file_name, True, cls.database_name)
         pass 
 
 
       
-    def test_list_db_tables(self):
-        # create a test_list of table names using the method 
-        test_list = self.test_extractor.list_db_tables(self.config_file_name, self.database_name)
-        # List the expected outputs 
-        expected_output = ['legacy_store_details', 'legacy_users', 'orders_table']
-        # Testing if the output is a list 
-        self.assertIsInstance(test_list, list)
-        # Testing if the test_list is the same as the expected output 
-        self.assertEqual(test_list, expected_output)
-
-        # Testing if an exception is raised when the wrong file_name is passed
-        with self.assertRaises(Exception): 
-            self.test_extractor.list_db_tables(self.config_file_name_wrong, self.database_name_wrong)
-
-      
     def test_read_rds_table(self):
 
-        test_read = self.test_extractor.read_rds_table(self.table_name, self.config_file_name, self.database_name)
+        test_read = self.test_extractor.read_rds_table(self.table_name, self.test_source_database_engine)
         # Testing if a dataframe is returned
         self.assertIsInstance(test_read, pd.DataFrame)
-        #Testing if a ValueError is raised when the wrong credentials are passed 
-        with self.assertRaises(ValueError):
-            self.test_extractor.read_rds_table(self.table_name_wrong, self.config_file_name_wrong, self.database_name_wrong)
+        #TODO: Add another test to raise an error below 
 
      
     

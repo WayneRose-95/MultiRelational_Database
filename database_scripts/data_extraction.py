@@ -3,6 +3,7 @@ from database_scripts.currency_rate_extraction import CurrencyRateExtractor
 from database_scripts.file_handler import get_absolute_file_path
 from sqlalchemy import inspect
 from sqlalchemy import select
+from sqlalchemy.engine import Engine
 from sqlalchemy import Table
 from sqlalchemy import MetaData
 from sqlalchemy.exc import OperationalError
@@ -47,50 +48,9 @@ class DatabaseExtractor:
     def __init__(self):
         self.database_connector = DatabaseConnector()
 
-    def list_db_tables(self, config_file_name: str, database_name: str):
-        """
-        Method to list the tables within a database
-
-        Parameters:
-        config_file_name
-        The file pathway to the config file
-
-        """
-        try:
-
-            data_extraction_logger.info("Initialising database connection")
-            # Initialise the connection using an instance of the DatabaseConnector class
-            engine = self.database_connector.initialise_database_connection(
-                config_file_name, connect_to_database=True, new_db_name=database_name
-            )
-            data_extraction_logger.info(
-                f"Initialising database connection using {config_file_name}"
-            )
-            data_extraction_logger.debug(f"Using {engine}")
-
-            # Use the inspect method of sqlalchemy to get an inspector element
-            inspector = inspect(engine)
-            data_extraction_logger.info("Inspecting database engine")
-
-            # Get the table names using the get_table_names method
-            table_names = inspector.get_table_names()
-            data_extraction_logger.info("Collecting table_names")
-            data_extraction_logger.info("List of table_names : {table_names}")
-            # print the table names to the console
-            print(table_names)
-
-            # Output: ['legacy_store_details', 'legacy_users', 'orders_table']
-
-            return table_names
-        except Exception as e:
-            data_extraction_logger.exception(
-                "An error occured while listing tables. Please verify your credentials"
-            )
-            print("Error occurred while listing tables: %s", str(e))
-            raise Exception
 
     def read_rds_table(
-        self, table_name: str, config_file_name: str, database_name: str
+        self, table_name: str, engine : Engine 
     ):
         """
         Method to read a table from an RDS and return a Pandas Dataframe
@@ -99,20 +59,22 @@ class DatabaseExtractor:
         table_name : str
         The name of the table from the source database
 
-        config_file_name
-        The file pathway for the name of the .yaml file
+        engine : Engine
+        The Engine object which represents either the source or target database 
+
         """
         try:
 
             # Initialise the connection
-            connection = self.database_connector.initialise_database_connection(
-                config_file_name, connect_to_database=True, new_db_name=database_name
-            )
+            # connection = self.database_connector.initialise_database_connection(
+            #     config_file_name, connect_to_database=True, new_db_name=database_name
+            # )
             data_extraction_logger.info("Initialising connection to the database")
-            data_extraction_logger.info(f"Using {connection}")
+            data_extraction_logger.info(f"Using {engine}")
 
             # Connect to the database
-            connection = connection.connect()
+            connection = engine.connect()
+
             data_extraction_logger.info(
                 f"Successfully connected to database via {connection}"
             )
@@ -362,53 +324,6 @@ class DatabaseExtractor:
             )
             raise Exception
 
-    def extract_currency_conversion_data(
-        self,
-        page_url: str,
-        table_body_xpath: str,
-        timestamp_xpath: str,
-        data_headers: list,
-        file_name: str,
-    ):
-        """
-        Method to extract table data from a website to be saved into a .csv format.
-        Method calls the scrape_information method from currency_rate_extraction.py script
-
-        Parameters:
-        page_url : str
-        The url of the website
-
-        table_body_xpath : str
-        The xpath which represents the body of the table to scrape
-
-        timestamp_xpath : str
-        The xpath which represents the timestamp of the data
-
-        data_headers : list
-        The headers of the .csv file
-
-        file_name : str
-        The name of the file exported
-
-        Returns:
-
-        raw_data : pd.DataFrame , timestamp : str
-        A tuple contaning the dataframe of the extracted data
-        A timestamp of when the data was extracted
-
-        Raises Exception upon error
-        """
-
-        try:
-            currency_extractor = CurrencyRateExtractor()
-            raw_data, timestamp = currency_extractor.scrape_information(
-                page_url, table_body_xpath, timestamp_xpath, data_headers, file_name
-            )
-            return raw_data, timestamp
-
-        except:
-            data_extraction_logger.exception("Unable to extract information.")
-            raise Exception
 
     def read_json_from_s3(self, bucket_url: str):
         """
@@ -507,14 +422,6 @@ if __name__ == "__main__":
         "country_data.json", "source_data_files"
     )
     extract = DatabaseExtractor()
-    extract.list_db_tables(credentials_file_path, "postgres")
-    extract.extract_currency_conversion_data(
-        "https://www.x-rates.com/table/?from=GBP&amount=1",
-        '//table[@class="tablesorter ratesTable"]/tbody',
-        '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
-        ["currency_name", "conversion_rate", "conversion_rate_percentage"],
-        source_data_file_path,
-    )
     extract.read_json_local(source_json_file_path)
     extract.read_rds_table("legacy_users", credentials_file_path, "postgres")
     extract.retrieve_pdf_data(

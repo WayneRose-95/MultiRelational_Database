@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Unittest Results</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-12">
+                <h2 class="text-capitalize">Unittest Results</h2>
+                <p class='attribute'><strong>Start Time: </strong>2024-01-15 21:09:48</p>
+                <p class='attribute'><strong>Duration: </strong>22.68 s</p>
+                <p class='attribute'><strong>Summary: </strong>Total: 11, Pass: 11</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12 col-sm-10 col-md-10">
+                <table class='table table-hover table-responsive'>
+                    <thead>
+                        <tr>
+                            <th>testing.test_data_cleaning.TestDataCleaning</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_clean_card_details</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                                <button class="btn btn-default btn-xs">View</button>
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td class="col-xs-9" colspan="3"><p>Job clean_card_details has been completed successfully
+ The type of the variable <class 'pandas.core.frame.DataFrame'>
+Number of rows in cleaned_table : 15286
+Number of rows in land_users from Test Database : 15286
+</p>
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_clean_currency_conversion_data</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                                <button class="btn btn-default btn-xs">View</button>
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td class="col-xs-9" colspan="3"><p>2024-01-15 21:09:55
+Index(['Unnamed: 0', 'currency_name', 'conversion_rate',
+       'conversion_rate_percentage', 'last_updated'],
+      dtype='object')
+Index(['Unnamed: 0', 'currency_name', 'conversion_rate',
+       'conversion_rate_percentage', 'last_updated'],
+      dtype='object')
+Job clean_currency_exchange rates has been completed successfully
+ The type of the variable <class 'pandas.core.frame.DataFrame'>
+Number of rows in cleaned_table : 67
+Number of rows in land_users from Test Database : 67
+</p>
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_clean_currency_data</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                                <button class="btn btn-default btn-xs">View</button>
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td class="col-xs-9" colspan="3"><p>['data-handling-public', 'products.csv']
+data-handling-public
+products.csv
+['Still_avaliable', 'Removed', nan, 'T3QRRH7SRP', 'BPSADIOQOK', 'H5N71TV8AY']
+Job clean_product_table has completed successfully
+ The type of the variable <class 'pandas.core.frame.DataFrame'>
+Number of rows in cleaned_table : 1848
+Number of rows in land_users from Test Database : 1848
+The test list: ['product_key', 'ean', 'product_name', 'product_price', 'weight', 'weight_class', 'category', 'date_added', 'uuid', 'availability', 'product_code']
+The expected list : ['currency_key', 'currency_conversion_key', 'currency_code', 'country_code', 'country_name', 'currency_symbol']
+</p>
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_clean_dates</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_clean_orders_table</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                                <button class="btn btn-default btn-xs">View</button>
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td class="col-xs-9" colspan="3"><p>dict_keys(['orders_table'])
+SELECT orders_table.level_0, orders_table.index, orders_table.date_uuid, orders_table.first_name, orders_table.last_name, orders_table.user_uuid, orders_table.card_number, orders_table.store_code, orders_table.product_code, orders_table."1", orders_table.product_quantity 
+FROM orders_table
+SELECT orders_table.level_0, orders_table.index, orders_table.date_uuid, orders_table.first_name, orders_table.last_name, orders_table.user_uuid, orders_table.card_number, orders_table.store_code, orders_table.product_code, orders_table."1", orders_table.product_quantity 
+FROM orders_table
+Job clean_orders_table has completed successfully.
+ The type of the variable <class 'pandas.core.frame.DataFrame'>
+Number of rows in cleaned_table : 120123
+Number of rows in land_users from Test Database : 120123
+The test list: ['order_key', 'date_uuid', 'user_uuid', 'card_key', 'date_key', 'product_key', 'store_key', 'user_key', 'currency_key', 'card_number', 'store_code', 'product_code', 'product_quantity', 'country_code']
+The expected list : ['order_key', 'date_uuid', 'user_uuid', 'card_key', 'date_key', 'product_key', 'store_key', 'user_key', 'currency_key', 'card_number', 'store_code', 'product_code', 'product_quantity', 'country_code']
+</p>
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_clean_product_data</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                                <button class="btn btn-default btn-xs">View</button>
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td class="col-xs-9" colspan="3"><p>['data-handling-public', 'products.csv']
+data-handling-public
+products.csv
+['Still_avaliable', 'Removed', nan, 'T3QRRH7SRP', 'BPSADIOQOK', 'H5N71TV8AY']
+Job clean_product_table has completed successfully
+ The type of the variable <class 'pandas.core.frame.DataFrame'>
+Number of rows in cleaned_table : 1848
+Number of rows in land_users from Test Database : 1848
+The test list: ['product_key', 'ean', 'product_name', 'product_price', 'weight', 'weight_class', 'category', 'date_added', 'uuid', 'availability', 'product_code']
+The expected list : ['product_key', 'ean', 'product_name', 'product_price', 'weight', 'weight_class', 'category', 'date_added', 'uuid', 'availability', 'product_code']
+</p>
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_clean_store_table</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                                <button class="btn btn-default btn-xs">View</button>
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td class="col-xs-9" colspan="3"><p>dict_keys(['legacy_store_details'])
+SELECT legacy_store_details.index, legacy_store_details.address, legacy_store_details.longitude, legacy_store_details.lat, legacy_store_details.locality, legacy_store_details.store_code, legacy_store_details.staff_numbers, legacy_store_details.opening_date, legacy_store_details.store_type, legacy_store_details.latitude, legacy_store_details.country_code, legacy_store_details.continent 
+FROM legacy_store_details
+SELECT legacy_store_details.index, legacy_store_details.address, legacy_store_details.longitude, legacy_store_details.lat, legacy_store_details.locality, legacy_store_details.store_code, legacy_store_details.staff_numbers, legacy_store_details.opening_date, legacy_store_details.store_type, legacy_store_details.latitude, legacy_store_details.country_code, legacy_store_details.continent 
+FROM legacy_store_details
+Job clean_store_data has completed succesfully
+ The type of the variable <class 'pandas.core.frame.DataFrame'>
+Number of rows in cleaned_table : 443
+Number of rows in land_users from Test Database : 443
+The test list: ['store_key', 'store_address', 'longitude', 'latitude', 'city', 'store_code', 'number_of_staff', 'opening_date', 'store_type', 'country_code', 'region']
+The expected list : ['store_key', 'store_address', 'longitude', 'latitude', 'city', 'store_code', 'number_of_staff', 'opening_date', 'store_type', 'country_code', 'region']
+</p>
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_clean_time_event_data</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                                <button class="btn btn-default btn-xs">View</button>
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td class="col-xs-9" colspan="3"><p>Job clean time_event_table has been completed sucessfully
+ The type of the variable <class 'pandas.core.frame.DataFrame'>
+Number of rows in cleaned_table : 120125
+Number of rows in land_users from Test Database : 120125
+The test list: ['date_key', 'event_time', 'day', 'month', 'year', 'time_period', 'date_uuid']
+The expected list : ['date_key', 'event_time', 'day', 'month', 'year', 'time_period', 'date_uuid']
+</p>
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_clean_user_data</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                                <button class="btn btn-default btn-xs">View</button>
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td class="col-xs-9" colspan="3"><p>dict_keys(['legacy_users'])
+SELECT legacy_users.index, legacy_users.first_name, legacy_users.last_name, legacy_users.date_of_birth, legacy_users.company, legacy_users.email_address, legacy_users.address, legacy_users.country, legacy_users.country_code, legacy_users.phone_number, legacy_users.join_date, legacy_users.user_uuid 
+FROM legacy_users
+SELECT legacy_users.index, legacy_users.first_name, legacy_users.last_name, legacy_users.date_of_birth, legacy_users.company, legacy_users.email_address, legacy_users.address, legacy_users.country, legacy_users.country_code, legacy_users.phone_number, legacy_users.join_date, legacy_users.user_uuid 
+FROM legacy_users
+Job clean_user_data has been completed
+land_user_data
+Engine(postgresql+psycopg2://Sales_Data_Admin:***@localhost:5432/sales_data_test)
+dict_keys(['land_user_data'])
+SELECT land_user_data.index, land_user_data.user_key, land_user_data.first_name, land_user_data.last_name, land_user_data.date_of_birth, land_user_data.company, land_user_data.email_address, land_user_data.address, land_user_data.country, land_user_data.country_code, land_user_data.phone_number, land_user_data.join_date, land_user_data.user_uuid 
+FROM land_user_data
+SELECT land_user_data.index, land_user_data.user_key, land_user_data.first_name, land_user_data.last_name, land_user_data.date_of_birth, land_user_data.company, land_user_data.email_address, land_user_data.address, land_user_data.country, land_user_data.country_code, land_user_data.phone_number, land_user_data.join_date, land_user_data.user_uuid 
+FROM land_user_data
+ The type of the variable <class 'pandas.core.frame.DataFrame'>
+Number of rows in cleaned_table : 15286
+Number of rows in land_users from Test Database : 15286
+The test list: ['user_key', 'first_name', 'last_name', 'date_of_birth', 'company', 'email_address', 'address', 'country', 'country_code', 'phone_number', 'join_date', 'user_uuid']
+The expected list : ['user_key', 'first_name', 'last_name', 'date_of_birth', 'company', 'email_address', 'address', 'country', 'country_code', 'phone_number', 'join_date', 'user_uuid']
+</p>
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_convert_to_kg_invalid_weights</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                            </td>
+                        </tr>
+                        <tr class='success'>
+                            <td class="col-xs-10">test_convert_to_kg_valid_weights</td>
+                            <td class="col-xs-1">
+                                <span class="label label-success" style="display:block;width:40px;">Pass</span>
+                            </td>
+                            <td class="col-xs-1">
+                                <button class="btn btn-default btn-xs">View</button>
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td class="col-xs-9" colspan="3"><p>[0.08, 0.42, 1.68, 0.718, 0.6, 0.504, 0.48, 1200.0, 0.17]
+</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="3">
+                                Total: 11, Pass: 11 -- Duration: 22.68 s
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('td').on('click', '.btn', function(e){
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                var $this = $(this);
+                var $nextRow = $this.closest('tr').next('tr');
+                $nextRow.slideToggle("fast");
+                $this.text(function(i, text){
+                    if (text === 'View') {
+                        return 'Hide';
+                    } else {
+                        return 'View';
+                    };
+                });
+            });
+        });
+    </script>
+</body>
+</html
