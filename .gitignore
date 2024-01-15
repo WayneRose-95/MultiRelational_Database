@@ -132,6 +132,7 @@ credentials/db_creds.yaml
 credentials/sales_data_creds.yaml 
 credentials/sales_data_creds_dev.yaml
 credentials/sales_data_creds_test.yaml
+credentials/sales_data_creds_poc.yaml
 testing/test_file.txt 
 testing/test.yaml 
 testing/test_config_yaml.yaml

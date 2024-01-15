@@ -167,3 +167,55 @@ ORDER BY total_sales ASC;
 
 -- Determine the average time taken between each sale grouped by year. 
 
+WITH date_times AS (
+    SELECT
+        year,
+        month,
+        day,
+        event_time,
+        TO_TIMESTAMP(CONCAT(year, '/', month, '/', day, '/', event_time), 'YYYY/MM/DD/HH24:MI:ss') AS date_times--creating a datetime column
+    FROM 
+        dim_date_times d
+	-- Ensure that the date_key is greater than or equal to 1 to avoid throwing an error. 
+	WHERE date_key >= 1 
+    ORDER BY 
+        date_times DESC
+	
+),		   	
+next_times AS(
+    SELECT 
+        year,
+        event_time,
+        date_times,
+	    -- adds the next sales timestamp to a new column
+        LEAD(date_times) OVER(ORDER BY date_times DESC) AS next_times 
+    FROM 
+        date_times
+),
+
+avg_times AS(
+    SELECT 
+        year,
+        (AVG(date_times - next_times)) AS avg_times
+    FROM 
+        next_times
+    GROUP BY 
+        year
+    ORDER BY 
+        avg_times DESC
+)
+
+SELECT 
+    year,
+	CONCAT('"Hours": ', (EXTRACT(HOUR FROM avg_times)),','
+	' "minutes" :', (EXTRACT(MINUTE FROM avg_times)),','
+    ' "seconds" :', ROUND(EXTRACT(SECOND FROM avg_times)),','
+    ' "milliseconds" :', ROUND((EXTRACT( SECOND FROM avg_times) - FLOOR(EXTRACT(SECOND FROM avg_times)))*100)) AS actual_time_taken
+FROM 
+    avg_times
+GROUP BY 
+    year, avg_times
+ORDER BY 
+    avg_times DESC
+LIMIT 
+    5;

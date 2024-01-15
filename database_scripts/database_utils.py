@@ -1,5 +1,9 @@
 import yaml
 from sqlalchemy import create_engine
+from sqlalchemy import inspect
+from sqlalchemy import text
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 from database_scripts.file_handler import get_absolute_file_path
 import pandas as pd
@@ -179,12 +183,56 @@ class DatabaseConnector:
             print("Error Connecting to the Database")
             raise OperationalError
 
+    def list_db_tables(self, engine : Engine): # , config_file_name: str, database_name: str
+        """
+        Method to list the tables within a database
+
+        Parameters:
+        engine : Engine 
+        The database Engine object which is used to interact with the source or target database
+
+        """
+        try:
+            # Initilise the database connection using the Engine object 
+            database_utils_logger.info("Initialising database connection")
+            database_utils_logger.info(
+                f"Initialising database connection using {engine}"
+            )
+            # database_utils_logger.debug(f"Using {engine}")
+
+            # Use the inspect method of sqlalchemy to get an inspector element
+            inspector = inspect(engine)
+            database_utils_logger.info("Inspecting database engine")
+
+            # Get the table names using the get_table_names method
+            table_names = inspector.get_table_names()
+            database_utils_logger.info("Collecting table_names")
+            database_utils_logger.info(f"List of table_names : {table_names}")
+            # print the table names to the console
+            print(table_names)
+
+            # Output: ['legacy_store_details', 'legacy_users', 'orders_table']
+            # Return the list of table names as an output 
+            return table_names
+        
+        # Raise an Exception if there are any issues with listing the tables.   
+        except Exception as e:
+            database_utils_logger.exception(
+                "An error occured while listing tables. Please verify your credentials"
+            )
+            print("Error occurred while listing tables: %s", str(e))
+            raise Exception
+        
+
     def upload_to_db(
         self,
         dataframe: pd.DataFrame,
-        connection,
+        connection : Engine,
         table_name: str,
         table_condition : str = "append" or "replace" or "fail",
+        mapping: dict = None,
+        subset: list = None,
+        additional_rows: list = None,
         column_datatypes=None
     ):
         """
@@ -199,7 +247,45 @@ class DatabaseConnector:
 
         table_name : str
         The name of the table to be uploaded to the database
+
+        table_condition : str = "append" or "replace" or "fail" 
+        The table condition specified either append, replace or fail
+
+        mapping : dict = None 
+        An optional parameter to apply mapping to the dataframe. 
+        By default, it is None 
+
+        subset : list = None 
+        An optional parameter to filter the dataframe by a list of values. 
+        By defult, it is None 
+
+        additional_rows : list = None 
+        An optional parameter to add additional rows to the start of the dataframe. 
+        By default, it is None 
         """
+        if mapping:
+            # Apply the mapping to the specified column
+            dataframe = dataframe.assign(
+                availability=dataframe["availability"].map(mapping)
+            )
+
+        if subset:
+            try:
+                # Filter rows based on the specified subset
+                dataframe = dataframe[
+                    dataframe["country_code"].isin(subset)
+                ]
+            except KeyError:
+                dataframe = dataframe[
+                    dataframe["currency_code"].isin(subset)
+                ]
+
+        if additional_rows:
+            # Add additional rows to the start of the table
+            additional_rows_df = pd.DataFrame(additional_rows)
+            dataframe = pd.concat(
+                [additional_rows_df, dataframe]
+            ).reset_index(drop=True)
         try:
             database_utils_logger.info(
                 f"Attempting to upload table {table_name} to the database"
@@ -213,8 +299,74 @@ class DatabaseConnector:
             )
             print("Error uploading table to the database")
             raise Exception
-        pass
+        
+    def create_database(self, database_name: str, connection_string : str):
+        # Create the database with the provided database_name and database_username
+        
+        connection = create_engine(connection_string)
+        database_engine = connection.connect()
+        if database_engine:
+            # Disable transactional behavior
+            database_engine.execution_options(isolation_level="AUTOCOMMIT")
 
+            # Check if the database exists
+            check_db_stmt = text(
+                f"SELECT 1 FROM pg_database WHERE datname = '{database_name}'"
+            )
+            result = database_engine.execute(check_db_stmt)
+
+            if result.scalar():
+                # Database already exists, so skip database creation
+                print(
+                    f"Database '{database_name}' already exists. Skipping database creation."
+                )
+                database_utils_logger.warning(
+                    f"Database '{database_name}' already exists. Skipping database creation."
+                )
+            else:
+                # Create a new database
+                create_db_stmt = text(f"CREATE DATABASE {database_name}")
+                database_engine.execute(create_db_stmt)
+                print(f"Database '{database_name}' created successfully.")
+                database_utils_logger.info(
+                    f"Database '{database_name}' created successfully."
+                )
+
+            # Close the connection
+            database_engine.close()
+        else:
+            print("Connection to the database failed.")
+            database_utils_logger.error("Connection to the database failed.")
+   
+    def alter_and_update(self, sql_file_path: str, database_engine : Engine):
+        # Create a session object using sessionmaker
+        sql_session = sessionmaker(bind=database_engine)
+        session = sql_session()
+
+        try:
+            with open(sql_file_path, "r") as file:
+                sql_statement = file.read()
+                print(sql_statement)
+            database_utils_logger.info(sql_statement)
+            database_utils_logger.info("Executing and committing sql_statement")
+            session.execute(text(sql_statement))
+            session.commit()
+            database_utils_logger.info(
+                "SQL statement submitted to database. Please verify."
+            )
+            print("SQL statement submitted to database. Please verify.")
+        except:
+            database_utils_logger.exception(
+                f"Error when running sql_statement. The sql statement submitted was {sql_statement}"
+            )
+            print(
+                f"Error when running sql_statement. The sql statement submitted was {sql_statement}"
+            )
+            raise Exception
+
+        finally:
+            database_utils_logger.info("Closing Session")
+            session.close()
 
 if __name__ == "__main__":
     yaml_file_path = get_absolute_file_path("db_creds.yaml", "credentials")

@@ -3,6 +3,7 @@ from database_scripts.database_utils import DatabaseConnector
 from database_scripts.file_handler import get_absolute_file_path
 from sqlalchemy import create_engine, Column, VARCHAR, DATE, FLOAT, SMALLINT, BOOLEAN, TIME, NUMERIC, TIMESTAMP
 from sqlalchemy.exc import OperationalError
+from sqlalchemy.engine import Engine
 from sqlalchemy.dialects.postgresql import BIGINT, UUID
 from datetime import datetime
 from typing import Optional
@@ -12,6 +13,7 @@ import re
 import yaml
 import os
 import logging
+import pytz
 
 
 
@@ -40,58 +42,30 @@ data_cleaning_logger.addHandler(file_handler)
 
 
 class DataCleaning:
-    def __init__(self, datastore_config_file_name):
-        # Instantitating an instance of the DatabaseExtractor Class
-        self.extractor = DatabaseExtractor()
-        # Instantitating an instance of the DatabaseConnector Class
-        self.uploader = DatabaseConnector()
-        data_cleaning_logger.info(
-            f"Parsing datastore_config_file : {datastore_config_file_name}"
-        )
-        with open(datastore_config_file_name) as file:
-            creds = yaml.safe_load(file)
-            DATABASE_TYPE = creds["DATABASE_TYPE"]
-            DBAPI = creds["DBAPI"]
-            RDS_USER = creds["RDS_USER"]
-            RDS_PASSWORD = creds["RDS_PASSWORD"]
-            RDS_HOST = creds["RDS_HOST"]
-            RDS_PORT = creds["RDS_PORT"]
-            DATABASE = creds["RDS_DATABASE"]
-
-        try:
-            data_cleaning_logger.info("Attempting to connect to datastore")
-            self.engine = create_engine(
-                f"{DATABASE_TYPE}+{DBAPI}://{RDS_USER}:{RDS_PASSWORD}@{RDS_HOST}:{RDS_PORT}/{DATABASE}"
-            )
-            data_cleaning_logger.info("Connection successful")
-            print("connection successful")
-        except OperationalError:
-            data_cleaning_logger.exception("Error connecting to the database")
-            print("Error connecting to database")
-            raise Exception
+    def __init__(self): 
+        pass 
 
     def clean_user_data(
         self,
+        source_database_engine : Engine,
+        legacy_users_dataframe : pd.DataFrame,
         source_table_name: str,
-        source_database_config_file_name: str,
-        name_of_source_database: str
+        # source_database_config_file_name: str,
+        # name_of_source_database: str
         
     ):
         """
         Method to clean the user data table
 
         Parameters:
-        source_table_name : str
-        The table name in the source database
+        source_database_engine : Engine
+        The Engine object for the source database
 
-        source_database_config_file_name : str
-        The name of the config file used to connect to the source database
+        legacy_users_dataframe : pd.DataFrame 
+        A dataframe which contains information from the legacy_users table 
 
-        datastore_table_name : str
-        The name of the table which will be uploaded to the datastore
-
-        dimension_table_name : str
-        The name of the dimension table to be uploaded to the datastore
+        source_table_name : str 
+        The name of the source table from the source database 
 
         Returns:
         legacy_users_dataframe: Dataframe
@@ -100,11 +74,9 @@ class DataCleaning:
         """
         data_cleaning_logger.info("Starting job clean_user_data")
         data_cleaning_logger.info(f"Attempting to clean {source_table_name}")
+        data_cleaning_logger.debug(f"Connecting to {source_database_engine}")
         data_cleaning_logger.info("Reading in table from source database")
-        # Reading in the table from the AWS database
-        legacy_users_dataframe = self.extractor.read_rds_table(
-            source_table_name, source_database_config_file_name, name_of_source_database
-        )
+
 
         data_cleaning_logger.debug(f"Number of rows : {len(legacy_users_dataframe)}")
 
@@ -183,14 +155,16 @@ class DataCleaning:
         data_cleaning_logger.info("Appended new rows to the beginning of the dataframe")
         data_cleaning_logger.debug(f"Number of rows : {len(legacy_users_dataframe)}")
         data_cleaning_logger.debug(f"Job clean_user_data has completely successfully")
-
+        print('Job clean_user_data has been completed')
         return legacy_users_dataframe
 
     def clean_store_data(
         self,
+        source_database_engine : Engine,
+        legacy_store_dataframe : pd.DataFrame,
         source_table_name: str,
-        source_database_config_file_name: str,
-        name_of_source_database: str
+        # source_database_config_file_name: str,
+        # name_of_source_database: str
 
     ):
         """
@@ -207,9 +181,6 @@ class DataCleaning:
         datastore_table_name : str
         The name of the table which will be uploaded to the datastore
 
-        dimension_table_name : str
-        The name of the dimension table to be uploaded to the datastore
-
         Returns:
 
         legacy_store_database_table : DataFrame
@@ -217,11 +188,10 @@ class DataCleaning:
 
         """
         data_cleaning_logger.info("Starting Job clean_store_data")
+        data_cleaning_logger.info(f"Attempting to clean {source_table_name}")
+        data_cleaning_logger.debug(f"Connecting to {source_database_engine}")
         data_cleaning_logger.info("Reading in table from the source database")
-        # Reading in the table from the AWS database
-        legacy_store_dataframe = self.extractor.read_rds_table(
-            source_table_name, source_database_config_file_name, name_of_source_database
-        )
+
         data_cleaning_logger.info("Database table successfully read.")
         data_cleaning_logger.info(f"Number of rows : {len(legacy_store_dataframe)}")
 
@@ -325,6 +295,7 @@ class DataCleaning:
         data_cleaning_logger.info(
             "Replacing values in the longitude column to the correct values"
         )
+        #TODO: This needs a refactor. Do it either SQL or Python? 
         legacy_store_dataframe["number_of_staff"] = legacy_store_dataframe[
             "number_of_staff"
         ].replace({"3n9": "39", "A97": "97", "80R": "80", "J78": "78", "30e": "30"})
@@ -352,9 +323,10 @@ class DataCleaning:
         data_cleaning_logger.debug(f"Number of Rows : {len(legacy_store_dataframe)}")
 
         data_cleaning_logger.info("Job clean_store_data has completed succesfully")
+        print("Job clean_store_data has completed succesfully")
         return legacy_store_dataframe
 
-    def clean_card_details(self, link_to_pdf: str):
+    def clean_card_details(self, card_details_table : pd.DataFrame):
         """
         Method to clean a pdf file with card details and upload it to a datastore
 
@@ -363,12 +335,6 @@ class DataCleaning:
         link_to_pdf : str
         The link to the pdf file
 
-        datastore_table_name : str
-        The name of the table to be uploaded to the datastore
-
-        dimension_table_name : str
-        The name of the table to be uploaded to the datastore
-
         Returns
 
         card_details_database_table
@@ -376,11 +342,6 @@ class DataCleaning:
 
         """
         data_cleaning_logger.info("Starting Job clean_card_details")
-        data_cleaning_logger.info(f"Attempting to read PDF table from {link_to_pdf}")
-        # Read in the pdf data for the card details
-        card_details_table = self.extractor.retrieve_pdf_data(link_to_pdf)
-
-        data_cleaning_logger.info(f"Succesfully read table from {link_to_pdf}")
         data_cleaning_logger.info(f"Number of rows : {len(card_details_table)}")
         data_cleaning_logger.info(
             "Removing non-numeric characters from the card_number column"
@@ -498,14 +459,14 @@ class DataCleaning:
             [new_rows_additions, card_details_table]
         ).reset_index(drop=True)
         data_cleaning_logger.info(f"Number of rows : {len(card_details_table)}")
-
+        print("Job clean_card_details has been completed successfully")
         return card_details_table
 
     def clean_orders_table(
         self,
-        source_table_name: str,
-        source_database_config_file_name: str,
-        name_of_source_database: str
+        source_database_engine: Engine,
+        orders_dataframe: pd.DataFrame,
+        orders_table_name : str
     ):
         '''
         Method to clean the orders fact table from the AWS RDS 
@@ -524,14 +485,9 @@ class DataCleaning:
 
         data_cleaning_logger.info("Starting job clean_orders_table")
         data_cleaning_logger.info("Reading in the table from the source database")
+        data_cleaning_logger.info(f"Attempting to clean {orders_table_name}")
+        data_cleaning_logger.debug(f"Connecting to {source_database_engine}")
 
-        # Read in the table from the RDS database
-        orders_dataframe = self.extractor.read_rds_table(
-            source_table_name, source_database_config_file_name, name_of_source_database
-        )
-        data_cleaning_logger.info(
-            f"Successfully read the table {source_table_name} from the source database"
-        )
         data_cleaning_logger.info(f"Number of rows : {len(orders_dataframe)}")
 
         data_cleaning_logger.info("Stating the name of the columns")
@@ -601,9 +557,10 @@ class DataCleaning:
         orders_dataframe = orders_dataframe[column_order]
 
         data_cleaning_logger.info("Job clean_orders_table has completed successfully.")
+        print("Job clean_orders_table has completed successfully.")
         return orders_dataframe 
 
-    def clean_time_event_table(self, s3_bucket_url: str):
+    def clean_time_event_table(self, time_df : pd.DataFrame):
         """
         Method to read in a time_dimension table from an AWS S3 Bucket,
         clean it, and upload it to the datastore.
@@ -621,9 +578,6 @@ class DataCleaning:
         data_cleaning_logger.info("Starting job clean_time_event_table")
         data_cleaning_logger.info("Reading file from s3_bucket into dataframe")
         # Read in the json data from the s3 bucket
-        time_df = self.extractor.read_json_from_s3(s3_bucket_url)
-
-        data_cleaning_logger.info(f"Successfully read file from {s3_bucket_url}")
         data_cleaning_logger.info(f"Number of rows : {len(time_df)}")
 
         data_cleaning_logger.info(
@@ -699,9 +653,10 @@ class DataCleaning:
         data_cleaning_logger.info(
             "Job clean_time_event_table has completed successfully"
         )
+        print("Job clean time_event_table has been completed sucessfully")
         return time_df
 
-    def clean_product_table(self, s3_bucket_url: str):
+    def clean_product_table(self, products_table : pd.DataFrame):
         """
         Method to read in a .csv file from an S3 Bucket on AWS,
         CLean the data, and then upload it to the datastore
@@ -723,11 +678,7 @@ class DataCleaning:
 
         """
         data_cleaning_logger.info("Starting job clean_product_table")
-        data_cleaning_logger.info(f"Reading data from {s3_bucket_url}")
-        # Set the dataframe to the output of the method
-        products_table = self.extractor.read_s3_bucket_to_dataframe(s3_bucket_url)
 
-        data_cleaning_logger.info(f"Successfully read data from {s3_bucket_url}")
         data_cleaning_logger.info(f"Number of rows : {len(products_table)}")
 
         data_cleaning_logger.info(
@@ -837,9 +788,10 @@ class DataCleaning:
         )
 
         data_cleaning_logger.info("Job clean_product_table has completed successfully")
+        print("Job clean_product_table has completed successfully")
         return products_table
 
-    def clean_currency_table(self, source_file_name: str):
+    def clean_currency_table(self, currency_table : pd.DataFrame):
         '''
         Method to read in currency data from a .json file, clean the data using Pandas 
         and upload the table to the datastore 
@@ -857,12 +809,7 @@ class DataCleaning:
         '''
         data_cleaning_logger.info("Starting Job clean_currency_table")
 
-        data_cleaning_logger.info(f"Reading in file {source_file_name}")
-        # Reading in the file
-        currency_table = self.extractor.read_json_local(
-            source_file_name
-        )  # "codes-all_csv.csv"
-        data_cleaning_logger.info("Successfully read file")
+
         data_cleaning_logger.debug(f"Number of rows : {len(currency_table)}")
 
         # Reset the index of the dataframe
@@ -931,15 +878,13 @@ class DataCleaning:
         data_cleaning_logger.info(
             "Job clean_currency_table has completed successfully."
         )
+        print("job clean_currency_table has been completed successfully")
         return land_currency_table
 
+    #TODO: There is something wrong with this method as the percentage_change column goes to null when it's uploaded. 
     def clean_currency_exchange_rates(
         self,
-        page_url: str,
-        table_body_xpath: str,
-        timestamp_xpath: str,
-        data_headers: list,
-        source_file_name: str,
+        raw_currency_data : pd.DataFrame,
         currency_mapping_document_name: str
     ):
         '''
@@ -947,39 +892,19 @@ class DataCleaning:
         clean it, and upload it to the target datastore. 
 
         Parameters
-        page_url : str 
-        The url to the website 
-        
-        tablebody_xpath : str
-        The xpath representing the table of data on the website  
+        raw_currency_data : pd.DataFrame 
+        The data from the raw_currency_data table 
 
-        timestamp_xpath : str 
-        The xpath representing the timestamp on the webpage 
-
-        data_headers: list 
-        The list of column names for the pandas dataframe 
-
-        source_file_name: str 
-        The name of the source file which will be exported after the extraction process. 
-        In .csv format
-
-        currency_mapping_document_name : str
-        The file pathway to the currency_mapping.txt file which contains the currency codes 
-
-        datastore_table_name : str 
-        The name of the table to be uploaded to the datastore 
+        currency_mapping_document_name : str 
+        The name of the currency_mapping document 
 
         Returns: 
-        cleaned_currency_conversion_datastore_table : pd.DataFrame 
+        cleaned_currency_conversion_df : pd.DataFrame 
         A DataFrame containing the cleaned currency conversion data
         '''
 
         data_cleaning_logger.info("Starting job clean_currency_exchange_rates")
-        data_cleaning_logger.info(f"Extracting data from {page_url}")
-        raw_currency_data, timestamp = self.extractor.extract_currency_conversion_data(
-            page_url, table_body_xpath, timestamp_xpath, data_headers, source_file_name
-        )
-        data_cleaning_logger.info(f"Successfully read in DataFrame and {timestamp}")
+
         data_cleaning_logger.debug(f"Number of rows : {len(raw_currency_data)}")
 
         # Dropping duplicates
@@ -987,19 +912,27 @@ class DataCleaning:
         no_duplicates_dataframe = raw_currency_data.drop_duplicates()
 
         data_cleaning_logger.debug(f"Number of rows : {len(no_duplicates_dataframe)}")
-        # Dropping the first row of the dataframe
-        no_duplicates_dataframe = no_duplicates_dataframe[1:]
 
-        data_cleaning_logger.info(f"Creating datetime object using {timestamp}")
-        # Creating the datetime object using the timestamp variable
-        datetime_object = datetime.strptime(timestamp, "%b %d, %Y %H:%M %Z")
-        data_cleaning_logger.debug(datetime_object)
+        # Getting the datetime using utcnow() 
+        current_utc_time = datetime.utcnow()
+
+        # Specify the UTC timezone
+        utc_timezone = pytz.utc
+
+        # Add timezone information to the datetime object
+        current_utc_time_with_timezone = utc_timezone.localize(current_utc_time)
+
+        # Format the datetime object as a string with timezone
+        formatted_time_with_timezone = current_utc_time_with_timezone.strftime("%Y-%m-%d %H:%M:%S")
+
+        print(formatted_time_with_timezone)
+        data_cleaning_logger.debug(formatted_time_with_timezone)
 
         data_cleaning_logger.info("Creating new column with datetime object")
         # Create a new column called last_updated using the datetime object, then fill all nulls with the datetime
         df_with_datetime = no_duplicates_dataframe.assign(
-            last_updated=pd.Series([datetime_object] * len(no_duplicates_dataframe))
-        ).fillna(datetime_object)
+            last_updated=pd.Series([formatted_time_with_timezone] * len(no_duplicates_dataframe))
+        ).fillna(formatted_time_with_timezone)
 
         data_cleaning_logger.debug(df_with_datetime.columns)
         data_cleaning_logger.debug(
@@ -1013,6 +946,14 @@ class DataCleaning:
         )
         data_cleaning_logger.debug(currency_mapping)
 
+        print(df_with_datetime.columns)
+        try:
+            df_with_datetime.columns = ["currency_name", "conversion_rate", "conversion_rate_percentage", "last_updated"]
+        except ValueError:
+            df_with_datetime.columns = ['Unnamed: 0', "currency_name", "conversion_rate", "conversion_rate_percentage", "last_updated"]
+
+
+        print(df_with_datetime.columns)
         # Mapping currency code dictionary to the currency names within the dataframe
         df_with_datetime["currency_code"] = df_with_datetime["currency_name"].map(
             currency_mapping
@@ -1025,17 +966,26 @@ class DataCleaning:
         # Adding new row to dataframe
         new_row = {
             "currency_name": "British Pound",
+            "currency_code": "GBP",
             "conversion_rate": "1.000000",
             "conversion_rate_percentage": "1.000000",
-            "last_updated": f"{datetime_object}",
-            "currency_code": "GBP",
+            "percentage_change": np.nan,
+            "last_updated": f"{formatted_time_with_timezone}"
+            
         }
 
         data_cleaning_logger.info(f"Adding new row {new_row}")
 
+        # Reading in the dataframe from a dictionary and tranposing it
         uk_row_df = pd.DataFrame.from_dict(new_row, orient="index").T
 
         data_cleaning_logger.info("New dataframe created")
+
+        # Dropping the Unamed: 0 column if it is present 
+        try:
+            df_with_datetime.drop('Unnamed: 0', axis=1, inplace=True)
+        except:
+            print("WARNING: No Unamed : 0 found in axis")
 
         data_cleaning_logger.debug(uk_row_df)
         updated_df = pd.concat([uk_row_df, df_with_datetime]).reset_index(drop=True)
@@ -1056,7 +1006,7 @@ class DataCleaning:
             "currency_name",
             "currency_code",
             "conversion_rate",
-            "percentage_change",
+            "conversion_rate_percentage",
             "last_updated",
         ]
         data_cleaning_logger.info("Updating column_order of dataframe")
@@ -1079,131 +1029,12 @@ class DataCleaning:
         cleaned_currency_conversion_df = pd.concat([new_rows_addition, updated_df])
         data_cleaning_logger.info("Successfully concatentated rows from together")
 
-        # cleaned_currency_conversion_datastore_table = self._upload_to_database(
-        #     cleaned_currency_conversion_df, self.engine, datastore_table_name
-        # )
-        # data_cleaning_logger.info(f"{datastore_table_name} table uploaded")
 
         data_cleaning_logger.info(
             "Job clean_currency_exchange_rates completed successfully"
         )
+        print("Job clean_currency_exchange rates has been completed successfully")
         return cleaned_currency_conversion_df
-
-    def load_dimension_table(
-        self,
-        datastore_land_table: pd.DataFrame,
-        datastore_table_name: str,
-        table_condition : str = "append" or "replace" or "fail",
-        mapping: dict = None,
-        subset: list = None,
-        additional_rows: list = None,
-        dim_column_datatypes = None
-    ):
-        '''
-        Method to load the dimension table as a result of the cleaning process. 
-
-        Parameters: 
-        datastore_land_table : pd.DataFrame 
-        A dataframe containing data created from the clean methods. 
-
-        datastore_table_name : str 
-        The name of the table to be uploaded to the datastore 
-
-        mapping : dict = None 
-        An optional parameter to apply mapping to the dataframe. 
-        By default, it is None 
-
-        subset : list = None 
-        An optional parameter to filter the dataframe by a list of values. 
-        By defult, it is None 
-
-        additional_rows : list = None 
-        An optional parameter to add additional rows to the start of the dataframe. 
-        By default, it is None 
-
-        Returns: 
-        dimension_table : pd.DataFrame 
-        A DataFrame which contains the dimension table 
-        '''
-
-        if mapping:
-            # Apply the mapping to the specified column
-            datastore_land_table = datastore_land_table.assign(
-                availability=datastore_land_table["availability"].map(mapping)
-            )
-
-        if subset:
-            try:
-                # Filter rows based on the specified subset
-                datastore_land_table = datastore_land_table[
-                    datastore_land_table["country_code"].isin(subset)
-                ]
-            except KeyError:
-                datastore_land_table = datastore_land_table[
-                    datastore_land_table["currency_code"].isin(subset)
-                ]
-
-        if additional_rows:
-            # Add additional rows to the start of the table
-            additional_rows_df = pd.DataFrame(additional_rows)
-            datastore_land_table = pd.concat(
-                [additional_rows_df, datastore_land_table]
-            ).reset_index(drop=True)
-
-        # Logic for Slowly changing Dimension Implementation could go here?
-        dimension_table = self._upload_to_database(
-            datastore_land_table, 
-            self.engine, 
-            datastore_table_name, 
-            table_condition=table_condition,
-            datastore_column_datatypes=dim_column_datatypes
-        )
-        return dimension_table
-
-    def _upload_to_database(
-        self,
-        dataframe: pd.DataFrame,
-        database_engine,
-        datastore_table_name: str,
-        table_condition : str = "append" or "replace" or "fail",
-        datastore_column_datatypes=None
-    ):
-        """
-        Method to upload the completed dataframe to the datastore
-        Method uses the upload_to_db method in the DatabaseConnector class to upload the table to the database
-
-        Parameters:
-        dataframe : pd.DataFrame
-        A pandas dataframe
-
-        database_engine
-        The database_engine that the user wants to use. Defined inside the __init__ method of the DataCleaning class
-
-        datastore_table_name : str
-        The name of the table uploaded to the datastore
-
-        column_datatypes = None
-        The datatypes of the columns to upload to the datastore. 
-        By default, this is None, but can be populated using a dict of datatypes. 
-
-        Returns:
-        dataframe
-        A pandas dataframe
-        """
-        try:
-            self.uploader.upload_to_db(
-                dataframe,
-                database_engine,
-                datastore_table_name,
-                table_condition=table_condition,
-                column_datatypes=datastore_column_datatypes
-            )
-            print(f"{datastore_table_name} table uploaded")
-            return dataframe
-
-        except:
-            print("Error uploading table to database")
-            raise Exception
 
     @staticmethod
     def add_new_rows(rows_to_add: list):
@@ -1344,436 +1175,3 @@ class DataCleaning:
             return pd.to_datetime(date, errors="coerce")
 
 
-def perform_data_cleaning(
-    target_datastore_config_file_name: str,
-    source_config_file_name: str,
-    currency_code_mapping_file_name: str,
-    country_data_source_file_name: str,
-    currency_conversion_output_file_name: str,
-):
-    cleaner = DataCleaning(target_datastore_config_file_name)
-    land_user_table = cleaner.clean_user_data(
-        "legacy_users", source_config_file_name, "postgres", "land_user_data"
-    )
-    dim_users_table = cleaner.load_dimension_table(land_user_table, "dim_users")
-    land_store_table = cleaner.clean_store_data(
-        "legacy_store_details",
-        source_config_file_name,
-        "postgres",
-        "land_store_details",
-    )
-    dim_store_table = cleaner.load_dimension_table(
-        land_store_table, "dim_store_details"
-    )
-    land_product_table = cleaner.clean_product_table(
-        "s3://data-handling-public/products.csv", "land_product_details"
-    )
-    dim_product_details_table = cleaner.load_dimension_table(
-        land_product_table, "dim_product_details"
-    )
-    land_time_events_table = cleaner.clean_time_event_table(
-        "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
-        "land_date_times",
-    )
-    dim_date_times_table = cleaner.load_dimension_table(
-        land_time_events_table, "dim_date_times"
-    )
-    land_card_details_table = cleaner.clean_card_details(
-        "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf",
-        "land_card_details",
-    )
-    dim_card_details_table = cleaner.load_dimension_table(
-        land_card_details_table, "dim_card_details"
-    )
-    land_currency_table = cleaner.clean_currency_table(
-        country_data_source_file_name, "land_currency"
-    )  # ["US", "GB", "DE"]
-    dim_currency_table = cleaner.load_dimension_table(
-        land_currency_table, ["US", "GB", "DE"], "dim_currency"
-    )
-
-    land_currency_conversions_table = cleaner.clean_currency_exchange_rates(
-        "https://www.x-rates.com/table/?from=GBP&amount=1",
-        '//table[@class="tablesorter ratesTable"]/tbody',
-        '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
-        ["currency_name", "conversion_rate", "percentage_change"],
-        currency_conversion_output_file_name,
-        currency_code_mapping_file_name,
-        "land_currency_conversion",
-    )
-    dim_currency_conversion_table = cleaner.load_dimension_table(
-        land_currency_conversions_table,
-        ["USD", "GBP", "EUR"],
-        "dim_currency_conversion",
-    )
-    cleaner.clean_orders_table(
-        "orders_table", file_pathway_to_source_database, "postgres", "orders_table"
-    )
-
-
-if __name__ == "__main__":
-    # Creating absolute file pathways from get_absolute_file_path method
-    file_pathway_to_source_database = get_absolute_file_path(
-        "db_creds.yaml", "credentials"
-    )
-    file_pathway_to_datastore = get_absolute_file_path(
-        "sales_data_creds_test.yaml", "credentials"
-    )
-    file_pathway_to_source_text_file = get_absolute_file_path(
-        "currency_code_mapping", "source_data_files"
-    )
-    file_pathway_to_json_source_file = get_absolute_file_path(
-        "country_data.json", "source_data_files"
-    )
-    file_pathway_to_exported_csv_file = get_absolute_file_path(
-        "currency_conversions_test", "source_data_files"
-    )
-
-    # perform_data_cleaning(
-    #     file_pathway_to_datastore,
-    #     file_pathway_to_source_database,
-    #     file_pathway_to_source_text_file,
-    #     file_pathway_to_json_source_file,
-    #     file_pathway_to_exported_csv_file
-
-    #                       )
-
-    cleaner = DataCleaning(file_pathway_to_datastore)
-
-    land_user_table = cleaner.clean_user_data(
-        "legacy_users", 
-        file_pathway_to_source_database, 
-        "postgres"
-    )
-    cleaner._upload_to_database(
-        land_user_table,
-        cleaner.engine,
-        "land_user_data",
-        "replace",
-        datastore_column_datatypes={
-            "user_key": BIGINT,
-            "first_name": VARCHAR(255),
-            "last_name": VARCHAR(255),
-            "date_of_birth": DATE,
-            "company": VARCHAR(255),
-            "email_address": VARCHAR(255),
-            "address": VARCHAR(600),
-            "country": VARCHAR(100),
-            "country_code": VARCHAR(20),
-            "phone_number": VARCHAR(50),
-            "join_date": DATE,
-            "user_uuid": UUID  
-       }
-
-    )
-
-    dim_users_table = cleaner.load_dimension_table(
-        land_user_table, 
-        "dim_users",
-        "append",
-        dim_column_datatypes={
-            "index": BIGINT,
-            "user_key": BIGINT,
-            "first_name": VARCHAR(255),
-            "last_name": VARCHAR(255),
-            "date_of_birth": DATE,
-            "company": VARCHAR(255),
-            "email_address": VARCHAR(255),
-            "address": VARCHAR(600),
-            "country": VARCHAR(100),
-            "country_code": VARCHAR(20),
-            "phone_number": VARCHAR(50),
-            "join_date": DATE,
-            "user_uuid": UUID,
-        }
-    )
-
-    land_store_table = cleaner.clean_store_data(
-        "legacy_store_details",
-        file_pathway_to_source_database,
-        "postgres"   
-    )
-
-    cleaner._upload_to_database(
-        land_store_table,
-        cleaner.engine,
-        "land_store_details",
-        "replace",
-        datastore_column_datatypes={
-        "index": BIGINT,
-        "store_key": BIGINT,
-        "store_address": VARCHAR(1000),
-        "longitude": FLOAT,
-        "latitude": FLOAT,
-        "city": VARCHAR(255),
-        "store_code": VARCHAR(20),
-        "number_of_staff": SMALLINT,
-        "opening_date": DATE,
-        "store_type": VARCHAR(255),
-        "country_code": VARCHAR(20),
-        "region": VARCHAR(255)
-    }
-    )
-
-    dim_store_table = cleaner.load_dimension_table(
-        land_store_table, 
-        "dim_store_details",
-        "append",
-        dim_column_datatypes= {
-        "index": BIGINT,
-        "store_key": BIGINT,
-        "store_address": VARCHAR(1000),
-        "longitude": FLOAT,
-        "latitude": FLOAT,
-        "city": VARCHAR(255),
-        "store_code": VARCHAR(20),
-        "number_of_staff": SMALLINT,
-        "opening_date": DATE,
-        "store_type": VARCHAR(255),
-        "country_code": VARCHAR(20),
-        "region": VARCHAR(255)
-    }
-        )
-
-    land_product_table = cleaner.clean_product_table(
-        "s3://data-handling-public/products.csv"
-    )
-
-    cleaner._upload_to_database(
-        land_product_table,
-        cleaner.engine,
-        "land_product_details",
-        "replace",
-       datastore_column_datatypes={
-           "index": BIGINT,
-            "product_key": BIGINT,
-            "ean": VARCHAR(50),
-            "product_name": VARCHAR(500),
-            "product_price": FLOAT,
-            "weight": FLOAT,
-            "weight_class": VARCHAR(50),
-            "category": VARCHAR(50),
-            "date_added": DATE,
-            "uuid": UUID,
-            "availability": VARCHAR(30),
-            "product_code": VARCHAR(50)
-       } 
-    )
-
-    dim_product_details_table = cleaner.load_dimension_table(
-        land_product_table,
-        "dim_product_details",
-        "append",
-        mapping={"Still_avaliable": True, "Removed": False},
-            dim_column_datatypes={
-           "index": BIGINT,
-            "product_key": BIGINT,
-            "ean": VARCHAR(50),
-            "product_name": VARCHAR(500),
-            "product_price": FLOAT,
-            "weight": FLOAT,
-            "weight_class": VARCHAR(50),
-            "category": VARCHAR(50),
-            "date_added": DATE,
-            "uuid": UUID,
-            "availability": BOOLEAN,
-            "product_code": VARCHAR(50)
-       } 
-    )
-
-    land_time_events_table = cleaner.clean_time_event_table(
-        "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json",
-    )
-
-    cleaner._upload_to_database(
-        land_time_events_table,
-        cleaner.engine,
-        "land_date_times",
-        "replace",
-        datastore_column_datatypes={
-        "index": BIGINT,
-        "date_key": BIGINT,
-        "event_time": TIME,
-        "day": VARCHAR(30),
-        "month": VARCHAR(30),
-        "year": VARCHAR(30),
-        "time_period": VARCHAR(40),
-        "date_uuid": UUID
-    } 
-    )
-
-    dim_date_times_table = cleaner.load_dimension_table(
-        land_time_events_table, 
-        "dim_date_times",
-        "append",
-        dim_column_datatypes={
-        "index": BIGINT,
-        "date_key": BIGINT,
-        "event_time": TIME,
-        "day": VARCHAR(30),
-        "month": VARCHAR(30),
-        "year": VARCHAR(30),
-        "time_period": VARCHAR(40),
-        "date_uuid": UUID
-    } 
-    )
-    
-
-    land_card_details_table = cleaner.clean_card_details(
-        "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
-    )
-
-    cleaner._upload_to_database(
-        land_card_details_table,
-        cleaner.engine,
-        "land_card_details",
-        "replace",
-        datastore_column_datatypes={
-        "index": BIGINT,
-        "card_key": BIGINT,
-        "card_number": VARCHAR(30),
-        "expiry_date": VARCHAR(20),
-        "card_provider": VARCHAR(255),
-        "date_payment_confirmed": DATE
-    } 
-    )
-
-    dim_card_details_table = cleaner.load_dimension_table(
-        land_card_details_table, 
-        "dim_card_details",
-        "append",
-        dim_column_datatypes={
-        "index": BIGINT,
-        "card_key": BIGINT,
-        "card_number": VARCHAR(30),
-        "expiry_date": VARCHAR(20),
-        "card_provider": VARCHAR(255),
-        "date_payment_confirmed": DATE
-        }
-
-    )
-
-    land_currency_table = cleaner.clean_currency_table(
-        file_pathway_to_json_source_file
-    ) 
-
-    cleaner._upload_to_database(
-        land_currency_table,
-        cleaner.engine,
-        "land_currency",
-        "replace",
-        datastore_column_datatypes={
-        "index": BIGINT,
-        "currency_key": BIGINT,
-        "currency_conversion_key": BIGINT,
-        "country_name": VARCHAR(100),
-        "currency_code": VARCHAR(20),
-        "country_code": VARCHAR(5),
-        "currency_symbol": VARCHAR(5)
-    } 
-
-    ) 
-
-
-    dim_currency_table = cleaner.load_dimension_table(
-        land_currency_table,
-        "dim_currency",
-        subset=["US", "GB", "DE"],
-        additional_rows=[
-            {
-                "currency_key": -1,
-                "currency_conversion_key": -1,
-                "currency_code": "Not Applicable",
-            },
-            {
-                "currency_key": 0,
-                "currency_conversion_key": 0,
-                "currency_code": "Unknown",
-            },
-        ],
-        dim_column_datatypes={
-        "index": BIGINT,
-        "currency_key": BIGINT,
-        "currency_conversion_key": BIGINT,
-        "country_name": VARCHAR(100),
-        "currency_code": VARCHAR(20),
-        "country_code": VARCHAR(5),
-        "currency_symbol": VARCHAR(5)
-    } 
-
-    )
-
-    land_currency_conversions_table = cleaner.clean_currency_exchange_rates(
-        "https://www.x-rates.com/table/?from=GBP&amount=1",
-        '//table[@class="tablesorter ratesTable"]/tbody',
-        '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
-        ["currency_name", "conversion_rate", "percentage_change"],
-        file_pathway_to_exported_csv_file,
-        file_pathway_to_source_text_file
-    )
-
-    cleaner._upload_to_database(
-        land_currency_conversions_table,
-        cleaner.engine,
-        "land_currency_conversion",
-        "replace",
-        datastore_column_datatypes={
-        "index": BIGINT,
-        "currency_conversion_key": BIGINT,
-        "currency_name": VARCHAR(50),
-        "currency_code": VARCHAR(5),
-        "conversion_rate": NUMERIC(20,6),
-        "percentage_change": NUMERIC(20,6),
-        "last_updated" : TIMESTAMP(timezone=True)
-
-    } 
-    ) 
-
-    dim_currency_conversion_table = cleaner.load_dimension_table(
-        land_currency_conversions_table,
-        "dim_currency_conversion",
-        subset=["USD", "GBP", "EUR"],
-        additional_rows=[
-            {"currency_conversion_key": -1, "currency_name": "Not Applicable"},
-            {"currency_conversion_key": 0, "currency_name": "Unknown"}
-        ],
-        dim_column_datatypes={
-        "index": BIGINT,
-        "currency_conversion_key": BIGINT,
-        "currency_name": VARCHAR(50),
-        "currency_code": VARCHAR(5),
-        "conversion_rate": NUMERIC(20,6),
-        "percentage_change": NUMERIC(20,6),
-        "last_updated" : TIMESTAMP(timezone=True)
-        }
-    )
-
-    orders_table = cleaner.clean_orders_table(
-        "orders_table", 
-        file_pathway_to_source_database, 
-        "postgres"
-    )
-
-    cleaner._upload_to_database(
-        orders_table,
-        cleaner.engine,
-        "orders_table",
-        "append",
-        datastore_column_datatypes={
-        "index": BIGINT,
-        "order_key": BIGINT,
-        "date_uuid": UUID,
-        "user_uuid": UUID,
-        "card_key": BIGINT,
-        "date_key": BIGINT,
-        "product_key": BIGINT,
-        "store_key": BIGINT,
-        "user_key": BIGINT,
-        "currency_key": BIGINT,
-        "card_number": VARCHAR(30),
-        "store_code": VARCHAR(30),
-        "product_code": VARCHAR(30),
-        "product_quantity": SMALLINT,
-        "country_code": VARCHAR(20)
-    }
-    )
