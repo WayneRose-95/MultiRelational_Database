@@ -16,86 +16,51 @@ ORDER BY total_no_of_stores DESC;
 
 -- Question 3: Which month produce the average highest cost of sales typically? 
 
--- Question 3 Solution? 
+-- Question 3 Solution
 
 SELECT  
 
-ROUND(SUM(x.product_price * O.product_quantity)::numeric,2) AS total_sales, 
-D.month
+ROUND(SUM(dp.product_price * O.product_quantity)::numeric,2) AS total_sales, 
+CAST(TRIM(TRAILING '.0' FROM month) AS INTEGER) AS month_number
 
-FROM DIM_PRODUCT_DETAILS x
+FROM orders_table O 
 
-JOIN ORDERS_TABLE O ON 
+JOIN dim_product_details dp ON 
 
-x.PRODUCT_KEY = O.product_key
+dp.product_key = O.product_key
 JOIN DIM_DATE_TIMES D ON 
-O.date_key = D.time_key
+O.date_key = D.date_key
 GROUP BY D.month
 ORDER BY total_sales DESC;
 
 -- Question 4: How many sales are coming from online? 
 
-/* SELECT store_type FROM DIM_STORE_DETAILS;
+-- Question 4 Solution
 
-SELECT 
-
-DS.store_type,
-SUM(O.product_quantity) as product_quantity_count
-
-
-FROM 
-DIM_STORE_DETAILS DS
-JOIN ORDERS_TABLE O ON 
-DS.STORE_KEY = O.STORE_KEY 
-
-JOIN DIM_PRODUCT_DETAILS DP ON 
-O.PRODUCT_KEY = DP.PRODUCT_KEY
-
-GROUP BY store_type; */
-
--- Question 4 Solution? 
-
-SELECT
-    CASE
-        WHEN DS.store_type IN ('local', 'Mail Kiosk', 'Outlet', 'Super Store') THEN 'Offline'
-        ELSE 'Web Portal'
-    END AS store_type,
-    SUM(O.product_quantity) as product_quantity_count,
-	COUNT(O.CARD_NUMBER) as number_of_sales
-FROM
-    DIM_STORE_DETAILS DS
-    JOIN ORDERS_TABLE O ON DS.STORE_KEY = O.STORE_KEY
-    JOIN DIM_PRODUCT_DETAILS DP ON O.PRODUCT_KEY = DP.PRODUCT_KEY
-GROUP BY
-    CASE
-        WHEN DS.store_type IN ('local', 'Mail Kiosk', 'Outlet', 'Super Store') THEN 'Offline'
-        ELSE 'Web Portal'
-    END;
-
+SELECT COUNT(*) as number_of_sales, SUM(product_quantity) as product_quantity_count,
+CASE 
+    WHEN store_code = 'WEB-1388012W' THEN 'Web'
+    ELSE 'Offline'
+END AS location    
+FROM orders_table
+GROUP BY location
 
 
 -- Question 5: What percentage of sales come through each type of store? 
 
--- Question 5 Solution? 
+-- Question 5 Solution
 
--- Select the distinct store_type 
-SELECT DISTINCT store_type FROM dim_store_details;
-
-SELECT 
-
-DS.store_type,
-ROUND(SUM(DP.product_price * O.product_quantity)::numeric,2) AS total_sales,
-ROUND((SUM(DP.product_price * O.product_quantity) / SUM(SUM(DP.product_price * O.product_quantity)) OVER ())::numeric * 100, 2) AS percentage_total
-
-FROM DIM_STORE_DETAILS DS
-
-JOIN ORDERS_TABLE O ON 
-DS.STORE_KEY = O.STORE_KEY 
-
-JOIN DIM_PRODUCT_DETAILS DP ON 
-O.PRODUCT_KEY = DP.PRODUCT_KEY
-GROUP BY DS.store_type
-ORDER BY total_sales DESC;
+SELECT dim_store.store_type, 
+ROUND(SUM(CAST(orders_table.product_quantity AS NUMERIC) * CAST(dim_products.product_price AS NUMERIC)) , 2)  as total_sales, 
+ROUND(CAST(COUNT(*) AS NUMERIC) / CAST((SELECT COUNT(*) FROM orders_table) AS NUMERIC) * 100, 2) as "percentage_total(%)",
+COUNT(*) as count,
+-- Checks to see if the counts are consistent across the query
+(SELECT COUNT(*) FROM orders_table)
+FROM orders_table 
+LEFT JOIN dim_product_details dim_products  ON orders_table.product_code = dim_products.product_code
+LEFT JOIN dim_store_details dim_store ON orders_table.store_code = dim_store.store_code
+GROUP BY store_type
+ORDER BY total_sales DESC
 
 
 
@@ -123,7 +88,7 @@ ORDER BY total_sales DESC;
 
 -- Question 7: What is our staff headcount? 
 
--- Question 7 Solution? 
+-- Question 7 Solution 
 
 SELECT 
 
@@ -140,7 +105,7 @@ ORDER BY number_of_staff DESC;
 
 -- Question 8: Which German store type is selling the most? 
 
--- Question 8: Solution? 
+-- Question 8 Solution
 
 SELECT
 ROUND(SUM(DP.product_price * O.product_quantity)::numeric,2) AS total_sales,
@@ -157,7 +122,7 @@ JOIN DIM_PRODUCT_DETAILS DP
 
 ON O.PRODUCT_KEY = DP.PRODUCT_KEY
 
-WHERE COUNTRY_CODE LIKE 'DE'
+WHERE O.COUNTRY_CODE LIKE 'DE'
 
 GROUP BY DS.STORE_TYPE, DS.COUNTRY_CODE
 ORDER BY total_sales ASC;
