@@ -13,6 +13,7 @@ import re
 import yaml
 import os
 import logging
+import pytz
 
 
 
@@ -884,7 +885,6 @@ class DataCleaning:
     def clean_currency_exchange_rates(
         self,
         raw_currency_data : pd.DataFrame,
-        timestamp : str,
         currency_mapping_document_name: str
     ):
         '''
@@ -894,9 +894,6 @@ class DataCleaning:
         Parameters
         raw_currency_data : pd.DataFrame 
         The data from the raw_currency_data table 
-
-        timestamp : str 
-        The timestamp element extracted from the website. 
 
         currency_mapping_document_name : str 
         The name of the currency_mapping document 
@@ -915,19 +912,27 @@ class DataCleaning:
         no_duplicates_dataframe = raw_currency_data.drop_duplicates()
 
         data_cleaning_logger.debug(f"Number of rows : {len(no_duplicates_dataframe)}")
-        # Dropping the first row of the dataframe
-        no_duplicates_dataframe = no_duplicates_dataframe[1:]
 
-        data_cleaning_logger.info(f"Creating datetime object using {timestamp}")
-        # Creating the datetime object using the timestamp variable
-        datetime_object = datetime.strptime(timestamp, "%b %d, %Y %H:%M %Z")
-        data_cleaning_logger.debug(datetime_object)
+        # Getting the datetime using utcnow() 
+        current_utc_time = datetime.utcnow()
+
+        # Specify the UTC timezone
+        utc_timezone = pytz.utc
+
+        # Add timezone information to the datetime object
+        current_utc_time_with_timezone = utc_timezone.localize(current_utc_time)
+
+        # Format the datetime object as a string with timezone
+        formatted_time_with_timezone = current_utc_time_with_timezone.strftime("%Y-%m-%d %H:%M:%S")
+
+        print(formatted_time_with_timezone)
+        data_cleaning_logger.debug(formatted_time_with_timezone)
 
         data_cleaning_logger.info("Creating new column with datetime object")
         # Create a new column called last_updated using the datetime object, then fill all nulls with the datetime
         df_with_datetime = no_duplicates_dataframe.assign(
-            last_updated=pd.Series([datetime_object] * len(no_duplicates_dataframe))
-        ).fillna(datetime_object)
+            last_updated=pd.Series([formatted_time_with_timezone] * len(no_duplicates_dataframe))
+        ).fillna(formatted_time_with_timezone)
 
         data_cleaning_logger.debug(df_with_datetime.columns)
         data_cleaning_logger.debug(
@@ -941,6 +946,14 @@ class DataCleaning:
         )
         data_cleaning_logger.debug(currency_mapping)
 
+        print(df_with_datetime.columns)
+        try:
+            df_with_datetime.columns = ["currency_name", "conversion_rate", "conversion_rate_percentage", "last_updated"]
+        except ValueError:
+            df_with_datetime.columns = ['Unnamed: 0', "currency_name", "conversion_rate", "conversion_rate_percentage", "last_updated"]
+
+
+        print(df_with_datetime.columns)
         # Mapping currency code dictionary to the currency names within the dataframe
         df_with_datetime["currency_code"] = df_with_datetime["currency_name"].map(
             currency_mapping
@@ -957,15 +970,22 @@ class DataCleaning:
             "conversion_rate": "1.000000",
             "conversion_rate_percentage": "1.000000",
             "percentage_change": np.nan,
-            "last_updated": f"{datetime_object}"
+            "last_updated": f"{formatted_time_with_timezone}"
             
         }
 
         data_cleaning_logger.info(f"Adding new row {new_row}")
 
+        # Reading in the dataframe from a dictionary and tranposing it
         uk_row_df = pd.DataFrame.from_dict(new_row, orient="index").T
 
         data_cleaning_logger.info("New dataframe created")
+
+        # Dropping the Unamed: 0 column if it is present 
+        try:
+            df_with_datetime.drop('Unnamed: 0', axis=1, inplace=True)
+        except:
+            print("WARNING: No Unamed : 0 found in axis")
 
         data_cleaning_logger.debug(uk_row_df)
         updated_df = pd.concat([uk_row_df, df_with_datetime]).reset_index(drop=True)

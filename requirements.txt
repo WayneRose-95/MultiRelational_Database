@@ -1,9 +1,11 @@
 boto3==1.26.141
 html_testRunner==1.2.1
+lxml==5.1.0
 numpy==1.24.1
 pandas==2.0.0
 PyYAML==6.0.1
-selenium==4.10.0
+selenium==4.16.0
 SQLAlchemy==2.0.14
 tabula_py==2.6.0
+undetected_chromedriver==2.1.1
 webdriver_manager==3.8.6
