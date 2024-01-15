@@ -44,6 +44,17 @@ class TestCurrencyRateExtraction(unittest.TestCase):
         combined_table = self.currency_extractor.merge_dataframes("right", test_html_datatable1, test_html_datatable2)
 
         saved_data = self.currency_extractor.save_data(combined_table, self.file_name, ["currency_name", "conversion_rate", "conversion_rate_percentage"])
+        
+        # Get the current directory 
+        current_directory = os.getcwd()
+
+        # Making the full file path 
+        file_path = os.path.join(current_directory, f"{self.file_name}.csv")
+
+        # The expected file_path
+        file_exists = os.path.exists(file_path)
+
+        self.assertTrue(file_exists, f"The file {self.file_name} does not exist in {file_path}")
 
         
     @classmethod
