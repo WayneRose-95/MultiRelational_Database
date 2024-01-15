@@ -947,8 +947,11 @@ class DataCleaning:
         data_cleaning_logger.debug(currency_mapping)
 
         print(df_with_datetime.columns)
+        try:
+            df_with_datetime.columns = ["currency_name", "conversion_rate", "conversion_rate_percentage", "last_updated"]
+        except ValueError:
+            df_with_datetime.columns = ['Unnamed: 0', "currency_name", "conversion_rate", "conversion_rate_percentage", "last_updated"]
 
-        df_with_datetime.columns = ["currency_name", "conversion_rate", "conversion_rate_percentage", "last_updated"]
 
         print(df_with_datetime.columns)
         # Mapping currency code dictionary to the currency names within the dataframe
@@ -978,8 +981,11 @@ class DataCleaning:
 
         data_cleaning_logger.info("New dataframe created")
 
-        # Dropping the Unamed: 0 column
-        # df_with_datetime.drop('Unnamed: 0', axis=1, inplace=True)
+        # Dropping the Unamed: 0 column if it is present 
+        try:
+            df_with_datetime.drop('Unnamed: 0', axis=1, inplace=True)
+        except:
+            print("WARNING: No Unamed : 0 found in axis")
 
         data_cleaning_logger.debug(uk_row_df)
         updated_df = pd.concat([uk_row_df, df_with_datetime]).reset_index(drop=True)
