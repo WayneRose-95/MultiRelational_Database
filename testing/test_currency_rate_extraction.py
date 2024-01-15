@@ -1,6 +1,6 @@
 import unittest 
 import pandas as pd 
-from database_scripts.currency_rate_extraction_poc import CurrencyExtractor
+from database_scripts.currency_rate_extraction import CurrencyExtractor
 from time import sleep
 import os 
 class TestCurrencyRateExtraction(unittest.TestCase):

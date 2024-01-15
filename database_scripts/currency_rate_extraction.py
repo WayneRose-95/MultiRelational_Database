@@ -1,236 +1,181 @@
-from selenium.webdriver import Chrome
-from selenium.webdriver import ChromeOptions
-from selenium.webdriver.common.by import By
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.common.exceptions import NoSuchElementException
+import urllib.request
+import pandas as pd
+from datetime import datetime
 from database_scripts.file_handler import get_absolute_file_path
 
-# from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-from selenium.webdriver.chrome.service import Service
-import os
-import logging
-import pandas as pd
-import undetected_chromedriver as uc
 
 
-"""
-LOG DEFINITION
-"""
+class CurrencyExtractor:
+    '''
+    A class which extracts currency data from a url. 
 
-log_filename = get_absolute_file_path(
-    "currency_rate_extractor.log", "logs"
-)  # "logs/currency_rate_extractor.log"
-if not os.path.exists(log_filename):
-    os.makedirs(os.path.dirname(log_filename), exist_ok=True)
+    The website needs to have a table of currencies. 
 
-currency_rate_logger = logging.getLogger(__name__)
+    Attributes 
 
-# Set the default level as DEBUG
-currency_rate_logger.setLevel(logging.DEBUG)
+    url: The url of the website 
 
-# Format the logs by time, filename, function_name, level_name and the message
-format = logging.Formatter(
-    "%(asctime)s:%(filename)s:%(funcName)s:%(levelname)s:%(message)s"
-)
-file_handler = logging.FileHandler(log_filename)
+    Methods 
 
-# Set the formatter to the variable format
+    read_html_data()
+    html_to_dataframe()
+    merge_dataframes()
+    convert_columns() 
+    save_data() 
+    '''
+    def __init__(self, url):
+        self.url = url
 
-file_handler.setFormatter(format)
+    def read_html_data(self):
+        '''
+        Method to read in html data using urllib.request 
 
-currency_rate_logger.addHandler(file_handler)
+        Given a url to a website, the method will read the html code of said website 
 
+        Returns: 
 
-class CurrencyRateExtractor:
-    def __init__(self, undetected_chrome=False):
+        html : _UrlopenRet 
 
-        chrome_options = ChromeOptions()
+        The html from the website 
+        '''
+        with urllib.request.urlopen(self.url) as webpage:
+            html = webpage.read()
 
-        # chrome_options.add_argument(generate_user_agent())
-        # caps = DesiredCapabilities().CHROME
-        # caps["pageLoadStrategy"] = "normal"
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--window-size=1920,1080")
-        chrome_options.add_argument("--remote-debugging-port=9222")
+        return html
 
-        if undetected_chrome:
-            self.driver = uc.Chrome(
-                use_subprocess=True,
-                options=chrome_options
-                )
-        else:
-            self.driver = Chrome(
-                service=Service(ChromeDriverManager().install()), options=chrome_options
-            )  
+    def html_to_dataframe(self, html, index_number: int):
+        '''
+        Method to read in html data into a pandas dataframe. 
 
-    def land_first_url(self, page_url: str):
-        """
-        Method to get the url of the website
+        The method uses pd.read_html() to read in html data into a dataframe 
 
-        Parameters:
-        page_url : str
-        The url of the webpage
+        Parameters: 
 
-        Returns an exception if the url is invalid.
-        """
+        html : _UrlopenRet 
 
-        try:
-            initial_webpage = self.driver.get(page_url)
-            currency_rate_logger.info("Successfully landed first page")
-            currency_rate_logger.debug(page_url)
-        except:
-            currency_rate_logger.exception("Error accessing first page")
+        The html data extracted from the website. 
 
-    def extract_timestamp(self, timestamp_xpath: str):
-        """
-        Method to extract the timestamp from the website
+        index_number : int 
 
-        Parameters:
-        timestamp_xpath : str
-        The xpath representing the timestamp web element
+        The index representing the html table extracted 
 
         Returns:
-        timestamp : str
-        The timestamp extracted from the website as a string
-        """
-        currency_rate_logger.debug("Extracting timestamp from website")
-        timestamp = self.driver.find_element(By.XPATH, timestamp_xpath).text
-        currency_rate_logger.info(f"Timestamp extracted : {timestamp}")
-        return timestamp
 
-    def extract_table(self, table_body_xpath: str):
-        """
-        Method to extract the table data from the website using an xpath
+        html_datatable : pd.DataFrame 
+        A dataframe containing html data 
 
-        Parameters:
-        table_body_xpath : str
-        The xpath representing the table on the website
+        Example Usage:
 
-        Returns data : list
-        A list of lists containing the extracted table data
-        """
-        data = []
-        try:
-            currency_rate_logger.debug("Extracting data table from website")
-            # Find the table_container_xpath
-            table_container = self.driver.find_element(By.XPATH, table_body_xpath)
-            currency_rate_logger.debug(table_container)
-            print(table_container)
+        c = CurrencyExtractor(https://www.sampleurl.com)
 
-            # Extract the table rows from the table element found in a loop
-            for tr_tag in table_container.find_elements(By.XPATH, "//tr"):
-                # Add these to the data list using a list comprehension
-                row = [item.text for item in tr_tag.find_elements(By.XPATH, ".//td")]
-                data.append(row)
+        html_data = c.read_html_data()
 
-            # Print the data to the console and the number of elements in the list. 
-            print(data)
-            print(len(data))
-            currency_rate_logger.info("Data table extracted")
-            currency_rate_logger.debug(f"Number of rows : {len(data)}")
-            return data
+        df = c.html_to_dataframe(html_data, 0)
+        '''
+        html_datatable = pd.read_html(html)[index_number]
 
-        # If this does not work, return an empty list. 
-        except:
-            currency_rate_logger.warning("No data found. Returning empty list")
-            return []
+        return html_datatable
 
-    def data_to_dataframe(self, data: list or dict, headers: list, file_name: str):
-        """
-        Method to convert the data extracted from the website
-        to a pandas DataFrame.
-
-        Parameters:
-        data : list or dict
-        The data extracted from the webiste
-
-        headers : list
-        The list of headers for the pandas DataFrame
-
-        file_name : str
-        The name of the file to be exported to .csv
-        """
-        currency_rate_logger.info("Reading the data into a dataframe")
-        # Make a dataframe from the raw_data then convert it to a .csv file. 
-        raw_data = pd.DataFrame(data, columns=headers)
-        raw_data.to_csv(f"{file_name}.csv", columns=headers)
-        currency_rate_logger.info(f"{file_name}.csv successfully exported")
-        print(f"{file_name}.csv successfully exported")
-        # Return the raw_data to a .csv file 
-        return raw_data
-
-    def scrape_information(
-        self,
-        page_url: str,
-        table_body_xpath: str,
-        timestamp_xpath: str,
-        data_headers: list,
-        file_name: str,
+    def merge_dataframes(
+        self, join_clause: str, first_df: pd.DataFrame, second_df : pd.DataFrame
     ):
-        """
-        Method to combine all other methods to scrape information from the website.
+        '''
+        Method to merge two dataframes 
+
+        The method takes in two dataframes and a join_clause  
+
+        The result is a merged dataframe object. 
 
         Parameters:
-        page_url : str
-        The url to the webpage
 
-        table_body_xpath : str
-        The xpath for the table on the website
+        join_clause : str 
 
-        timestamp_xpath : str
-        The xpath for the timestamp on the website
+        The join_clause used to join the two tables together. 
 
-        data_headers : list
-        The list of headers for the DataFrame
+        Accepted Values: "left", "right", "inner", "cross", "outer"
 
-        file_name : str
-        The name of the file exported to .csv
+        first_df : pd.DataFrame 
 
-        Returns:
-        dataframe, timestamp
-        A tuple containing the dataframe created from the data,
-        and the timestampe extracted from the website.
+        The first dataframe to be used. 
 
-        """
+        This is the lead table for the join clause 
 
-        currency_rate_logger.info(f"Attempting to land {page_url}")
-        # call the land_first_url method 
-        self.land_first_url(page_url)
+        second_df : pd.DataFrame 
 
-        currency_rate_logger.info(f"Attempting to extract table from {page_url}")
-        # Extract the table from the website 
-        data = self.extract_table(table_body_xpath)
+        The second dataframe to be used  
 
-        currency_rate_logger.info("Extracting timestamp")
-        # Extract the timestamp element from the website 
-        timestamp = self.extract_timestamp(timestamp_xpath)
+        '''
+        combined_df = pd.merge(first_df, second_df, how=join_clause)
 
-        currency_rate_logger.info("Converting data extracted to DataFrame")
-        # Next, convert the data to a dataframe, and save it. 
-        dataframe = self.data_to_dataframe(data, data_headers, file_name)
-        currency_rate_logger.info(f"Table scraped. Please check {file_name}.csv file")
-        # Once completed, close the window. 
-        print(f"Table scraped. Please check {file_name}.csv file")
-        self.driver.quit()
-        return dataframe, timestamp
+        return combined_df
+
+    @staticmethod
+    def convert_columns(dataframe: pd.DataFrame, column_names: list):
+        '''
+        Staticmethod to convert columns into set column names 
+
+        Parameters: 
+
+        dataframe : pd.DataFrame 
+
+        The dataframe which contains the columns 
+
+        column_names : list 
+
+        The names of the columns 
+
+        Returns: 
+
+        column_names: list
+
+        The names of the columns returned. 
+        '''
+        dataframe.columns = column_names
+
+        return column_names
+
+    def save_data(self, raw_data: pd.DataFrame, file_name: str, headers: list):
+        '''
+        Method to save the data. 
+
+        Currently, only .csv files are supported 
+
+        Parameters: 
+
+        raw_data : pd.DataFrame 
+        
+        The dataframe to be saved into a .csv file 
+
+        file_name : str 
+
+        The name of the file to save 
+
+        headers : list 
+        
+        The names of the column headers
+
+        Returns: 
+
+        None
+
+        '''
+        column_headers = self.convert_columns(dataframe=raw_data, column_names=headers)
+        raw_data.to_csv(f"{file_name}.csv", columns=headers)
+        print(f"{file_name}.csv successfully exported")
 
 
 if __name__ == "__main__":
-    currency_conversions_file = get_absolute_file_path(
-        "currency_conversions", "source_data_files"
-    )
-    sample_extractor = CurrencyRateExtractor(undetected_chrome=True)
-    dataframe, timestamp = sample_extractor.scrape_information(
-        "https://www.x-rates.com/table/?from=GBP&amount=1",
-        '//table[@class="tablesorter ratesTable"]/tbody',
-        '//*[@id="content"]/div[1]/div/div[1]/div[1]/span[2]',
+    file_path = get_absolute_file_path("currency_conversions_poc ", "source_data_files")
+    c_ext = CurrencyExtractor("https://www.x-rates.com/table/?from=GBP&amount=1")
+    html_data = c_ext.read_html_data()
+    first_table = c_ext.html_to_dataframe(html_data, 0)
+    second_table = c_ext.html_to_dataframe(html_data, 1)
+
+    combined_table = c_ext.merge_dataframes("right", first_table, second_table)
+
+    c_ext.save_data(
+        combined_table,
+        file_path,
         ["currency_name", "conversion_rate", "conversion_rate_percentage"],
-        currency_conversions_file,
     )
+    print("Success?")
