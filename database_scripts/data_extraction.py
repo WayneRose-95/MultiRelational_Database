@@ -1,5 +1,4 @@
 from database_scripts.database_utils import DatabaseConnector
-from database_scripts.currency_rate_extraction import CurrencyRateExtractor
 from database_scripts.file_handler import get_absolute_file_path
 from sqlalchemy import inspect
 from sqlalchemy import select
