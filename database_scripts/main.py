@@ -586,13 +586,13 @@ if __name__ == "__main__":
         credentials_directory_name='credentials',
         source_data_directory_name='source_data_files',
         source_database_creds_file="db_creds.yaml",
-        target_database_creds_file="sales_data_creds_dev.yaml",
+        target_database_creds_file="sales_data_creds.yaml",
         currency_url="https://www.x-rates.com/table/?from=GBP&amount=1",
         source_text_file="currency_code_mapping",
         json_source_file="country_data.json",
         exported_csv_file="currency_conversions.csv",
         source_database_name='postgres',
-        target_database_name='sales_data_dev'
+        target_database_name='sales_data'
 
     )
 
