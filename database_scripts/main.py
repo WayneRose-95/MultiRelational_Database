@@ -4,7 +4,7 @@ from database_scripts.data_extraction import DatabaseExtractor
 from database_scripts.data_cleaning import DataCleaning 
 from database_scripts.currency_rate_extraction import CurrencyExtractor
 from database_scripts.file_handler import get_absolute_file_path
-from sqlalchemy import Column, VARCHAR, DATE, FLOAT, SMALLINT, BOOLEAN, TIME, NUMERIC, TIMESTAMP
+from sqlalchemy import Column, VARCHAR, DATE, FLOAT, SMALLINT, BOOLEAN, TIME, NUMERIC, TIMESTAMP, INTEGER
 from sqlalchemy.dialects.postgresql import BIGINT, UUID
 from sqlalchemy.engine import Engine
 # Built-in python module imports 
@@ -353,34 +353,37 @@ class ETLProcess:
             {
                 "index": BIGINT,
                 "date_key": BIGINT,
-                "event_time": TIME,
-                "day": VARCHAR(30),
-                "month": VARCHAR(30),
-                "year": VARCHAR(30),
+                "date_uuid": UUID,
+                "day": INTEGER,
+                "month": INTEGER,
+                "year": INTEGER,
                 "time_period": VARCHAR(40),
-                "date_uuid": UUID
+                "event_time": TIME,
+                "full_date": DATE 
+                
             } 
         ))
 
         # Add the dim_date_times tablet o the list of tables to upload
         self.tables_to_upload_list.append((
-        cleaned_time_event_table,
-        self.configuration.target_database_engine,
-        "dim_date_times",
-        "append",
-        None,
-        None,
-        None,
-        {
-        "index": BIGINT,
-        "date_key": BIGINT,
-        "event_time": TIME,
-        "day": VARCHAR(30),
-        "month": VARCHAR(30),
-        "year": VARCHAR(30),
-        "time_period": VARCHAR(40),
-        "date_uuid": UUID
-    } 
+            cleaned_time_event_table,
+            self.configuration.target_database_engine,
+            "dim_date_times",
+            "append",
+            None,
+            None,
+            None,
+            {
+                "index": BIGINT,
+                "date_key": BIGINT,
+                "date_uuid": UUID,
+                "day": INTEGER,
+                "month": INTEGER,
+                "year": INTEGER,
+                "time_period": VARCHAR(40),
+                "event_time": TIME,
+                "full_date": DATE 
+            } 
         ))
         pass
 
