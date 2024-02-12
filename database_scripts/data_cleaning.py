@@ -607,17 +607,21 @@ class DataCleaning:
         data_cleaning_logger.info("Resetting the index of the table")
         # Reset the index
         time_df = time_df.reset_index(drop=True)
+        # Adding a new column full_date which is the full date YYYY-MM-DD format 
+        time_df['full_date'] = pd.to_datetime(time_df[['year', 'month', 'day']]).dt.strftime('%Y-%m-%d')
 
         data_cleaning_logger.info("Changing the column order of the table")
         # Lastly, change the column order
         column_order = [
             "date_key",
-            "timestamp",
+            "date_uuid",
             "day",
             "month",
             "year",
             "time_period",
-            "date_uuid",
+            "timestamp",
+            "full_date",
+            
         ]
         data_cleaning_logger.info(column_order)
 
@@ -625,6 +629,7 @@ class DataCleaning:
 
         data_cleaning_logger.info("New column order")
         data_cleaning_logger.info(time_df.columns)
+        # Rename the timestamp column to event_time 
         time_df.rename(columns={"timestamp": "event_time"}, inplace=True)
 
         data_cleaning_logger.info("Adding new rows to the table in case of unknowns")
@@ -642,14 +647,6 @@ class DataCleaning:
         )
         time_df = pd.concat([new_rows_addition, time_df]).reset_index(drop=True)
 
-        # Try to upload the table to the database
-        # time_datastore_table = self._upload_to_database(
-        #     time_df, self.engine, datastore_table_name
-        # )
-        # data_cleaning_logger.info(
-        #     f"Successfully loaded {datastore_table_name} to database"
-        # )
-        # print(f"Successfully loaded {datastore_table_name} to database")
         data_cleaning_logger.info(
             "Job clean_time_event_table has completed successfully"
         )

@@ -203,15 +203,10 @@ class TestDataCleaning(unittest.TestCase):
         # Next, test if the method returns a dataframe 
         self.assertIsInstance(cleaned_time_event_data, pd.DataFrame)
 
-        # 2. Testing if the number of rows are the same 
-
-        print(f"Number of rows in cleaned_table : {len(cleaned_time_event_data)}")
-        print(f"Number of rows in land_users from Test Database : {len(cleaned_time_event_data)}")
-
-        # 3. Testing if the number of columns are the same. 
+        # 2. Testing if the number of columns are in the same order. 
 
         expected_columns  = [
-            'date_key','event_time','day', 'month', 'year', 'time_period','date_uuid'
+            'date_key','event_time','date_uuid', 'day', 'month', 'year', 'time_period','full_date'
         ]
         # print a comparison between the test_list of columns and the expected list of columns
         print(f"The test list: {cleaned_time_event_data.columns.tolist()}")
