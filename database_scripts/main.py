@@ -266,7 +266,19 @@ def time_events_pipeline():
     )
 
 def orders_table_pipeline():
+    raw_orders_table = extractor.read_rds_table('orders_table', source_engine)
+    print(raw_orders_table)
+    cleaned_orders_table = cleaner.clean_orders_table(source_engine, raw_orders_table, 'orders_table')
+    print(cleaned_orders_table)
 
+    # Uploading tables to database 
+    connector.upload_to_db(
+        cleaned_orders_table
+        , target_engine
+        , "orders_table"
+        , "append"
+        , schema_config=db_schema
+    )
     pass     
 
 
@@ -822,7 +834,8 @@ if __name__ == "__main__":
     # store_data_pipeline()
     # product_details_pipeline()
     # card_details_pipeline() 
-    time_events_pipeline() 
+    # time_events_pipeline() 
+    orders_table_pipeline()
 
 #     etl_configuration = Configuration(
 #         credentials_directory_name='credentials',
