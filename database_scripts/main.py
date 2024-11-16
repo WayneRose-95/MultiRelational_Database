@@ -55,6 +55,10 @@ connector = DatabaseConnector()
 extractor = DataExtractor()
 cleaner = DataCleaning() 
 
+# Create the target database 
+target_database_conn_string = connector.create_connection_string(target_database_creds_file, True, new_db_name='postgres')
+connector.create_database('sales_data_concept', target_database_conn_string)
+
 source_database_creds = connector.read_database_credentials(source_database_creds_file)
 
 # Connecting to source database 
@@ -63,10 +67,6 @@ source_engine = connector.initialise_database_connection(source_database_creds_f
 # Connecting to target database 
 target_engine = connector.initialise_database_connection(target_database_creds_file, connect_to_database=True, new_db_name=target_database_name)
 
-# Connection string to connect to target server 
-target_database_conn_string = connector.create_connection_string(target_database_creds_file, True, new_db_name='postgres')
-
-connector.create_database('sales_data_concept', target_database_conn_string)
 
 def user_data_pipeline():
     # Extract User Data From RDS 
@@ -122,6 +122,39 @@ def store_data_pipeline():
     # Clean the raw_data 
     cleaned_store_data_table = cleaner.clean_store_data(source_engine, raw_store_details_table, 'legacy_store_details')
     print(cleaned_store_data_table)
+
+    new_store_rows = [
+        {"store_key": -1, "store_address": "Not Applicable"},
+        {"store_key": 0, "store_address": "Unknown"},
+    ]
+
+    connector.upload_to_db(
+        raw_store_details_table
+        ,target_engine
+        ,'raw_store_data'
+        ,'replace'   
+    )
+    
+    connector.upload_to_db(
+        cleaned_store_data_table
+        , target_engine
+        , 'land_store_data'
+        ,"replace"
+        , schema_config=db_schema
+    )
+
+    connector.upload_to_db(
+        cleaned_store_data_table
+        , target_engine
+        , "dim_store_details"
+        , "append"
+        , additional_rows=new_store_rows
+        , schema_config=db_schema
+    )
+
+def product_details_pipeline(): 
+    
+    pass 
 
 
 
@@ -671,7 +704,9 @@ def store_data_pipeline():
 #         )
 
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
+    # user_data_pipeline()
+    store_data_pipeline()
 
 #     etl_configuration = Configuration(
 #         credentials_directory_name='credentials',

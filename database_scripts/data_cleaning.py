@@ -281,18 +281,18 @@ class DataCleaning:
 
         data_cleaning_logger.info("Adding new rows to cover for unknown values")
 
-        new_rows_addition = self.add_new_rows(
-            [
-                {"store_key": -1, "store_address": "Not Applicable"},
-                {"store_key": 0, "store_address": "Unknown"},
-            ]
-        )
-        data_cleaning_logger.info("New rows addded")
-        data_cleaning_logger.info("Concatenating new rows with store_dataframe")
+        # new_rows_addition = self.add_new_rows(
+        #     [
+        #         {"store_key": -1, "store_address": "Not Applicable"},
+        #         {"store_key": 0, "store_address": "Unknown"},
+        #     ]
+        # )
+        # data_cleaning_logger.info("New rows addded")
+        # data_cleaning_logger.info("Concatenating new rows with store_dataframe")
 
-        legacy_store_dataframe = pd.concat(
-            [new_rows_addition, legacy_store_dataframe]
-        ).reset_index(drop=True)
+        # legacy_store_dataframe = pd.concat(
+        #     [new_rows_addition, legacy_store_dataframe]
+        # ).reset_index(drop=True)
 
         data_cleaning_logger.debug(f"Number of Rows : {len(legacy_store_dataframe)}")
 
