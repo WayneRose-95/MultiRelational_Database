@@ -11,6 +11,7 @@ from sqlalchemy.engine import Engine
 import logging 
 import os 
 import time 
+import yaml 
 
 """
 LOG DEFINITION
@@ -36,20 +37,94 @@ file_handler.setFormatter(format)
 
 main_logger.addHandler(file_handler)
 
-# credentials_directory_name='credentials',
-# source_data_directory_name='source_data_files',
-source_database_creds_file= "../credentials/db_creds.yaml"
-target_database_creds_file= "../credentials/sales_data_creds.yaml"
-currency_url= "https://www.x-rates.com/table/?from=GBP&amount=1"
-source_text_file= "../source_data_files/currency_code_mapping.txt"
-json_source_file= "../source_data_files/country_data.json"
-exported_csv_file= "../source_data_files/currency_conversions.csv"
-source_database_name= 'postgres'
-target_database_name= 'sales_data'
 
+source_database_creds_file = "../credentials/db_creds.yaml"
+target_database_creds_file = "../credentials/sales_data_creds.yaml"
+currency_url = "https://www.x-rates.com/table/?from=GBP&amount=1"
+source_text_file = "../source_data_files/currency_code_mapping.txt"
+json_source_file = "../source_data_files/country_data.json"
+exported_csv_file = "../source_data_files/currency_conversions.csv"
+source_database_name = 'postgres'
+target_database_name = 'sales_data_concept'
+
+with open('../credentials/database_schema.yaml') as schema_file:
+    db_schema = yaml.safe_load(schema_file)
+
+# Recreating user data pipeline 
 connector = DatabaseConnector()
 extractor = DataExtractor()
 cleaner = DataCleaning() 
+
+source_database_creds = connector.read_database_credentials(source_database_creds_file)
+
+# Connecting to source database 
+source_engine = connector.initialise_database_connection(source_database_creds_file, connect_to_database=True, new_db_name=source_database_name)
+
+# Connecting to target database 
+target_engine = connector.initialise_database_connection(target_database_creds_file, connect_to_database=True, new_db_name=target_database_name)
+
+# Connection string to connect to target server 
+target_database_conn_string = connector.create_connection_string(target_database_creds_file, True, new_db_name='postgres')
+
+connector.create_database('sales_data_concept', target_database_conn_string)
+
+def user_data_pipeline():
+    # Extract User Data From RDS 
+    user_table = extractor.read_rds_table('legacy_users', source_engine)
+
+    print(user_table)
+    cleaned_user_table = cleaner.clean_user_data(source_engine, user_table, 'legacy_users')
+    print(cleaned_user_table)
+
+    new_user_rows = [
+        {
+            "user_key": -1,
+            "first_name": "Not Applicable",
+            "last_name": "Not Applicable",
+        },
+        {
+            "user_key": 0, 
+            "first_name": "Unknown", 
+            "last_name": "Unknown"
+        }
+    ]
+
+    connector.upload_to_db(
+        user_table
+        ,target_engine
+        ,'raw_user_data'
+        ,'replace'
+        
+
+    )
+    connector.upload_to_db(
+        cleaned_user_table
+        , target_engine
+        , 'land_user_data'
+        ,"replace"
+        , schema_config=db_schema
+        )
+
+    connector.upload_to_db(
+        cleaned_user_table
+        , target_engine
+        , "dim_users"
+        , "append"
+        , additional_rows=new_user_rows
+        , schema_config=db_schema
+    )
+
+
+def store_data_pipeline():
+    # Extract the source data from the RDS 
+    raw_store_details_table = extractor.read_rds_table('legacy_store_details', source_engine)
+    print(raw_store_details_table)
+    # Clean the raw_data 
+    cleaned_store_data_table = cleaner.clean_store_data(source_engine, raw_store_details_table, 'legacy_store_details')
+    print(cleaned_store_data_table)
+
+
+
 # class Configuration:
 #     '''
 #     A class which is responsible for setting the configuration of the databases and file locations used 
@@ -394,9 +469,11 @@ cleaner = DataCleaning()
 #                 "day": INTEGER,
 #                 "month": INTEGER,
 #                 "year": INTEGER,
-#                 "time_period": VARCHAR(40),
 #                 "event_time": TIME,
-#                 "full_date": DATE 
+#                 "full_date": DATE, 
+#                 "time_period": VARCHAR(40),
+#                 
+#                 
 #             } 
 #         ))
 #         pass

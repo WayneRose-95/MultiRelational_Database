@@ -1,7 +1,4 @@
-from database_scripts.data_extraction import DatabaseExtractor
-from database_scripts.database_utils import DatabaseConnector
 from database_scripts.file_handler import get_absolute_file_path
-from sqlalchemy import create_engine, Column, VARCHAR, DATE, FLOAT, SMALLINT, BOOLEAN, TIME, NUMERIC, TIMESTAMP
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.engine import Engine
 from sqlalchemy.dialects.postgresql import BIGINT, UUID
@@ -129,29 +126,6 @@ class DataCleaning:
         ]
         legacy_users_dataframe = legacy_users_dataframe[column_order]
 
-        new_rows_addition = self.add_new_rows(
-            [
-                {
-                    "user_key": -1,
-                    "first_name": "Not Applicable",
-                    "last_name": "Not Applicable",
-                },
-                {
-                    "user_key": 0, 
-                    "first_name": "Unknown", 
-                    "last_name": "Unknown"
-                }
-            ]
-        )
-        data_cleaning_logger.debug(new_rows_addition)
-
-        data_cleaning_logger.info(
-            "Appending the new_rows to the beginning of the dataframe"
-        )
-
-        legacy_users_dataframe = pd.concat(
-            [new_rows_addition, legacy_users_dataframe]
-        ).reset_index(drop=True)
         data_cleaning_logger.info("Appended new rows to the beginning of the dataframe")
         data_cleaning_logger.debug(f"Number of rows : {len(legacy_users_dataframe)}")
         data_cleaning_logger.debug(f"Job clean_user_data has completely successfully")

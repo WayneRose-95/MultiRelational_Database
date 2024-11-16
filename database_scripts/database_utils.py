@@ -2,7 +2,7 @@ import yaml
 from sqlalchemy import create_engine
 from sqlalchemy import inspect
 from sqlalchemy import text
-from sqlalchemy import MetaData, Table, Column, VARCHAR, DATE, FLOAT, SMALLINT, BOOLEAN, TIME, NUMERIC, TIMESTAMP, INTEGER, UUID, DATETIME, DECIMAL
+from sqlalchemy import MetaData, Table, Column, VARCHAR, DATE, FLOAT, SMALLINT, BOOLEAN, TIME, NUMERIC, TIMESTAMP, INTEGER, UUID, DATETIME, DECIMAL, BIGINT
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
@@ -42,6 +42,7 @@ database_utils_logger.addHandler(file_handler)
 class DatabaseConnector:
     def __init__(self):
                 self.type_mapping =  {
+            "BIGINT": BIGINT,
             "VARCHAR": VARCHAR,
             "DATE": DATE,
             "FLOAT": FLOAT,
@@ -327,7 +328,7 @@ class DatabaseConnector:
         mapping: dict = None,
         subset: list = None,
         additional_rows: list = None,
-        column_datatypes=None
+        schema_config=None
     ):
         """
         Method to upload the table to the database
@@ -384,9 +385,17 @@ class DatabaseConnector:
             database_utils_logger.info(
                 f"Attempting to upload table {table_name} to the database"
             )
+            if schema_config:
+                # Upload with a schema attached
+                column_types = schema_config["schemas"]["tables"][table_name]
+                table_schema = self.generate_table_schema(table_name, column_types)
+                dataframe.to_sql(table_name, con=connection, if_exists=table_condition, dtype={col.name: col.type for col in table_schema.columns}, index=False)
+                database_utils_logger.info("Table Uploaded")
+            else:
+                # Upload with no schema attached
+                dataframe.to_sql(table_name, con=connection, if_exists=table_condition, index=False)
+                database_utils_logger.info("Table Uploaded")
 
-            dataframe.to_sql(table_name, con=connection, if_exists=table_condition, dtype=column_datatypes)
-            database_utils_logger.info("Table Uploaded")
         except:
             database_utils_logger.exception(
                 f"Error uploading table to the database. Connection used : {connection}"

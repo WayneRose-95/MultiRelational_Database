@@ -72,31 +72,7 @@ class DataExtractor:
                 f"Successfully connected to database via {connection}"
             )
 
-            # Initialise a MetaData object
-            metadata = MetaData()
-
-            # Set a user table object
-            user_table = Table(table_name, metadata, autoload_with=connection)
-
-            # Show the table
-            print(metadata.tables.keys())
-            data_extraction_logger.debug(
-                f"List of tables within the database {metadata.tables.keys()}"
-            )
-
-            # Do a select statement to select all rows of the table
-            print(select(user_table))
-            data_extraction_logger.debug(
-                f"SQL Statement Submitted to database : {print(select(user_table))}"
-            )
-            # Declare a select statement on the table to select all rows of the table
-            select_statement = str(select(user_table))
-
-            data_extraction_logger.info("Creating DataFrame from {select_statement}")
-            # Pass this select statement into a pandas function, which reads the sql query
-            dataframe_table = pd.read_sql(select_statement, con=connection)
-            data_extraction_logger.info("Successfully created DataFrame")
-            # Return the dataframe_table as an output of the method
+            dataframe_table = pd.read_sql_table(table_name, engine)
             return dataframe_table
 
         except OperationalError as e:
@@ -111,7 +87,7 @@ class DataExtractor:
             data_extraction_logger.exception(
                 "An error occured while reading the table. Please view the traceback message"
             )
-            raise ValueError(f"Error occured while reading table '{table_name}' : {e}")
+            raise Exception(f"Error occured while reading table '{table_name}' : {e}")
 
     def retrieve_pdf_data(self, link_to_pdf: str):
         """
