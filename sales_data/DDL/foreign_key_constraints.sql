@@ -16,7 +16,7 @@ REFERENCES dim_date_times (date_key);
 ALTER TABLE orders_table
 ADD CONSTRAINT fk_dim_product_details
 FOREIGN KEY (product_key)
-REFERENCES dim_product_details (product_key);
+REFERENCES dim_product (product_key);
 
 -- Adding FK constraint to Orders Table on dim_store_details table
 ALTER TABLE orders_table
