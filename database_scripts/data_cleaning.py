@@ -577,10 +577,10 @@ class DataCleaning:
             "day",
             "month",
             "year",
-            "time_period",
             "timestamp",
             "full_date",
-            
+            "time_period"
+             
         ]
         data_cleaning_logger.info(column_order)
 
@@ -588,23 +588,21 @@ class DataCleaning:
 
         data_cleaning_logger.info("New column order")
         data_cleaning_logger.info(time_df.columns)
-        # Rename the timestamp column to event_time 
-        time_df.rename(columns={"timestamp": "event_time"}, inplace=True)
 
-        data_cleaning_logger.info("Adding new rows to the table in case of unknowns")
-        new_rows_addition = self.add_new_rows(
-            [
-                {"date_key": -1, "event_time": "00:00:00"},
-                {"date_key": 0, "event_time": "00:00:00"},
-            ]
-        )
-        data_cleaning_logger.info("New rows added")
-        data_cleaning_logger.info(new_rows_addition)
+        # data_cleaning_logger.info("Adding new rows to the table in case of unknowns")
+        # new_rows_addition = self.add_new_rows(
+        #     [
+        #         {"date_key": -1, "timestamp": "00:00:00"},
+        #         {"date_key": 0, "timestamp": "00:00:00"},
+        #     ]
+        # )
+        # data_cleaning_logger.info("New rows added")
+        # data_cleaning_logger.info(new_rows_addition)
 
-        data_cleaning_logger.info(
-            "Concatenating new rows to the start of the dataframe"
-        )
-        time_df = pd.concat([new_rows_addition, time_df]).reset_index(drop=True)
+        # data_cleaning_logger.info(
+        #     "Concatenating new rows to the start of the dataframe"
+        # )
+        # time_df = pd.concat([new_rows_addition, time_df]).reset_index(drop=True)
 
         data_cleaning_logger.info(
             "Job clean_time_event_table has completed successfully"
