@@ -770,35 +770,6 @@ class DataCleaning:
         currency_table = currency_table[column_order]
         data_cleaning_logger.info(currency_table.columns)
 
-        # new_rows_addition = self.add_new_rows(
-        #     [
-        #         {
-        #             "currency_key": -1,
-        #             "currency_conversion_key": -1,
-        #             "currency_code": "Not Applicable",
-        #         },
-        #         {
-        #             "currency_key": 0,
-        #             "currency_conversion_key": 0,
-        #             "currency_code": "Unknown",
-        #         },
-        #     ]
-        # )
-        # data_cleaning_logger.info("New rows added")
-        # data_cleaning_logger.info(new_rows_addition)
-
-        # data_cleaning_logger.info("Concatenating new rows to the start of the table")
-        # land_currency_table = pd.concat(
-        #     [new_rows_addition, currency_table]
-        # ).reset_index(drop=True)
-
-        # Uploading land_table_to_datastore
-        # currency_datastore_table = self._upload_to_database(
-        #     land_currency_table, self.engine, datastore_table_name
-        # )
-        # data_cleaning_logger.info(
-        #     f"Successfully loaded {datastore_table_name} to database"
-        #)
         data_cleaning_logger.info(
             "Job clean_currency_table has completed successfully."
         )
@@ -838,7 +809,7 @@ class DataCleaning:
         data_cleaning_logger.debug(f"Number of rows : {len(no_duplicates_dataframe)}")
 
         # Getting the datetime using utcnow() 
-        current_utc_time = datetime.utcnow()
+        current_utc_time = datetime.now() 
 
         # Specify the UTC timezone
         utc_timezone = pytz.utc
@@ -941,24 +912,24 @@ class DataCleaning:
         data_cleaning_logger.info("New column order implemented")
         data_cleaning_logger.debug(updated_df.columns)
 
-        # Adding new rows to cover for unknowns
-        data_cleaning_logger.info("Adding new rows to cover for unknowns")
-        new_rows_addition = self.add_new_rows(
-            [
-                {"currency_conversion_key": -1, "currency_name": "Not Applicable"},
-                {"currency_conversion_key": 0, "currency_name": "Unknown"},
-            ]
-        )
+        # # Adding new rows to cover for unknowns
+        # data_cleaning_logger.info("Adding new rows to cover for unknowns")
+        # new_rows_addition = self.add_new_rows(
+        #     [
+        #         {"currency_conversion_key": -1, "currency_name": "Not Applicable"},
+        #         {"currency_conversion_key": 0, "currency_name": "Unknown"},
+        #     ]
+        # )
 
-        cleaned_currency_conversion_df = pd.concat([new_rows_addition, updated_df])
-        data_cleaning_logger.info("Successfully concatentated rows from together")
+        # cleaned_currency_conversion_df = pd.concat([new_rows_addition, updated_df])
+        # data_cleaning_logger.info("Successfully concatentated rows from together")
 
 
         data_cleaning_logger.info(
             "Job clean_currency_exchange_rates completed successfully"
         )
         print("Job clean_currency_exchange rates has been completed successfully")
-        return cleaned_currency_conversion_df
+        return updated_df
 
     @staticmethod
     def add_new_rows(rows_to_add: list):

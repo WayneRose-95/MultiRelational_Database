@@ -41,7 +41,7 @@ main_logger.addHandler(file_handler)
 source_database_creds_file = "../credentials/db_creds.yaml"
 target_database_creds_file = "../credentials/sales_data_creds.yaml"
 currency_url = "https://www.x-rates.com/table/?from=GBP&amount=1"
-source_text_file = "../source_data_files/currency_code_mapping.txt"
+source_text_file = "../source_data_files/currency_code_mapping"
 json_source_file = "../source_data_files/country_data.json"
 exported_csv_file = "../source_data_files/currency_conversions.csv"
 source_database_name = 'postgres'
@@ -318,6 +318,80 @@ def currency_data_pipeline():
         , subset=["US", "GB", "DE"]
         , schema_config=db_schema
     )
+
+def currency_conversion_pipeline():
+        html_data = currency_extractor.read_html_data()
+        first_table = currency_extractor.html_to_dataframe(html_data, 0)
+        second_table = currency_extractor.html_to_dataframe(html_data, 1)
+
+        combined_table = currency_extractor.merge_dataframes("right", first_table, second_table)
+        print(combined_table)
+
+        cleaned_currency_conversion_table = cleaner.clean_currency_exchange_rates(
+            combined_table, 
+            source_text_file
+            )
+        print(cleaned_currency_conversion_table)
+
+        new_currency_rows =  [
+                {"currency_conversion_key": -1, "currency_name": "Not Applicable"},
+                {"currency_conversion_key": 0, "currency_name": "Unknown"},
+            ]
+        
+        connector.upload_to_db(
+        cleaned_currency_conversion_table
+        , target_engine
+        , "land_currency_conversion_data"
+        ,"replace"
+        , schema_config=db_schema
+    )
+        
+        connector.upload_to_db(
+            cleaned_currency_conversion_table
+            , target_engine
+            , "dim_currency_conversion"
+            , "append"
+            , additional_rows=new_currency_rows
+            , subset=["USD", "GBP", "EUR"]
+            , schema_config=db_schema
+    )
+
+def alter_and_update_database():
+
+    # # Adding logic to populate the weight class column in the dim_products_table
+    connector.alter_and_update(
+        get_absolute_file_path("add_weight_class_column_script.sql", r"sales_data\DML"),
+        target_engine
+    )
+
+    # Adding primary keys to tables 
+    connector.alter_and_update(
+        get_absolute_file_path("add_primary_keys.sql", r"sales_data\DDL"),
+        target_engine
+        )
+
+    # Adding foreign key constraints to tables 
+    connector.alter_and_update(
+        get_absolute_file_path("foreign_key_constraints.sql", r"sales_data\DDL"),
+        target_engine
+    )
+
+    # Mapping foreign keys to empty key columns in fact table and dim_currency table
+    connector.alter_and_update(
+        get_absolute_file_path(
+            "update_foreign_keys.sql", r"sales_data\DML"
+        ),
+        target_engine
+    )
+
+    # Creating views based on database post-load
+    connector.alter_and_update(
+        get_absolute_file_path(
+            "create_views.sql", r"sales_data\DDL"
+        ),
+        target_engine
+    )        
+
     
 
     
@@ -831,52 +905,53 @@ def currency_data_pipeline():
 #         return uploaded_tables
     
 
-#     def alter_and_update_database(self):
+    # def alter_and_update_database():
 
-#         # # Adding logic to populate the weight class column in the dim_products_table
-#         self.configuration.connector.alter_and_update(
-#             get_absolute_file_path("add_weight_class_column_script.sql", r"sales_data\DML"),
-#             self.configuration.target_database_engine
-#         )
+    #     # # Adding logic to populate the weight class column in the dim_products_table
+    #     self.configuration.connector.alter_and_update(
+    #         get_absolute_file_path("add_weight_class_column_script.sql", r"sales_data\DML"),
+    #         self.configuration.target_database_engine
+    #     )
 
-#         # Adding primary keys to tables 
-#         self.configuration.connector.alter_and_update(
-#             get_absolute_file_path("add_primary_keys.sql", r"sales_data\DDL"),
-#             self.configuration.target_database_engine
-#             )
+    #     # Adding primary keys to tables 
+    #     self.configuration.connector.alter_and_update(
+    #         get_absolute_file_path("add_primary_keys.sql", r"sales_data\DDL"),
+    #         self.configuration.target_database_engine
+    #         )
 
-#         # Adding foreign key constraints to tables 
-#         self.configuration.connector.alter_and_update(
-#             get_absolute_file_path("foreign_key_constraints.sql", r"sales_data\DDL"),
-#             self.configuration.target_database_engine
-#         )
+    #     # Adding foreign key constraints to tables 
+    #     self.configuration.connector.alter_and_update(
+    #         get_absolute_file_path("foreign_key_constraints.sql", r"sales_data\DDL"),
+    #         self.configuration.target_database_engine
+    #     )
 
-#         # Mapping foreign keys to empty key columns in fact table and dim_currency table
-#         self.configuration.connector.alter_and_update(
-#             get_absolute_file_path(
-#                 "update_foreign_keys.sql", r"sales_data\DML"
-#             ),
-#             self.configuration.target_database_engine
-#         )
+    #     # Mapping foreign keys to empty key columns in fact table and dim_currency table
+    #     self.configuration.connector.alter_and_update(
+    #         get_absolute_file_path(
+    #             "update_foreign_keys.sql", r"sales_data\DML"
+    #         ),
+    #         self.configuration.target_database_engine
+    #     )
 
-#         # Creating views based on database post-load
-#         self.configuration.connector.alter_and_update(
-#             get_absolute_file_path(
-#                 "create_views.sql", r"sales_data\DDL"
-#             ),
-#             self.configuration.target_database_engine
-#         )
+    #     # Creating views based on database post-load
+    #     self.configuration.connector.alter_and_update(
+    #         get_absolute_file_path(
+    #             "create_views.sql", r"sales_data\DDL"
+    #         ),
+    #         self.configuration.target_database_engine
+    #     )
 
 
 if __name__ == "__main__":
-    # user_data_pipeline()
-    # store_data_pipeline()
-    # product_details_pipeline()
-    # card_details_pipeline() 
-    # time_events_pipeline() 
-    # orders_table_pipeline()
+    user_data_pipeline()
+    store_data_pipeline()
+    product_details_pipeline()
+    card_details_pipeline() 
+    time_events_pipeline() 
+    orders_table_pipeline()
     currency_data_pipeline() 
-
+    currency_conversion_pipeline() 
+    alter_and_update_database()
 #     etl_configuration = Configuration(
 #         credentials_directory_name='credentials',
 #         source_data_directory_name='source_data_files',
