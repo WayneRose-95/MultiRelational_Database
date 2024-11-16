@@ -128,6 +128,7 @@ def store_data_pipeline():
         {"store_key": 0, "store_address": "Unknown"},
     ]
 
+    # Uploading tables to database 
     connector.upload_to_db(
         raw_store_details_table
         ,target_engine
@@ -152,9 +153,86 @@ def store_data_pipeline():
         , schema_config=db_schema
     )
 
+def card_details_pipeline():
+    raw_card_details_table = extractor.retrieve_pdf_data("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf")
+    print(raw_card_details_table)
+
+    cleaned_card_details_table = cleaner.clean_card_details(raw_card_details_table)
+    print(cleaned_card_details_table)
+
+    new_card_details_row_additions = [
+            {"card_key": -1, "card_number": "Not Applicable"},
+            {"card_key": 0, "card_number": "Unknown"},
+        ]
+    
+    # Uploading tables to database 
+    connector.upload_to_db(
+        raw_card_details_table
+        ,target_engine
+        ,'raw_card_data'
+        ,'replace'   
+    )
+    
+    connector.upload_to_db(
+        cleaned_card_details_table
+        , target_engine
+        , 'land_card_data'
+        ,"replace"
+        , schema_config=db_schema
+    )
+
+    connector.upload_to_db(
+        cleaned_card_details_table
+        , target_engine
+        , "dim_card_details"
+        , "append"
+        , additional_rows=new_card_details_row_additions
+        , schema_config=db_schema
+    )
+
 def product_details_pipeline(): 
+    # Extract the raw products table from the S3 bucket 
+    raw_product_details_table = extractor.read_s3_bucket_to_dataframe("s3://data-handling-public/products.csv")
+    print(raw_product_details_table)
+    # Apply the cleaning method to the raw products table 
+    cleaned_product_details_table = cleaner.clean_product_table(raw_product_details_table)
+    print(cleaned_product_details_table)
+
+    new_product_rows = [
+                {"product_key": -1, "ean": "Not Applicable"},
+                {"product_key": 0, "ean": "Unknown"},
+            ]
+    
+    # Uploading tables to database 
+    connector.upload_to_db(
+        raw_product_details_table
+        ,target_engine
+        ,'raw_product_data'
+        ,'replace'   
+    )
+    
+    connector.upload_to_db(
+        cleaned_product_details_table
+        , target_engine
+        , 'land_product_data'
+        ,"replace"
+        , schema_config=db_schema
+    )
+
+    connector.upload_to_db(
+        cleaned_product_details_table
+        , target_engine
+        , "dim_product"
+        , "append"
+        , mapping={"Still_avaliable": True, "Removed": False}
+        , additional_rows=new_product_rows
+        , schema_config=db_schema
+    )
+
+def time_events_pipeline():
     
     pass 
+     
 
 
 
@@ -706,7 +784,9 @@ def product_details_pipeline():
 
 if __name__ == "__main__":
     # user_data_pipeline()
-    store_data_pipeline()
+    # store_data_pipeline()
+    product_details_pipeline()
+    card_details_pipeline() 
 
 #     etl_configuration = Configuration(
 #         credentials_directory_name='credentials',

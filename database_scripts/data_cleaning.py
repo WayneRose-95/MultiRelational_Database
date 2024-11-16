@@ -279,21 +279,6 @@ class DataCleaning:
             {"3n9": "39", "A97": "97", "80R": "80", "J78": "78", "30e": "30"}
         )
 
-        data_cleaning_logger.info("Adding new rows to cover for unknown values")
-
-        # new_rows_addition = self.add_new_rows(
-        #     [
-        #         {"store_key": -1, "store_address": "Not Applicable"},
-        #         {"store_key": 0, "store_address": "Unknown"},
-        #     ]
-        # )
-        # data_cleaning_logger.info("New rows addded")
-        # data_cleaning_logger.info("Concatenating new rows with store_dataframe")
-
-        # legacy_store_dataframe = pd.concat(
-        #     [new_rows_addition, legacy_store_dataframe]
-        # ).reset_index(drop=True)
-
         data_cleaning_logger.debug(f"Number of Rows : {len(legacy_store_dataframe)}")
 
         data_cleaning_logger.info("Job clean_store_data has completed succesfully")
@@ -414,24 +399,24 @@ class DataCleaning:
         # Reset the index of the table to match the indexes to the card_keys
         card_details_table = card_details_table.reset_index(drop=True)
 
-        data_cleaning_logger.info("Adding new rows to the table to cover for unknowns")
-        # Add new rows to the table
-        new_rows_additions = self.add_new_rows(
-            [
-                {"card_key": -1, "card_number": "Not Applicable"},
-                {"card_key": 0, "card_number": "Unknown"},
-            ]
-        )
-        data_cleaning_logger.info("New rows added")
-        data_cleaning_logger.info(new_rows_additions)
+        # data_cleaning_logger.info("Adding new rows to the table to cover for unknowns")
+        # # Add new rows to the table
+        # new_rows_additions = self.add_new_rows(
+        #     [
+        #         {"card_key": -1, "card_number": "Not Applicable"},
+        #         {"card_key": 0, "card_number": "Unknown"},
+        #     ]
+        # )
+        # data_cleaning_logger.info("New rows added")
+        # data_cleaning_logger.info(new_rows_additions)
 
-        data_cleaning_logger.info(
-            "Concatentating the two dataframes together to add the new rows to the top"
-        )
-        # Concatentate the two dataframes together
-        card_details_table = pd.concat(
-            [new_rows_additions, card_details_table]
-        ).reset_index(drop=True)
+        # data_cleaning_logger.info(
+        #     "Concatentating the two dataframes together to add the new rows to the top"
+        # )
+        # # Concatentate the two dataframes together
+        # card_details_table = pd.concat(
+        #     [new_rows_additions, card_details_table]
+        # ).reset_index(drop=True)
         data_cleaning_logger.info(f"Number of rows : {len(card_details_table)}")
         print("Job clean_card_details has been completed successfully")
         return card_details_table
@@ -742,21 +727,6 @@ class DataCleaning:
         products_table = products_table[column_order]
         data_cleaning_logger.info("New column order")
         data_cleaning_logger.info(products_table.columns)
-
-        data_cleaning_logger.info("Adding new rows to the table in case of unknowns")
-        new_rows_addition = self.add_new_rows(
-            [
-                {"product_key": -1, "ean": "Not Applicable"},
-                {"product_key": 0, "ean": "Unknown"},
-            ]
-        )
-
-        data_cleaning_logger.info(
-            "Concatenating new rows to the start of the dataframe"
-        )
-        products_table = pd.concat([new_rows_addition, products_table]).reset_index(
-            drop=True
-        )
 
         data_cleaning_logger.info("Job clean_product_table has completed successfully")
         print("Job clean_product_table has completed successfully")
