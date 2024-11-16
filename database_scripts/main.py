@@ -50,10 +50,11 @@ target_database_name = 'sales_data_concept'
 with open('../credentials/database_schema.yaml') as schema_file:
     db_schema = yaml.safe_load(schema_file)
 
-# Recreating user data pipeline 
+# Instianting Classes 
 connector = DatabaseConnector()
 extractor = DataExtractor()
 cleaner = DataCleaning() 
+currency_extractor = CurrencyExtractor(currency_url) 
 
 # Create the target database 
 target_database_conn_string = connector.create_connection_string(target_database_creds_file, True, new_db_name='postgres')
@@ -281,7 +282,45 @@ def orders_table_pipeline():
     )
     pass     
 
+def currency_data_pipeline():
+    raw_currency_data = extractor.read_json_local(json_source_file)
+    print(raw_currency_data)
+    cleaned_currency_table = cleaner.clean_currency_table(raw_currency_data)
+    print(cleaned_currency_table)   
 
+    new_currency_rows = [
+            {
+                "currency_key": -1,
+                "currency_conversion_key": -1,
+                "currency_code": "Not Applicable",
+            },
+            {
+                "currency_key": 0,
+                "currency_conversion_key": 0,
+                "currency_code": "Unknown",
+            },
+        ]
+    
+    connector.upload_to_db(
+        cleaned_currency_table
+        , target_engine
+        , "land_currency_data"
+        ,"replace"
+        , schema_config=db_schema
+    )
+
+    connector.upload_to_db(
+        cleaned_currency_table
+        , target_engine
+        , "dim_currency"
+        , "append"
+        , additional_rows=new_currency_rows
+        , subset=["US", "GB", "DE"]
+        , schema_config=db_schema
+    )
+    
+
+    
 
 # class Configuration:
 #     '''
@@ -835,7 +874,8 @@ if __name__ == "__main__":
     # product_details_pipeline()
     # card_details_pipeline() 
     # time_events_pipeline() 
-    orders_table_pipeline()
+    # orders_table_pipeline()
+    currency_data_pipeline() 
 
 #     etl_configuration = Configuration(
 #         credentials_directory_name='credentials',

@@ -770,27 +770,27 @@ class DataCleaning:
         currency_table = currency_table[column_order]
         data_cleaning_logger.info(currency_table.columns)
 
-        new_rows_addition = self.add_new_rows(
-            [
-                {
-                    "currency_key": -1,
-                    "currency_conversion_key": -1,
-                    "currency_code": "Not Applicable",
-                },
-                {
-                    "currency_key": 0,
-                    "currency_conversion_key": 0,
-                    "currency_code": "Unknown",
-                },
-            ]
-        )
-        data_cleaning_logger.info("New rows added")
-        data_cleaning_logger.info(new_rows_addition)
+        # new_rows_addition = self.add_new_rows(
+        #     [
+        #         {
+        #             "currency_key": -1,
+        #             "currency_conversion_key": -1,
+        #             "currency_code": "Not Applicable",
+        #         },
+        #         {
+        #             "currency_key": 0,
+        #             "currency_conversion_key": 0,
+        #             "currency_code": "Unknown",
+        #         },
+        #     ]
+        # )
+        # data_cleaning_logger.info("New rows added")
+        # data_cleaning_logger.info(new_rows_addition)
 
-        data_cleaning_logger.info("Concatenating new rows to the start of the table")
-        land_currency_table = pd.concat(
-            [new_rows_addition, currency_table]
-        ).reset_index(drop=True)
+        # data_cleaning_logger.info("Concatenating new rows to the start of the table")
+        # land_currency_table = pd.concat(
+        #     [new_rows_addition, currency_table]
+        # ).reset_index(drop=True)
 
         # Uploading land_table_to_datastore
         # currency_datastore_table = self._upload_to_database(
@@ -803,7 +803,7 @@ class DataCleaning:
             "Job clean_currency_table has completed successfully."
         )
         print("job clean_currency_table has been completed successfully")
-        return land_currency_table
+        return currency_table
 
     #TODO: There is something wrong with this method as the percentage_change column goes to null when it's uploaded. 
     def clean_currency_exchange_rates(
