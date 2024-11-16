@@ -2,6 +2,7 @@ import yaml
 from sqlalchemy import create_engine
 from sqlalchemy import inspect
 from sqlalchemy import text
+from sqlalchemy import MetaData, Table, Column, VARCHAR, DATE, FLOAT, SMALLINT, BOOLEAN, TIME, NUMERIC, TIMESTAMP, INTEGER, UUID, DATETIME, DECIMAL
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
@@ -39,6 +40,21 @@ database_utils_logger.addHandler(file_handler)
 
 
 class DatabaseConnector:
+    def __init__(self):
+                self.type_mapping =  {
+            "VARCHAR": VARCHAR,
+            "DATE": DATE,
+            "FLOAT": FLOAT,
+            "SMALLINT": SMALLINT,
+            "BOOLEAN": BOOLEAN,
+            "TIME": TIME,
+            "NUMERIC": NUMERIC,
+            "TIMESTAMP": TIMESTAMP,
+            "INTEGER": INTEGER,
+            "UUID": UUID, 
+            "DECIMAL": DECIMAL,
+            "DATETIME": DATETIME 
+        }
     def read_database_credentials(self, config_file: yaml):
         """
         Method to read database_credentials from a yaml file
@@ -223,6 +239,84 @@ class DatabaseConnector:
             print("Error occurred while listing tables: %s", str(e))
             raise Exception
         
+    def parse_column_type(self, column_type : str):
+            """
+            Method to parse a column type from a string 
+
+            Parameters
+            ---------- 
+
+                column_type : str 
+
+                    The type of column in a string format 
+
+            Returns
+            -------
+
+                column_type_object : dict 
+
+                    A dictionary which matches the column type to an integer 
+
+            """
+            # Split the desired column name by the first occurence of the '(' character
+            # NOTE: the *column_parameters will set everything else that is split to a list. 
+            column_type_name, *column_parameters = column_type.split('(')
+            # Strip the Whitespace from the column_name 
+            column_type_name = column_type_name.strip()
+            # For the column_parameters variable select the first element of the list,
+            # then remove the last character from the list. 
+            # Afterwards, apply the split method to split the rest of the string by ','s
+            # If the column_parameters variable is empty return an empty list
+            column_parameters = column_parameters[0][:-1].split(',') if column_parameters else []
+            # Map the variable to a SQLAlchemy Type
+            column_type_object = self.type_mapping[column_type_name]
+            # If condition for if column_parameters is not empty
+            if column_parameters:
+                # convert each value in the column_parameter variable to an integer
+                column_type_object = column_type_object(*map(int, column_parameters))
+            return column_type_object
+
+    def generate_table_schema(self, table_name : str, columns : dict):
+        """
+        Method to generate the schema for a desired table name
+        Utilising SQLAlchemy's ORM syntax 
+
+        Parameters
+        ---------- 
+
+            table_name : str 
+
+                The name of the table. 
+
+            columns : dict 
+
+                A dictionary containing key-value pairs for each of the columns
+
+        Returns
+        -------
+
+            table : Table 
+
+                A Table object representing the table to be created inside the database
+        """
+        # Create a MetaData() object
+        metadata = MetaData()
+        table_columns = []
+        # Iterate through the columns dictionary
+        for column_name, column_type in columns.items():
+            # In each iteration, call the parse_column_type function
+            column_type_object = self.parse_column_type(column_type)
+            # Append the tuple to the list of table_columns
+            table_columns.append(Column(column_name, column_type_object))
+        # Create a Table object based on the metadata and schema of the columns dictionary
+        table = Table(table_name, metadata, *table_columns)
+
+        # Print detailed schema information
+        print(f"Table: {table_name}")
+        for column in table.columns:
+            print(f"Column: {column.name}, Type: {column.type}")
+        
+        return table    
 
     def upload_to_db(
         self,
@@ -369,8 +463,7 @@ class DatabaseConnector:
             session.close()
 
 if __name__ == "__main__":
-    yaml_file_path = get_absolute_file_path("db_creds.yaml", "credentials")
+    yaml_file_path = "../credentials/db_creds.yaml"
     new_database = DatabaseConnector()
-    new_database.read_database_credentials(yaml_file_path)
-    new_database.create_connection_string(yaml_file_path)
-    new_database.initialise_database_connection(yaml_file_path)
+    conn_string = new_database.create_connection_string(yaml_file_path)
+    new_database.initialise_database_connection(yaml_file_path, connect_to_database=True, new_db_name='postgres')

@@ -15,7 +15,7 @@ import time
 """
 LOG DEFINITION
 """
-log_filename = get_absolute_file_path("main_reworked.log", "logs")  # "logs/main_reworked.log"
+log_filename = "../logs/main_reworked.log"   # "logs/main_reworked.log"
 if not os.path.exists(log_filename):
     os.makedirs(os.path.dirname(log_filename), exist_ok=True)
 
