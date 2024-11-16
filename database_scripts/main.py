@@ -230,9 +230,44 @@ def product_details_pipeline():
     )
 
 def time_events_pipeline():
+    # Reading the raw_time_event_table from s3
+    raw_time_event_table = extractor.read_json_from_s3("https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json")
+    # Applying cleaning method to raw_time_events_table
+    print(raw_time_event_table)
+    cleaned_time_event_table = cleaner.clean_time_event_table(raw_time_event_table)
+    print(cleaned_time_event_table)
+    new_time_event_rows = [
+                {"date_key": -1, "timestamp": "00:00:00"},
+                {"date_key": 0, "timestamp": "00:00:00"},
+         ]
+    # Uploading tables to database 
+    connector.upload_to_db(
+        raw_time_event_table
+        ,target_engine
+        ,'raw_time_event_data'
+        ,'replace'   
+    )
     
-    pass 
-     
+    connector.upload_to_db(
+        cleaned_time_event_table
+        , target_engine
+        , "land_date_times"
+        ,"replace"
+        , schema_config=db_schema
+    )
+
+    connector.upload_to_db(
+        cleaned_time_event_table
+        , target_engine
+        , "dim_date_times"
+        , "append"
+        , additional_rows=new_time_event_rows
+        , schema_config=db_schema
+    )
+
+def orders_table_pipeline():
+
+    pass     
 
 
 
@@ -785,8 +820,9 @@ def time_events_pipeline():
 if __name__ == "__main__":
     # user_data_pipeline()
     # store_data_pipeline()
-    product_details_pipeline()
-    card_details_pipeline() 
+    # product_details_pipeline()
+    # card_details_pipeline() 
+    time_events_pipeline() 
 
 #     etl_configuration = Configuration(
 #         credentials_directory_name='credentials',
