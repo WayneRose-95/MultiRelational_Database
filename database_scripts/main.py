@@ -8,15 +8,26 @@ from sqlalchemy import Column, VARCHAR, DATE, FLOAT, SMALLINT, BOOLEAN, TIME, NU
 from sqlalchemy.dialects.postgresql import BIGINT, UUID
 from sqlalchemy.engine import Engine
 # Built-in python module imports 
+import json 
 import logging 
 import os 
 import time 
 import yaml 
+"""
+Opening configuration files 
+
+"""
+
+with open('../config/database_schema.yaml') as schema_file:
+    db_schema = yaml.safe_load(schema_file)
+
+with open('../config/main_config.json') as config_file:
+    main_config = json.load(config_file)
 
 """
 LOG DEFINITION
 """
-log_filename = "../logs/main_reworked.log"   # "logs/main_reworked.log"
+log_filename = main_config['filepaths']['logs']['main_log_filepath'] #"../logs/main.log"  
 if not os.path.exists(log_filename):
     os.makedirs(os.path.dirname(log_filename), exist_ok=True)
 
@@ -38,17 +49,17 @@ file_handler.setFormatter(format)
 main_logger.addHandler(file_handler)
 
 
-source_database_creds_file = "../credentials/db_creds.yaml"
-target_database_creds_file = "../credentials/sales_data_creds.yaml"
-currency_url = "https://www.x-rates.com/table/?from=GBP&amount=1"
-source_text_file = "../source_data_files/currency_code_mapping"
-json_source_file = "../source_data_files/country_data.json"
-exported_csv_file = "../source_data_files/currency_conversions.csv"
-source_database_name = 'postgres'
-target_database_name = 'sales_data_concept'
+source_database_creds_file = main_config['filepaths']['databases']['source_database'] # "../credentials/db_creds.yaml"
+target_database_creds_file = main_config['filepaths']['databases']['target_database'] # "../credentials/sales_data_creds.yaml"
+currency_url = main_config['urls']['currency_exchange_url'] # "https://www.x-rates.com/table/?from=GBP&amount=1"
+source_text_file = main_config['filepaths']['source_files']['source_text_file'] # "../source_data_files/currency_code_mapping"
+json_source_file = main_config['filepaths']['source_files']['json_source_file'] # "../source_data_files/country_data.json"
+exported_csv_file = main_config['filepaths']['source_files']['currency_csv_file'] # "../source_data_files/currency_conversions.csv"
+source_database_name = main_config['databases']['source_database'] #'postgres'
+target_database_name = main_config['databases']['target_database'] # 'sales_data'
 
-with open('../credentials/database_schema.yaml') as schema_file:
-    db_schema = yaml.safe_load(schema_file)
+
+
 
 # Instianting Classes 
 connector = DatabaseConnector()
@@ -58,7 +69,7 @@ currency_extractor = CurrencyExtractor(currency_url)
 
 # Create the target database 
 target_database_conn_string = connector.create_connection_string(target_database_creds_file, True, new_db_name='postgres')
-connector.create_database('sales_data_concept', target_database_conn_string)
+connector.create_database(main_config['databases']['target_database'], target_database_conn_string)
 
 source_database_creds = connector.read_database_credentials(source_database_creds_file)
 
@@ -126,7 +137,7 @@ def store_data_pipeline():
 
     new_store_rows = [
         {"store_key": -1, "store_address": "Not Applicable"},
-        {"store_key": 0, "store_address": "Unknown"},
+        {"store_key": 0, "store_address": "Unknown"}
     ]
 
     # Uploading tables to database 
@@ -163,7 +174,7 @@ def card_details_pipeline():
 
     new_card_details_row_additions = [
             {"card_key": -1, "card_number": "Not Applicable"},
-            {"card_key": 0, "card_number": "Unknown"},
+            {"card_key": 0, "card_number": "Unknown"}
         ]
     
     # Uploading tables to database 
@@ -201,7 +212,7 @@ def product_details_pipeline():
 
     new_product_rows = [
                 {"product_key": -1, "ean": "Not Applicable"},
-                {"product_key": 0, "ean": "Unknown"},
+                {"product_key": 0, "ean": "Unknown"}
             ]
     
     # Uploading tables to database 
@@ -239,7 +250,7 @@ def time_events_pipeline():
     print(cleaned_time_event_table)
     new_time_event_rows = [
                 {"date_key": -1, "timestamp": "00:00:00"},
-                {"date_key": 0, "timestamp": "00:00:00"},
+                {"date_key": 0, "timestamp": "00:00:00"}
          ]
     # Uploading tables to database 
     connector.upload_to_db(
