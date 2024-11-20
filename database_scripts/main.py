@@ -89,14 +89,14 @@ def user_data_pipeline():
         user_table
         ,target_engine
         ,main_config['databases']['target_table_names'][0] # raw_user_data
-        ,'replace'
+        ,main_config['table_operations']['replace']
         
     )
     connector.upload_to_db(
         cleaned_user_table
         , target_engine
         , main_config['databases']['target_table_names'][1] # land_user_data
-        ,"replace"
+        , main_config['table_operations']['replace']
         , schema_config=db_schema
         )
 
@@ -104,7 +104,7 @@ def user_data_pipeline():
         cleaned_user_table
         , target_engine
         , main_config['databases']['target_table_names'][2] # dim_users
-        , "append"
+        , main_config['table_operations']['append']
         , additional_rows=new_user_rows
         , schema_config=db_schema
     )
@@ -125,14 +125,14 @@ def store_data_pipeline():
         raw_store_details_table
         ,target_engine
         ,main_config['databases']['target_table_names'][3] # raw_store_data
-        ,'replace'   
+        ,main_config['table_operations']['replace']   
     )
     
     connector.upload_to_db(
         cleaned_store_data_table
         , target_engine
         , main_config['databases']['target_table_names'][4] # 'land_store_data'
-        ,"replace"
+        , main_config['table_operations']['replace']
         , schema_config=db_schema
     )
 
@@ -140,7 +140,7 @@ def store_data_pipeline():
         cleaned_store_data_table
         , target_engine
         , main_config['databases']['target_table_names'][5] # "dim_store_details"
-        , "append"
+        , main_config['table_operations']['append']
         , additional_rows=new_store_rows
         , schema_config=db_schema
     )
@@ -159,14 +159,14 @@ def card_details_pipeline():
         raw_card_details_table
         ,target_engine
         , main_config['databases']['target_table_names'][6] # 'raw_card_data'
-        ,'replace'   
+        ,main_config['table_operations']['replace']   
     )
     
     connector.upload_to_db(
         cleaned_card_details_table
         , target_engine
         , main_config['databases']['target_table_names'][7] # 'land_card_data'
-        ,"replace"
+        , main_config['table_operations']['replace']
         , schema_config=db_schema
     )
 
@@ -174,7 +174,7 @@ def card_details_pipeline():
         cleaned_card_details_table
         , target_engine
         , main_config['databases']['target_table_names'][8] # "dim_card_details"
-        , "append"
+        , main_config['table_operations']['append']
         , additional_rows=new_card_details_row_additions
         , schema_config=db_schema
     )
@@ -194,22 +194,22 @@ def product_details_pipeline():
         raw_product_details_table
         ,target_engine
         , main_config['databases']['target_table_names'][9] # 'raw_product_data'
-        ,'replace'   
+        ,main_config['table_operations']['replace']   
     )
     
     connector.upload_to_db(
         cleaned_product_details_table
         , target_engine
-        , 'land_product_data'
-        ,"replace"
+        , main_config['databases']['target_table_names'][10]
+        ,main_config['table_operations']['replace']
         , schema_config=db_schema
     )
 
     connector.upload_to_db(
         cleaned_product_details_table
         , target_engine
-        , main_config['databases']['target_table_names'][10] #"dim_product"
-        , "append"
+        , main_config['databases']['target_table_names'][11] #"dim_product"
+        , main_config['table_operations']['append']
         , mapping=main_config['databases']['boolean_mapping']
         , additional_rows=new_product_rows
         , schema_config=db_schema
@@ -226,24 +226,24 @@ def time_events_pipeline():
     # Uploading tables to database 
     connector.upload_to_db(
         raw_time_event_table
-        ,target_engine
-        , main_config['databases']['target_table_names'][11] # 'raw_time_event_data'
-        ,'replace'   
+        , target_engine
+        , main_config['databases']['target_table_names'][12] # 'raw_time_event_data'
+        , main_config['table_operations']['replace']   
     )
     
     connector.upload_to_db(
         cleaned_time_event_table
         , target_engine
-        , main_config['databases']['target_table_names'][12] # "land_date_times"
-        ,"replace"
+        , main_config['databases']['target_table_names'][13] # "land_date_times"
+        , main_config['table_operations']['replace']
         , schema_config=db_schema
     )
 
     connector.upload_to_db(
         cleaned_time_event_table
         , target_engine
-        , main_config['databases']['target_table_names'][13] # "dim_date_times"
-        , "append"
+        , main_config['databases']['target_table_names'][14] # "dim_date_times"
+        , main_config['table_operations']['append']
         , additional_rows=new_time_event_rows
         , schema_config=db_schema
     )
@@ -259,7 +259,7 @@ def orders_table_pipeline():
         cleaned_orders_table
         , target_engine
         , main_config['databases']['target_table_names'][-1] # "orders_table"
-        , "append"
+        , main_config['table_operations']['append']
         , schema_config=db_schema
     )
     pass     
@@ -275,16 +275,16 @@ def currency_data_pipeline():
     connector.upload_to_db(
         cleaned_currency_table
         , target_engine
-        , main_config['databases']['target_table_names'][14] # "land_currency_data"
-        ,"replace"
+        , main_config['databases']['target_table_names'][15] # "land_currency_data"
+        ,main_config['table_operations']['replace']
         , schema_config=db_schema
     )
 
     connector.upload_to_db(
         cleaned_currency_table
         , target_engine
-        , main_config['databases']['target_table_names'][15] # "dim_currency"
-        , "append"
+        , main_config['databases']['target_table_names'][16] # "dim_currency"
+        , main_config['table_operations']['append']
         , additional_rows=new_currency_rows
         , subset=main_config['currency_subset'] # ["US", "GB", "DE"]
         , schema_config=db_schema
@@ -309,16 +309,16 @@ def currency_conversion_pipeline():
         connector.upload_to_db(
         cleaned_currency_conversion_table
         , target_engine
-        , main_config['databases']['target_table_names'][16] # "land_currency_conversion_data"
-        ,"replace"
+        , main_config['databases']['target_table_names'][17] # "land_currency_conversion_data"
+        , main_config['table_operations']['replace']
         , schema_config=db_schema
     )
         
         connector.upload_to_db(
             cleaned_currency_conversion_table
             , target_engine
-            , main_config['databases']['target_table_names'][17] # "dim_currency_conversion"
-            , "append"
+            , main_config['databases']['target_table_names'][18] # "dim_currency_conversion"
+            , main_config['table_operations']['append']
             , additional_rows=new_currency_rows
             , subset=main_config['currency_conversion_subset']
             , schema_config=db_schema
