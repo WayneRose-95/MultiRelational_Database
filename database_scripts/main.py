@@ -63,8 +63,8 @@ cleaner = DataCleaning()
 currency_extractor = CurrencyExtractor(currency_url) 
 
 # Create the target database 
-target_database_conn_string = connector.create_connection_string(target_database_creds_file, True, new_db_name='postgres')
-connector.create_database(main_config['databases']['target_database'], target_database_conn_string)
+target_database_conn_string = connector.create_connection_string(target_database_creds_file, True, new_db_name=source_database_name)
+connector.create_database(target_database_name, target_database_conn_string)
 
 source_database_creds = connector.read_database_credentials(source_database_creds_file)
 
