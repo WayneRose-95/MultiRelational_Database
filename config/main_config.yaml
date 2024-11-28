@@ -1,0 +1,106 @@
+filepaths:
+  logs:
+    main_log_filepath: "../logs/main.log"
+  databases:
+    source_database: "../credentials/db_creds.yaml"
+    target_database: "../credentials/sales_data_creds.yaml"
+  source_files:
+    source_text_file: "../source_data_files/currency_code_mapping"
+    json_source_file: "../source_data_files/country_data.json"
+    currency_csv_file: "../source_data_files/currency_conversions.csv"
+  sql_scripts:
+    add_weight_class_column: "../sales_data/DML/add_weight_class_column_script.sql"
+    add_primary_keys: "../sales_data/DDL/add_primary_keys.sql"
+    foreign_key_constraints: "../sales_data/DDL/foreign_key_constraints.sql"
+    update_foreign_keys: "../sales_data/DML/update_foreign_keys.sql"
+    create_views: "../sales_data/DDL/create_views.sql"
+  schema:
+    database_schema: "../config/database_schema.yaml"
+urls:
+  s3_csv_file: s3://data-handling-public/products.csv
+  pdf_file: https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf
+  s3_json_file: https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json
+  currency_exchange_url: https://www.x-rates.com/table/?from=GBP&amount=1
+databases:
+  source_database: postgres
+  source_table_names:
+  - legacy_users
+  - legacy_store_details
+  - orders_table
+  target_database: sales_data_dev
+  target_table_names:
+  - raw_user_data
+  - land_user_data
+  - dim_users
+  - raw_store_data
+  - land_store_data
+  - dim_store_details
+  - raw_card_data
+  - land_card_data
+  - dim_card_details
+  - raw_product_data
+  - land_product_data
+  - dim_product
+  - raw_time_event_data
+  - land_date_times
+  - dim_date_times
+  - land_currency_data
+  - dim_currency
+  - land_currency_conversion_data
+  - dim_currency_conversion
+  - orders_table
+  boolean_mapping:
+    Still_avaliable: 'True'
+    Removed: 'False'
+  additional_rows:
+    dim_users:
+    - user_key: -1
+      first_name: Not Applicable
+      last_name: Not Applicable
+    - user_key: 0
+      first_name: Unknown
+      last_name: Unknown
+    dim_store_details:
+    - store_key: -1
+      store_address: Not Applicable
+    - store_key: 0
+      store_address: Unknown
+    dim_card_details:
+    - card_key: -1
+      card_number: Not Applicable
+    - card_key: 0
+      card_number: Unknown
+    dim_product:
+    - product_key: -1
+      ean: Not Applicable
+    - product_key: 0
+      ean: Unknown
+    dim_date_times:
+    - date_key: -1
+      timestamp: '00:00:00'
+    - date_key: 0
+      timestamp: '00:00:00'
+    dim_currency:
+    - currency_key: -1
+      currency_conversion_key: -1
+      currency_code: Not Applicable
+    - currency_key: 0
+      currency_conversion_key: 0
+      currency_code: Unknown
+    dim_currency_conversion:
+    - currency_conversion_key: -1
+      currency_name: Not Applicable
+    - currency_conversion_key: 0
+      currency_name: Unknown
+table_operations:
+  replace: replace
+  append: append
+  fail: fail
+currency_subset:
+- US
+- GB
+- DE
+currency_conversion_subset:
+- USD
+- GBP
+- EUR

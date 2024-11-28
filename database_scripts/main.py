@@ -4,7 +4,6 @@ from database_scripts.data_extraction import DataExtractor
 from database_scripts.data_cleaning import DataCleaning 
 from database_scripts.currency_rate_extraction import CurrencyExtractor
 # Built-in python module imports 
-import json 
 import logging 
 import os 
 import yaml 
@@ -16,8 +15,8 @@ Opening configuration files
 with open('../config/database_schema.yaml') as schema_file:
     db_schema = yaml.safe_load(schema_file)
 
-with open('../config/main_config.json') as config_file:
-    main_config = json.load(config_file)
+with open('../config/main_config.yaml') as config_file:
+    main_config = yaml.safe_load(config_file)
 
 """
 LOG DEFINITION
