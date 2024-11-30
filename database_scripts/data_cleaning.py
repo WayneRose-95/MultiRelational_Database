@@ -1,7 +1,4 @@
-from database_scripts.data_extraction import DatabaseExtractor
-from database_scripts.database_utils import DatabaseConnector
 from database_scripts.file_handler import get_absolute_file_path
-from sqlalchemy import create_engine, Column, VARCHAR, DATE, FLOAT, SMALLINT, BOOLEAN, TIME, NUMERIC, TIMESTAMP
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.engine import Engine
 from sqlalchemy.dialects.postgresql import BIGINT, UUID
@@ -129,29 +126,6 @@ class DataCleaning:
         ]
         legacy_users_dataframe = legacy_users_dataframe[column_order]
 
-        new_rows_addition = self.add_new_rows(
-            [
-                {
-                    "user_key": -1,
-                    "first_name": "Not Applicable",
-                    "last_name": "Not Applicable",
-                },
-                {
-                    "user_key": 0, 
-                    "first_name": "Unknown", 
-                    "last_name": "Unknown"
-                }
-            ]
-        )
-        data_cleaning_logger.debug(new_rows_addition)
-
-        data_cleaning_logger.info(
-            "Appending the new_rows to the beginning of the dataframe"
-        )
-
-        legacy_users_dataframe = pd.concat(
-            [new_rows_addition, legacy_users_dataframe]
-        ).reset_index(drop=True)
         data_cleaning_logger.info("Appended new rows to the beginning of the dataframe")
         data_cleaning_logger.debug(f"Number of rows : {len(legacy_users_dataframe)}")
         data_cleaning_logger.debug(f"Job clean_user_data has completely successfully")
@@ -305,21 +279,6 @@ class DataCleaning:
             {"3n9": "39", "A97": "97", "80R": "80", "J78": "78", "30e": "30"}
         )
 
-        data_cleaning_logger.info("Adding new rows to cover for unknown values")
-
-        new_rows_addition = self.add_new_rows(
-            [
-                {"store_key": -1, "store_address": "Not Applicable"},
-                {"store_key": 0, "store_address": "Unknown"},
-            ]
-        )
-        data_cleaning_logger.info("New rows addded")
-        data_cleaning_logger.info("Concatenating new rows with store_dataframe")
-
-        legacy_store_dataframe = pd.concat(
-            [new_rows_addition, legacy_store_dataframe]
-        ).reset_index(drop=True)
-
         data_cleaning_logger.debug(f"Number of Rows : {len(legacy_store_dataframe)}")
 
         data_cleaning_logger.info("Job clean_store_data has completed succesfully")
@@ -440,24 +399,24 @@ class DataCleaning:
         # Reset the index of the table to match the indexes to the card_keys
         card_details_table = card_details_table.reset_index(drop=True)
 
-        data_cleaning_logger.info("Adding new rows to the table to cover for unknowns")
-        # Add new rows to the table
-        new_rows_additions = self.add_new_rows(
-            [
-                {"card_key": -1, "card_number": "Not Applicable"},
-                {"card_key": 0, "card_number": "Unknown"},
-            ]
-        )
-        data_cleaning_logger.info("New rows added")
-        data_cleaning_logger.info(new_rows_additions)
+        # data_cleaning_logger.info("Adding new rows to the table to cover for unknowns")
+        # # Add new rows to the table
+        # new_rows_additions = self.add_new_rows(
+        #     [
+        #         {"card_key": -1, "card_number": "Not Applicable"},
+        #         {"card_key": 0, "card_number": "Unknown"},
+        #     ]
+        # )
+        # data_cleaning_logger.info("New rows added")
+        # data_cleaning_logger.info(new_rows_additions)
 
-        data_cleaning_logger.info(
-            "Concatentating the two dataframes together to add the new rows to the top"
-        )
-        # Concatentate the two dataframes together
-        card_details_table = pd.concat(
-            [new_rows_additions, card_details_table]
-        ).reset_index(drop=True)
+        # data_cleaning_logger.info(
+        #     "Concatentating the two dataframes together to add the new rows to the top"
+        # )
+        # # Concatentate the two dataframes together
+        # card_details_table = pd.concat(
+        #     [new_rows_additions, card_details_table]
+        # ).reset_index(drop=True)
         data_cleaning_logger.info(f"Number of rows : {len(card_details_table)}")
         print("Job clean_card_details has been completed successfully")
         return card_details_table
@@ -618,10 +577,10 @@ class DataCleaning:
             "day",
             "month",
             "year",
-            "time_period",
             "timestamp",
             "full_date",
-            
+            "time_period"
+             
         ]
         data_cleaning_logger.info(column_order)
 
@@ -629,23 +588,6 @@ class DataCleaning:
 
         data_cleaning_logger.info("New column order")
         data_cleaning_logger.info(time_df.columns)
-        # Rename the timestamp column to event_time 
-        time_df.rename(columns={"timestamp": "event_time"}, inplace=True)
-
-        data_cleaning_logger.info("Adding new rows to the table in case of unknowns")
-        new_rows_addition = self.add_new_rows(
-            [
-                {"date_key": -1, "event_time": "00:00:00"},
-                {"date_key": 0, "event_time": "00:00:00"},
-            ]
-        )
-        data_cleaning_logger.info("New rows added")
-        data_cleaning_logger.info(new_rows_addition)
-
-        data_cleaning_logger.info(
-            "Concatenating new rows to the start of the dataframe"
-        )
-        time_df = pd.concat([new_rows_addition, time_df]).reset_index(drop=True)
 
         data_cleaning_logger.info(
             "Job clean_time_event_table has completed successfully"
@@ -769,21 +711,6 @@ class DataCleaning:
         data_cleaning_logger.info("New column order")
         data_cleaning_logger.info(products_table.columns)
 
-        data_cleaning_logger.info("Adding new rows to the table in case of unknowns")
-        new_rows_addition = self.add_new_rows(
-            [
-                {"product_key": -1, "ean": "Not Applicable"},
-                {"product_key": 0, "ean": "Unknown"},
-            ]
-        )
-
-        data_cleaning_logger.info(
-            "Concatenating new rows to the start of the dataframe"
-        )
-        products_table = pd.concat([new_rows_addition, products_table]).reset_index(
-            drop=True
-        )
-
         data_cleaning_logger.info("Job clean_product_table has completed successfully")
         print("Job clean_product_table has completed successfully")
         return products_table
@@ -843,40 +770,11 @@ class DataCleaning:
         currency_table = currency_table[column_order]
         data_cleaning_logger.info(currency_table.columns)
 
-        new_rows_addition = self.add_new_rows(
-            [
-                {
-                    "currency_key": -1,
-                    "currency_conversion_key": -1,
-                    "currency_code": "Not Applicable",
-                },
-                {
-                    "currency_key": 0,
-                    "currency_conversion_key": 0,
-                    "currency_code": "Unknown",
-                },
-            ]
-        )
-        data_cleaning_logger.info("New rows added")
-        data_cleaning_logger.info(new_rows_addition)
-
-        data_cleaning_logger.info("Concatenating new rows to the start of the table")
-        land_currency_table = pd.concat(
-            [new_rows_addition, currency_table]
-        ).reset_index(drop=True)
-
-        # Uploading land_table_to_datastore
-        # currency_datastore_table = self._upload_to_database(
-        #     land_currency_table, self.engine, datastore_table_name
-        # )
-        # data_cleaning_logger.info(
-        #     f"Successfully loaded {datastore_table_name} to database"
-        #)
         data_cleaning_logger.info(
             "Job clean_currency_table has completed successfully."
         )
         print("job clean_currency_table has been completed successfully")
-        return land_currency_table
+        return currency_table
 
     #TODO: There is something wrong with this method as the percentage_change column goes to null when it's uploaded. 
     def clean_currency_exchange_rates(
@@ -911,7 +809,7 @@ class DataCleaning:
         data_cleaning_logger.debug(f"Number of rows : {len(no_duplicates_dataframe)}")
 
         # Getting the datetime using utcnow() 
-        current_utc_time = datetime.utcnow()
+        current_utc_time = datetime.now() 
 
         # Specify the UTC timezone
         utc_timezone = pytz.utc
@@ -1014,24 +912,24 @@ class DataCleaning:
         data_cleaning_logger.info("New column order implemented")
         data_cleaning_logger.debug(updated_df.columns)
 
-        # Adding new rows to cover for unknowns
-        data_cleaning_logger.info("Adding new rows to cover for unknowns")
-        new_rows_addition = self.add_new_rows(
-            [
-                {"currency_conversion_key": -1, "currency_name": "Not Applicable"},
-                {"currency_conversion_key": 0, "currency_name": "Unknown"},
-            ]
-        )
+        # # Adding new rows to cover for unknowns
+        # data_cleaning_logger.info("Adding new rows to cover for unknowns")
+        # new_rows_addition = self.add_new_rows(
+        #     [
+        #         {"currency_conversion_key": -1, "currency_name": "Not Applicable"},
+        #         {"currency_conversion_key": 0, "currency_name": "Unknown"},
+        #     ]
+        # )
 
-        cleaned_currency_conversion_df = pd.concat([new_rows_addition, updated_df])
-        data_cleaning_logger.info("Successfully concatentated rows from together")
+        # cleaned_currency_conversion_df = pd.concat([new_rows_addition, updated_df])
+        # data_cleaning_logger.info("Successfully concatentated rows from together")
 
 
         data_cleaning_logger.info(
             "Job clean_currency_exchange_rates completed successfully"
         )
         print("Job clean_currency_exchange rates has been completed successfully")
-        return cleaned_currency_conversion_df
+        return updated_df
 
     @staticmethod
     def add_new_rows(rows_to_add: list):
