@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 from sqlalchemy.exc import OperationalError, DBAPIError
 from sqlalchemy import create_engine
 import pandas as pd 
-from database_scripts.data_extraction import DatabaseExtractor
+from database_scripts.data_extraction import DataExtractor
 from database_scripts.database_utils import DatabaseConnector
 from database_scripts.file_handler import get_absolute_file_path
 import tabula 
@@ -27,7 +27,7 @@ class TestDatabaseExtraction(unittest.TestCase):
         cls.test_url_wrong = "s3://data-handling-private/prod.csv"
         cls.test_json_filepath = get_absolute_file_path('country_data.json', 'source_data_files') #r"source_data_files\country_data.json"
         cls.test_json_filepath_wrong = "data.json"
-        cls.test_extractor = DatabaseExtractor() 
+        cls.test_extractor = DataExtractor() 
         cls.test_connector = DatabaseConnector()
         cls.test_source_database_engine = cls.test_connector.initialise_database_connection(cls.config_file_name, True, cls.database_name)
         pass 
@@ -56,7 +56,7 @@ class TestDatabaseExtraction(unittest.TestCase):
             self.test_extractor.retrieve_pdf_data("Not a link to a PDF")
 
     
-    @patch('database_scripts.data_extraction.DatabaseExtractor._is_valid_url')
+    @patch('database_scripts.data_extraction.DataExtractor._is_valid_url')
     @patch('database_scripts.data_extraction.tabula.read_pdf')
     def test_mock_retrieve_pdf_data(self, mock_read_pdf, mock_is_valid_url):
 
