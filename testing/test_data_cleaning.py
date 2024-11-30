@@ -3,7 +3,7 @@ import pandas as pd
 import json
 from unittest.mock import patch 
 from database_scripts.data_cleaning import DataCleaning 
-from database_scripts.data_extraction import DatabaseExtractor
+from database_scripts.data_extraction import DataExtractor
 from database_scripts.database_utils import DatabaseConnector
 from database_scripts.file_handler import get_absolute_file_path
 from sqlalchemy import create_engine
@@ -61,7 +61,7 @@ class TestDataCleaning(unittest.TestCase):
 
         # Instantiating instances of classes 
         cls.test_data_connector = DatabaseConnector() 
-        cls.test_data_extractor = DatabaseExtractor()
+        cls.test_data_extractor = DataExtractor()
         cls.test_data_cleaner = DataCleaning() 
 
         cls.source_database_engine = cls.test_data_connector.initialise_database_connection(cls.source_database_config_file_name, True, cls.source_database_name)
@@ -206,7 +206,7 @@ class TestDataCleaning(unittest.TestCase):
         # 2. Testing if the number of columns are in the same order. 
 
         expected_columns  = [
-            'date_key','event_time','date_uuid', 'day', 'month', 'year', 'time_period','full_date'
+            "date_key", "date_uuid", "day", "month","year","timestamp","full_date","time_period"
         ]
         # print a comparison between the test_list of columns and the expected list of columns
         print(f"The test list: {cleaned_time_event_data.columns.tolist()}")

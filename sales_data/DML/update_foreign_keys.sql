@@ -15,9 +15,9 @@ WHERE orders_table.date_uuid::uuid = dim_date_times.date_uuid;
 
 -- Updating orders_table with the keys from the dim_product_details table
 UPDATE orders_table 
-SET product_key = dim_product_details.product_key
-FROM dim_product_details 
-WHERE orders_table.product_code::varchar = dim_product_details.product_code;
+SET product_key = dim_product.product_key
+FROM dim_product 
+WHERE orders_table.product_code::varchar = dim_product.product_code;
 
 -- Updating orders_table with the keys from the dim_store_details table
 UPDATE orders_table 

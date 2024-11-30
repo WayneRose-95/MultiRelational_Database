@@ -84,7 +84,7 @@ class TestDatabaseConnector(unittest.TestCase):
         print(list_of_tables)
 
         # Set an expected output as the following list 
-        expected_output = ['legacy_store_details', 'legacy_users', 'orders_table']
+        expected_output = ['legacy_store_details', 'dim_card_details', 'legacy_users', 'orders_table']
 
         # Assert if the list of tables is a list object 
         # Then assert if the contents of the expected_output list and the input list are equal. 

@@ -1,4 +1,3 @@
-from database_scripts.database_utils import DatabaseConnector
 from database_scripts.file_handler import get_absolute_file_path
 from sqlalchemy import inspect
 from sqlalchemy import select
@@ -19,9 +18,7 @@ import logging
 """
 LOGS DEFINITION
 """
-log_filename = get_absolute_file_path(
-    "data_extraction.log", "logs"
-)  # "logs/data_extraction.log"
+log_filename = "../logs/data_extraction.log"
 if not os.path.exists(log_filename):
     os.makedirs(os.path.dirname(log_filename), exist_ok=True)
 
@@ -43,9 +40,9 @@ file_handler.setFormatter(format)
 data_extraction_logger.addHandler(file_handler)
 
 
-class DatabaseExtractor:
+class DataExtractor:
     def __init__(self):
-        self.database_connector = DatabaseConnector()
+        pass 
 
 
     def read_rds_table(
@@ -64,10 +61,7 @@ class DatabaseExtractor:
         """
         try:
 
-            # Initialise the connection
-            # connection = self.database_connector.initialise_database_connection(
-            #     config_file_name, connect_to_database=True, new_db_name=database_name
-            # )
+
             data_extraction_logger.info("Initialising connection to the database")
             data_extraction_logger.info(f"Using {engine}")
 
@@ -78,31 +72,7 @@ class DatabaseExtractor:
                 f"Successfully connected to database via {connection}"
             )
 
-            # Initialise a MetaData object
-            metadata = MetaData()
-
-            # Set a user table object
-            user_table = Table(table_name, metadata, autoload_with=connection)
-
-            # Show the table
-            print(metadata.tables.keys())
-            data_extraction_logger.debug(
-                f"List of tables within the database {metadata.tables.keys()}"
-            )
-
-            # Do a select statement to select all rows of the table
-            print(select(user_table))
-            data_extraction_logger.debug(
-                f"SQL Statement Submitted to database : {print(select(user_table))}"
-            )
-            # Declare a select statement on the table to select all rows of the table
-            select_statement = str(select(user_table))
-
-            data_extraction_logger.info("Creating DataFrame from {select_statement}")
-            # Pass this select statement into a pandas function, which reads the sql query
-            dataframe_table = pd.read_sql(select_statement, con=connection)
-            data_extraction_logger.info("Successfully created DataFrame")
-            # Return the dataframe_table as an output of the method
+            dataframe_table = pd.read_sql_table(table_name, engine)
             return dataframe_table
 
         except OperationalError as e:
@@ -117,7 +87,7 @@ class DatabaseExtractor:
             data_extraction_logger.exception(
                 "An error occured while reading the table. Please view the traceback message"
             )
-            raise ValueError(f"Error occured while reading table '{table_name}' : {e}")
+            raise Exception(f"Error occured while reading table '{table_name}' : {e}")
 
     def retrieve_pdf_data(self, link_to_pdf: str):
         """
@@ -420,7 +390,7 @@ if __name__ == "__main__":
     source_json_file_path = get_absolute_file_path(
         "country_data.json", "source_data_files"
     )
-    extract = DatabaseExtractor()
+    extract = DataExtractor()
     extract.read_json_local(source_json_file_path)
     extract.read_rds_table("legacy_users", credentials_file_path, "postgres")
     extract.retrieve_pdf_data(

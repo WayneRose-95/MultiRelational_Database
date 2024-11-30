@@ -1,0 +1,168 @@
+schemas:
+  tables:
+    land_user_data:
+      user_uuid: UUID
+      user_key: BIGINT
+      first_name: VARCHAR(255)
+      last_name: VARCHAR(255)
+      date_of_birth: DATE
+      company: VARCHAR(255)
+      email_address: VARCHAR(255)
+      address: VARCHAR(600)
+      country: VARCHAR(100)
+      country_code: VARCHAR(20)
+      phone_number: VARCHAR(50)
+      join_date: DATE
+      
+
+    dim_users:
+      user_uuid: UUID
+      user_key: BIGINT
+      first_name: VARCHAR(255)
+      last_name: VARCHAR(255)
+      date_of_birth: DATE
+      company: VARCHAR(255)
+      email_address: VARCHAR(255)
+      address: VARCHAR(600)
+      country: VARCHAR(100)
+      country_code: VARCHAR(20)
+      phone_number: VARCHAR(50)
+      join_date: DATE
+      
+
+    land_store_data:
+      index: BIGINT
+      store_key: BIGINT
+      store_address: VARCHAR(1000)
+      longitude: FLOAT
+      latitude: FLOAT
+      city: VARCHAR(255)
+      store_code: VARCHAR(20)
+      number_of_staff: SMALLINT
+      opening_date: DATE
+      store_type: VARCHAR(255)
+      country_code: VARCHAR(20)
+      region: VARCHAR(255)
+
+    dim_store_details:
+      index: BIGINT
+      store_key: BIGINT
+      store_address: VARCHAR(1000)
+      longitude: FLOAT
+      latitude: FLOAT
+      city: VARCHAR(255)
+      store_code: VARCHAR(20)
+      number_of_staff: SMALLINT
+      opening_date: DATE
+      store_type: VARCHAR(255)
+      country_code: VARCHAR(20)
+      region: VARCHAR(255)
+    
+    land_date_times:
+      date_key: BIGINT
+      date_uuid: UUID
+      day: INTEGER
+      month: INTEGER
+      year: INTEGER
+      timestamp: TIME
+      full_date: DATE 
+      time_period: VARCHAR(40)
+
+    dim_date_times:
+      date_key: BIGINT
+      date_uuid: UUID
+      day: INTEGER
+      month: INTEGER
+      year: INTEGER
+      timestamp: TIME
+      full_date: DATE 
+      time_period: VARCHAR(40)
+
+    land_card_data:
+      card_key: BIGINT
+      card_number: VARCHAR(30)
+      expiry_date: VARCHAR(20)
+      card_provider: VARCHAR(255)
+      date_payment_confirmed: DATE
+
+    dim_card_details:
+      card_key: BIGINT
+      card_number: VARCHAR(30)
+      expiry_date: VARCHAR(20)
+      card_provider: VARCHAR(255)
+      date_payment_confirmed: DATE
+
+    land_product_data:
+      product_key: BIGINT
+      ean: VARCHAR(50)
+      product_name: VARCHAR(500)
+      product_price: FLOAT
+      weight: FLOAT
+      weight_class: VARCHAR(50)
+      category: VARCHAR(50)
+      date_added: DATE
+      uuid: UUID
+      availability: VARCHAR(30)
+      product_code: VARCHAR(50)
+
+    dim_product:
+      product_key: BIGINT
+      ean: VARCHAR(50)
+      product_name: VARCHAR(500)
+      product_price: FLOAT
+      weight: FLOAT
+      weight_class: VARCHAR(50)
+      category: VARCHAR(50)
+      date_added: DATE
+      uuid: UUID
+      availability: VARCHAR(30)
+      product_code: VARCHAR(50)
+
+    land_currency_data:
+      currency_key: BIGINT
+      currency_conversion_key: BIGINT
+      country_name: VARCHAR(100)
+      currency_code: VARCHAR(20)
+      country_code: VARCHAR(5)
+      currency_symbol: VARCHAR(5)
+
+    dim_currency:
+      currency_key: BIGINT
+      currency_conversion_key: BIGINT
+      country_name: VARCHAR(100)
+      currency_code: VARCHAR(20)
+      country_code: VARCHAR(5)
+      currency_symbol: VARCHAR(5)
+
+    land_currency_conversion_data:
+      currency_conversion_key: BIGINT
+      currency_name: VARCHAR(50)
+      currency_code: VARCHAR(5)
+      conversion_rate: NUMERIC(20,6)
+      conversion_rate_percentage: NUMERIC(20,6)
+      last_updated : TIMESTAMP
+
+    dim_currency_conversion:
+      currency_conversion_key: BIGINT
+      currency_name: VARCHAR(50)
+      currency_code: VARCHAR(5)
+      conversion_rate: NUMERIC(20,6)
+      conversion_rate_percentage: NUMERIC(20,6)
+      last_updated : TIMESTAMP
+
+    orders_table:
+      index: BIGINT
+      order_key: BIGINT
+      date_uuid: UUID
+      user_uuid: UUID
+      card_key: BIGINT
+      date_key: BIGINT
+      product_key: BIGINT
+      store_key: BIGINT
+      user_key: BIGINT
+      currency_key: BIGINT
+      card_number: VARCHAR(30)
+      store_code: VARCHAR(30)
+      product_code: VARCHAR(30)
+      product_quantity: SMALLINT
+      country_code: VARCHAR(20)

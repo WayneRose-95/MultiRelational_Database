@@ -2,7 +2,7 @@
 
 -- Script to add a new column: weight_class based on the weight of the item 
 
-UPDATE dim_product_details
+UPDATE dim_product
 SET weight_class = 
   CASE
     WHEN weight < 2 THEN 'Light'
