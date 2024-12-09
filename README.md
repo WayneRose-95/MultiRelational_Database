@@ -77,7 +77,7 @@ After creating the STAR schema model Clear Pivot's Operations department wants t
 
 - How many stores does the business have an in which countries? 
 - Which locations currently have the most stores? 
-- Which months produce the average highest cost of sales typically? 
+- Which months produce the highest cost of sales typically? 
 - What percentage of sales come through each type of store? 
 - Which month in each year produced the highest cost of sales? 
 - What is our staff headcount? 
@@ -87,13 +87,15 @@ After creating the STAR schema model Clear Pivot's Operations department wants t
 The scripts used to answer these queries can be found within the [**sql_scripts.sql**](https://github.com/WayneRose-95/MultiRelational_Database/blob/main/sql_queries.sql) script within this repository. 
 
 ## Summary of Findings 
-- `60%` of the stores are based in the UK, the rest are in other regions
-- `Chapletown` is the location with the most stores at `14` locations
-- `August` is the month which produces the highest cales
+- `60%` of the stores are based in the UK, the rest are in other regions.
+- `Chapletown` is the location with the most stores at `14` locations.
+- `August` is the month which produces the highest sales.
 - `44%` of sales come from `Local` stores, followed by `Web Portal` at `22%`, `Super Store` at `15%` and `Mall Kiosk` at `8%` respectively.
-- `63%` of all staff are based in the uK
+- `63%` of all staff are based in the UK.
 - In `Germany`, the `Local` stores has a majority on sales numbers; making up `44%` of all sales within the region.
-- 
+- In the year `2013`, on average a sale was made every `2 minutes and 17 seconds`.
+
+For further insights and more, please check this link [**Summary of Insights**](https://github.com/WayneRose-95/MultiRelational_Database/wiki/Summary-of-Insights)
 
 # Wiki
 For further reading into the project, please check the [**Wiki**](https://github.com/WayneRose-95/MultiRelational_Database/wiki) page within this repository.  
