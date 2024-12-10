@@ -58,7 +58,7 @@ From which after the ETL process has completed, relationships amongst tables wil
 
 ## The Data Model 
 Below is a design of the STAR schema for Clear Pivot
-![image](https://github.com/user-attachments/assets/14d329f3-8de4-40b0-96a9-5fdc16beb887)
+![image](https://github.com/user-attachments/assets/958663bf-a781-400f-97a8-dd9a9b315e98)
 
 
 # Python Script Usage
